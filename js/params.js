@@ -43,6 +43,10 @@ const PARAMS = {
     meubleClasse:    { taux: 0.50, plafond: 77700 },
     meubleNonClasse: { taux: 0.30, plafond: 15000 },
     dividendes: 0.40,
+    // Assurance-vie > 8 ans (cases 2CH/2VV/2WW) — art. 125-0 A CGI
+    // Abattement annuel sur les produits, applicable à l'IR uniquement (PS dues sur le brut).
+    avSingle: 4600,
+    avCouple: 9200,
   },
 
   // --- PRÉLÈVEMENTS SOCIAUX ---

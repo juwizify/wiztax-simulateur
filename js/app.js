@@ -62,6 +62,8 @@ function getInputs() {
     dividendes:   v('dividendes'),
     interets:     v('interets'),
     pv:           v('pv'),
+    avProduits:   v('avProduits'),
+    avTaux:       v('avTaux'),
     autresRevenus: v('autresRevenus'),
     optionPFU:    document.getElementById('optionPFU').value,
 

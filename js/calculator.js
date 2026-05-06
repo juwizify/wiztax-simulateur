@@ -233,12 +233,27 @@ function calculerIR(input) {
   det.irMobilier = isPFU ? (input.dividendes + (input.interets || 0) + input.pv) * P.ps.pfuIr : 0;
 
   // ============================================================
+  // ÉTAPE 6bis : IR sur produits assurance-vie > 8 ans (2CH/2VV/2WW)
+  // Abattement annuel selon situation foyer, puis taux 7,5% ou 12,8%.
+  // L'abattement ne s'applique qu'à l'IR ; les PS sont dues sur le brut.
+  // Imposition séparée du barème (n'entre pas dans le RNI ni le QF).
+  // ============================================================
+  const avProduits = input.avProduits || 0;
+  const avAbat = isCouple ? P.abat.avCouple : P.abat.avSingle;
+  det.avAbattement = Math.min(avProduits, avAbat);
+  det.avImposable = Math.max(0, avProduits - avAbat);
+  const avTauxNum = parseFloat(input.avTaux) || 7.5;
+  det.irAV = det.avImposable * (avTauxNum / 100);
+
+  // ============================================================
   // ÉTAPE 7 : PRÉLÈVEMENTS SOCIAUX
   // ============================================================
   det.psMobilier = (input.dividendes + (input.interets || 0) + input.pv) * P.ps.mobilier;
   const revenusFonciersNets = det.microFoncierNet + det.foncierReel + det.meubleClasseNet + det.meubleNonClasseNet;
   det.psFoncier = revenusFonciersNets * P.ps.foncier;
-  det.totalPS = det.psMobilier + det.psFoncier;
+  // PS sur produits AV (taux foncier 17,2 %, sur le brut avant abattement)
+  det.psAV = avProduits * P.ps.foncier;
+  det.totalPS = det.psMobilier + det.psFoncier + det.psAV;
 
   // ============================================================
   // ÉTAPE 8 : RÉDUCTIONS D'IMPÔT
@@ -312,7 +327,7 @@ function calculerIR(input) {
   det.creditsAppliques = creditsEffectifs;
 
   det.impotNet = Math.max(0,
-    det.impotApresDecote + det.irMobilier - det.reductionsAppliquees
+    det.impotApresDecote + det.irMobilier + det.irAV - det.reductionsAppliquees
   ) - det.creditsAppliques + det.totalPS;
 
   // Revenu de référence = somme des revenus bruts déclarés (avant abattements) moins les charges
@@ -332,6 +347,7 @@ function calculerIR(input) {
     + input.microFoncier + input.foncierReel
     + input.meubleClasse + input.meubleNonClasse
     + input.dividendes + (input.interets || 0) + input.pv
+    + (input.avProduits || 0)
     + input.autresRevenus
     - input.per - input.pensionsAlim - input.csgDeductible - input.autresCharges
   );

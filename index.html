@@ -455,6 +455,25 @@
           </div>
 
           <div class="form-row">
+            <label for="avProduits">
+              Produits assurance-vie &gt; 8 ans
+              <i class="tip" data-tip="Cases 2CH / 2VV / 2WW de la déclaration.&#10;Saisir uniquement les PRODUITS (intérêts/gains) du rachat, pas le capital initial.&#10;&#10;Abattement annuel automatique selon la situation du foyer :&#10;· célibataire / divorcé / veuf : 4 600 €&#10;· couple marié / pacsé : 9 200 €&#10;&#10;L'abattement s'applique à l'IR uniquement. Les prélèvements sociaux (17,2 %) sont dus sur le total brut.&#10;&#10;Choisir le taux applicable ci-dessous.">i</i>
+            </label>
+            <input type="number" id="avProduits" value="0" min="0">
+          </div>
+
+          <div class="form-row">
+            <label for="avTaux">
+              Taux IR sur la part imposable
+              <i class="tip" data-tip="Taux d'imposition à appliquer sur la part dépassant l'abattement annuel.&#10;&#10;7,5 % (cas le plus courant) :&#10;· versements effectués AVANT le 27/09/2017 (case 2CH)&#10;· versements après cette date dans la limite de 150 000 € de primes nettes (case 2VV)&#10;&#10;12,8 % :&#10;· versements après le 27/09/2017 au-delà de 150 000 € de primes nettes (case 2WW)">i</i>
+            </label>
+            <select id="avTaux">
+              <option value="7.5">7,5 % (versements avant 27/09/2017 ou ≤ 150 k€ de primes après)</option>
+              <option value="12.8">12,8 % (versements après 27/09/2017 au-delà de 150 k€ de primes)</option>
+            </select>
+          </div>
+
+          <div class="form-row">
             <label for="autresRevenus">Autres revenus imposables</label>
             <input type="number" id="autresRevenus" value="0" min="0">
           </div>
