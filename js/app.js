@@ -94,6 +94,7 @@ function getInputs() {
     fipCorse:        v('fipCorse'),
     gfi:             v('gfi'),
     irPme:           v('irPme'),
+    malraux:         v('malraux'),
     sofica:          v('sofica'),
     autresReductions: v('autresReductions'),
     autresCredits:   v('autresCredits'),

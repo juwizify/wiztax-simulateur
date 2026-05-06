@@ -309,6 +309,10 @@ function calculerIR(input) {
   const ehpadBase = Math.min(input.ehpadFrais || 0, P.plafonds.ehpadPlafondParPers * ehpadNbPers);
   det.redEhpad = ehpadBase * P.plafonds.ehpadTaux;
 
+  // Loi Malraux (7NX/7NY) — HORS plafond niches (art. 199 tervicies CGI)
+  // L'utilisateur saisit le montant de la réduction (taux 22 % ou 30 % selon zone, déjà calculé).
+  det.redMalraux = input.malraux || 0;
+
   // Réductions dans le plafond niches
   det.redPinel       = input.pinel;
   det.redGirardinPD  = input.girardinPD;
@@ -375,7 +379,7 @@ function calculerIR(input) {
   }
   det.reductionsAppliquees = Math.min(
     det.impotApresDecote + det.irMobilier,
-    det.redDons + det.fraisScol + det.redEhpad + reductionsDansNichesEffectives
+    det.redDons + det.fraisScol + det.redEhpad + det.redMalraux + reductionsDansNichesEffectives
   );
 
   // Application des crédits avec plafonnement niches

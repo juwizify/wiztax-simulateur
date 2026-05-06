@@ -70,6 +70,7 @@ function makeInput(overrides = {}) {
     fipCorse: 0,
     gfi: 0,
     irPme: 0,
+    malraux: 0,
     sofica: 0,
     autresReductions: 0,
 
@@ -516,6 +517,20 @@ const CASES = [
     // total nouvelles réductions = 7 000 < niche 10 000 → appliquée intégralement
     // impôt net = 20 701 - 7 000 = 13 701, TMI = 41 %
     expected: { impotNet: 13701, revenuReference: 100000, tmi: 0.41 },
+  },
+
+  // -------------------------------------------------------------------
+  // 7NX / 7NY — Loi Malraux (réduction HORS plafond niches)
+  // L'utilisateur saisit le montant de la réduction calculée (22 % ou 30 %).
+  // -------------------------------------------------------------------
+  {
+    name: 'Malraux : 60k sal + 5 000 € de réduction Malraux (hors niches)',
+    input: makeInput({ sal1: 60000, malraux: 5000 }),
+    // sal net 54k → tranches 1 977.69 + (54k-29 579)×0.30 = 1 977.69 + 7 326.30
+    //   = 9 303.99 → 9 304
+    // - réduction Malraux 5 000 (hors niches, plafonnée à l'impôt dû)
+    // impôt net = 9 304 - 5 000 = 4 304
+    expected: { impotNet: 4304, revenuReference: 60000, tmi: 0.30 },
   },
 ];
 
