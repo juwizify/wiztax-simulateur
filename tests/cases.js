@@ -67,6 +67,9 @@ function makeInput(overrides = {}) {
     girardinPD: 0,
     girardinAG: 0,
     fcpi: 0,
+    fipCorse: 0,
+    gfi: 0,
+    irPme: 0,
     sofica: 0,
     autresReductions: 0,
 
@@ -498,6 +501,21 @@ const CASES = [
     // réduction 20 000 × 25 % = 5 000
     // impôt = 3 904 - 5 000 = max(0, -1 096) = 0 (réduction non remboursable, capée)
     expected: { impotNet: 0, revenuReference: 40000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 7XS / 7UN / 7CF — FIP Corse, GFI, IR-PME
+  // 3 dispositifs niche 10 000 € (l'utilisateur saisit le montant de
+  // la réduction calculée, pas l'assiette).
+  // -------------------------------------------------------------------
+  {
+    name: 'FIP Corse + GFI + IR-PME : 100k sal + 3k+2k+2k réductions sous niche',
+    input: makeInput({ sal1: 100000, fipCorse: 3000, gfi: 2000, irPme: 2000 }),
+    // sal net 90k → tranches : 1 977.69 + (84 577-29 579)×0.30 + (90 000-84 577)×0.41
+    //   = 1 977.69 + 16 499.40 + 2 223.43 = 20 700.52 → 20 701 (tranche 41 % active)
+    // total nouvelles réductions = 7 000 < niche 10 000 → appliquée intégralement
+    // impôt net = 20 701 - 7 000 = 13 701, TMI = 41 %
+    expected: { impotNet: 13701, revenuReference: 100000, tmi: 0.41 },
   },
 ];
 
