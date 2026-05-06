@@ -632,6 +632,42 @@
           </div>
 
           <div class="form-row">
+            <label for="fraisScolCollege">
+              Enfants au collège (7EA, 61 €/enfant)
+              <i class="tip" data-tip="Case 7EA de la déclaration (art. 199 quater F CGI).&#10;Nombre d'enfants à charge scolarisés au collège (de la 6ᵉ à la 3ᵉ).&#10;&#10;Réduction forfaitaire de 61 € par enfant. Pas de plafond de revenus, pas de justificatif à fournir.&#10;&#10;⚠ HORS plafond des niches fiscales.">i</i>
+            </label>
+            <input type="number" id="fraisScolCollege" value="0" min="0" step="1">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+              <span class="niche-plaf">61 € forfait/enfant</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="fraisScolLycee">
+              Enfants au lycée (7EC, 153 €/enfant)
+              <i class="tip" data-tip="Case 7EC de la déclaration.&#10;Nombre d'enfants à charge scolarisés au lycée (général, technologique ou professionnel, y compris CAP).&#10;&#10;Réduction forfaitaire de 153 € par enfant. Pas de plafond de revenus.&#10;&#10;⚠ HORS plafond des niches fiscales.">i</i>
+            </label>
+            <input type="number" id="fraisScolLycee" value="0" min="0" step="1">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+              <span class="niche-plaf">153 € forfait/enfant</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="fraisScolSup">
+              Enfants en études supérieures (7EF, 183 €/enfant)
+              <i class="tip" data-tip="Case 7EF de la déclaration.&#10;Nombre d'enfants à charge poursuivant des études supérieures (université, BTS, IUT, écoles, classes préparatoires, etc.).&#10;&#10;Réduction forfaitaire de 183 € par enfant. L'enfant doit rester rattaché au foyer fiscal des parents.&#10;&#10;⚠ HORS plafond des niches fiscales.">i</i>
+            </label>
+            <input type="number" id="fraisScolSup" value="0" min="0" step="1">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+              <span class="niche-plaf">183 € forfait/enfant</span>
+            </div>
+          </div>
+
+          <div class="form-row">
             <label for="pinel">
               Investissement Pinel / Denormandie
               <i class="tip" data-tip="Réduction d'impôt — saisir le montant annuel de la réduction.&#10;Plafond global niches : 10 000 €.">i</i>

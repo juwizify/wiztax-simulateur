@@ -298,6 +298,11 @@ function calculerIR(input) {
   det.donsBase = base7UD75Cap + base66Cap;
   det.redDons  = base7UD75Cap * 0.75 + base66Cap * 0.66;
 
+  // Frais de scolarité enfants (7EA/7EC/7EF) — réduction forfaitaire HORS niches
+  det.fraisScol = (input.fraisScolCollege || 0) * P.plafonds.fraisScolCollege
+                + (input.fraisScolLycee   || 0) * P.plafonds.fraisScolLycee
+                + (input.fraisScolSup     || 0) * P.plafonds.fraisScolSup;
+
   // Réductions dans le plafond niches
   det.redPinel       = input.pinel;
   det.redGirardinPD  = input.girardinPD;
@@ -359,7 +364,7 @@ function calculerIR(input) {
   }
   det.reductionsAppliquees = Math.min(
     det.impotApresDecote + det.irMobilier,
-    det.redDons + reductionsDansNichesEffectives
+    det.redDons + det.fraisScol + reductionsDansNichesEffectives
   );
 
   // Application des crédits avec plafonnement niches

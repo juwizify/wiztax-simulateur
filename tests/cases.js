@@ -74,6 +74,7 @@ function makeInput(overrides = {}) {
     emploiDomicile: 0,
     gardeEnfants: 0,
     cotSyndicales: 0,
+    fraisScolCollege: 0, fraisScolLycee: 0, fraisScolSup: 0,
     autresCredits: 0,
 
     ...overrides,
@@ -459,6 +460,23 @@ const CASES = [
     // crédit 400 × 66 % = 264
     // impôt = 3 904 - 264 = 3 640
     expected: { impotNet: 3640, revenuReference: 40000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 7EA/7EC/7EF — Frais de scolarité enfants (réduction forfaitaire)
+  // 61 € collège / 153 € lycée / 183 € supérieur, par enfant. Hors niches.
+  // -------------------------------------------------------------------
+  {
+    name: '7EC : célib + 1 enfant lycée, sal 40k',
+    input: makeInput({ sal1: 40000, nbEnfants: 1, fraisScolLycee: 1 }),
+    // 1 enfant → 1,5 part. Sal net 36k.
+    // QF=24k → impôt par part 1 364 → brut 2 046
+    // QF base 36k → impôt base 3 904
+    // avantage QF 1 858, plafond 1 807, supp QF 51
+    // impôt après QF 2 097 (pas de décote, > seuil 1 982)
+    // - réduction 7EC 153 → impôt net 1 944
+    // TMI : plafonnement actif → suit qfBase 36k → 30 %
+    expected: { impotNet: 1944, revenuReference: 40000, tmi: 0.30 },
   },
 ];
 

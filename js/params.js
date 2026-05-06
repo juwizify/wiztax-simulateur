@@ -92,6 +92,13 @@ const PARAMS = {
     // La part exonérée entre dans le RFR mais pas dans le revenu imposable.
     heuresSupExoPlafond:  7500,
 
+    // Frais de scolarité enfants (7EA/7EC/7EF) — art. 199 quater F CGI
+    // Réduction forfaitaire par enfant à charge selon niveau scolaire.
+    // HORS plafond niches.
+    fraisScolCollege:     61,
+    fraisScolLycee:      153,
+    fraisScolSup:        183,
+
     // Cotisations syndicales (7AC/7AE/7AG) — art. 199 quater C CGI
     // Crédit d'impôt 66 % plafonné à 1 % des salaires + alloc chômage + pensions.
     // HORS plafond niches.
