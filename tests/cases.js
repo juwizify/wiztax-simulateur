@@ -12,7 +12,7 @@
 function makeInput(overrides = {}) {
   return {
     // Situation
-    situation: 'celib',
+    situation: 'celibataire',
     nbEnfants: 0,
     gardeAlternee: 0,
     parentIsole: false,
@@ -83,6 +83,20 @@ const CASES = [
     //   impôt par part = 3903.99 → arrondi 3904
     //   Pas de QF supp, pas de décote (3904 > seuil 1982), pas de PFU/PS
     //   RFR = 40000 (salaire brut, charges = 0)
+    expected: {
+      impotNet: 3904,
+      revenuReference: 40000,
+      tmi: 0.30,
+    },
+  },
+
+  // -------------------------------------------------------------------
+  // Situation 'divorce-separe' : doit donner exactement le même résultat
+  // qu'un célibataire à inputs égaux (1 part, seuils single).
+  // -------------------------------------------------------------------
+  {
+    name: 'Divorcé/séparé 1 part, salaire 40 000 € → identique célibataire',
+    input: makeInput({ situation: 'divorce-separe', sal1: 40000 }),
     expected: {
       impotNet: 3904,
       revenuReference: 40000,
