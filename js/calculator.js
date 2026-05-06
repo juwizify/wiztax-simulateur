@@ -318,6 +318,7 @@ function calculerIR(input) {
   det.redGirardinPD  = input.girardinPD;
   det.redGirardinAG  = input.girardinAG;
   det.redFCPI        = input.fcpi;
+  det.redFcpiJei     = input.fcpiJei || 0;
   det.redFipCorse    = input.fipCorse || 0;
   det.redGfi         = input.gfi || 0;
   det.redIrPme       = input.irPme || 0;
@@ -326,7 +327,7 @@ function calculerIR(input) {
   det.redAutres      = input.autresReductions;
 
   det.totalReductions = det.redDons + det.redPinel + det.redGirardinPD + det.redGirardinAG
-    + det.redFCPI + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
+    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
     + det.redSofica + det.redAutres;
 
   // ============================================================
@@ -358,7 +359,7 @@ function calculerIR(input) {
   det.nichesUtilisees = det.redPinel
     + det.redGirardinPD * P.niches.girardinPdQuotePart
     + det.redGirardinAG * P.niches.girardinAgQuotePart
-    + det.redFCPI + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
+    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
     + det.redSofica + det.redAutres
     + det.credDomicile + det.credGarde + det.credAutres;
 

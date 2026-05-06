@@ -67,6 +67,7 @@ function makeInput(overrides = {}) {
     girardinPD: 0,
     girardinAG: 0,
     fcpi: 0,
+    fcpiJei: 0,
     fipCorse: 0,
     gfi: 0,
     irPme: 0,

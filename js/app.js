@@ -91,6 +91,7 @@ function getInputs() {
     girardinPD:      v('girardinPD'),
     girardinAG:      v('girardinAG'),
     fcpi:            v('fcpi'),
+    fcpiJei:         v('fcpiJei'),
     fipCorse:        v('fipCorse'),
     gfi:             v('gfi'),
     irPme:           v('irPme'),
