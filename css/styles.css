@@ -270,6 +270,16 @@ header span {
 }
 .form-row select { text-align: left; }
 
+/* Checkbox dans un form-row : aligne à droite comme les inputs number, taille raisonnable */
+.form-row input[type="checkbox"].form-checkbox {
+  justify-self: end;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  margin: 6px 8px;
+}
+
 /* Ligne calculée */
 .form-row.computed label {
   font-weight: 700;

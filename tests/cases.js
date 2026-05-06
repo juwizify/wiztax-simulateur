@@ -16,6 +16,7 @@ function makeInput(overrides = {}) {
     nbEnfants: 0,
     gardeAlternee: 0,
     parentIsole: false,
+    demiPartSupp: false,
 
     // Revenus salaires/pensions
     sal1: 0, sal2: 0,
@@ -99,6 +100,28 @@ const CASES = [
     input: makeInput({ situation: 'divorce-separe', sal1: 40000 }),
     expected: {
       impotNet: 3904,
+      revenuReference: 40000,
+      tmi: 0.30,
+    },
+  },
+
+  // -------------------------------------------------------------------
+  // Demi-part supplémentaire (cases L/N/P/F/W/S/G de la 2042)
+  // → +0,5 part, avantage QF plafonné à 1 807 €
+  // -------------------------------------------------------------------
+  {
+    name: 'Célibataire 1,5 part (demi-part supp), salaire 40 000 €',
+    input: makeInput({ sal1: 40000, demiPartSupp: true }),
+    // QF = 36000/1.5 = 24000 → impôt par part = (24000-11600)*0.11 = 1364
+    // impôt brut = 1364 × 1,5 = 2046
+    // qfBase = 36000/1 = 36000 → impôt brut base = 3904
+    // avantage QF = 3904 - 2046 = 1858
+    // plafond = 1 demi-part × 1807 = 1807
+    // supplément QF = 1858 - 1807 = 51
+    // impôt après QF = 2046 + 51 = 2097, > seuil décote → pas de décote
+    // TMI : plafonnement actif → basé sur qfBase = 36000 → tranche 30%
+    expected: {
+      impotNet: 2097,
       revenuReference: 40000,
       tmi: 0.30,
     },

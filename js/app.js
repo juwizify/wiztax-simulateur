@@ -33,6 +33,7 @@ function getInputs() {
     nbEnfants:    v('nbEnfants'),
     gardeAlternee: v('gardeAlternee'),
     parentIsole:  document.getElementById('parentIsole').value === 'oui',
+    demiPartSupp: document.getElementById('demiPartSupp').checked,
 
     // Revenus
     sal1:         v('sal1'),
@@ -229,6 +230,7 @@ function getInputsSimple() {
     nbEnfants:    v('s-nbEnfants'),
     gardeAlternee: v('s-gardeAlternee'),
     parentIsole:  v('s-parentIsole') === 'oui',
+    demiPartSupp: document.getElementById('s-demiPartSupp').checked,
 
     // Revenus — champs simplifiés
     sal1:         v('s-sal'),

@@ -22,7 +22,7 @@ function calcBaremePart(qf) {
 /**
  * Calcule le nombre de parts fiscales.
  */
-function calcParts(situation, nbEnfants, gardeAlternee, parentIsole) {
+function calcParts(situation, nbEnfants, gardeAlternee, parentIsole, demiPartSupp) {
   // Parts de base
   let partsBase = (situation === 'marie-pacse') ? 2 : 1;
   // Veuf avec enfants = 2 parts de base
@@ -47,8 +47,13 @@ function calcParts(situation, nbEnfants, gardeAlternee, parentIsole) {
   // Parent isolé
   const partsPI = parentIsole ? 0.5 : 0;
 
+  // Demi-part supplémentaire (cases L, N, P, F, W, S, G de la 2042)
+  // Plafond standard 1 807 € appliqué via la logique QF en aval (étape 4).
+  // Cas particuliers L (plafond réduit) et G (déplafonné) non simulés.
+  const partsDemi = demiPartSupp ? 0.5 : 0;
+
   return {
-    total: partsBase + partsEnfants + partsAlternee + partsPI,
+    total: partsBase + partsEnfants + partsAlternee + partsPI + partsDemi,
     base: partsBase,
   };
 }
@@ -152,7 +157,7 @@ function calculerIR(input) {
   // ============================================================
   // ÉTAPE 3 : QUOTIENT FAMILIAL ET BARÈME
   // ============================================================
-  const parts = calcParts(input.situation, input.nbEnfants, input.gardeAlternee, input.parentIsole);
+  const parts = calcParts(input.situation, input.nbEnfants, input.gardeAlternee, input.parentIsole, input.demiPartSupp);
   det.parts = parts.total;
   det.partsBase = parts.base;
 

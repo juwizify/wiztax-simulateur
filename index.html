@@ -67,6 +67,13 @@
             </select>
           </div>
 
+          <div class="form-row">
+            <label for="s-demiPartSupp">Demi-part supplémentaire
+              <i class="tip tip-down" data-tip="+0,5 part fiscale (avantage QF plafonné à 1 807 €).&#10;Cochez si l'un des cas s'applique :&#10;&#10;· L : célibataire/divorcé/veuf vivant seul·e ayant élevé un enfant ≥5 ans (plafond réel réduit ~1 058 €)&#10;· N : idem L mais ne vivait pas seul·e&#10;· P : pension invalidité ≥40 % ou carte invalidité/CMI&#10;· F : conjoint invalide ou décédé en 2025 remplissant ces conditions&#10;· W : carte du combattant ou pension militaire/victime de guerre + plus de 74 ans&#10;· S : marié/PACS, l'un des deux > 74 ans avec carte du combattant&#10;· G : pension de veuve de guerre (en réalité déplafonné)">i</i>
+            </label>
+            <input type="checkbox" id="s-demiPartSupp" class="form-checkbox">
+          </div>
+
           <div class="form-row computed">
             <label>→ Nombre de parts fiscales</label>
             <div class="computed-val" id="s-parts-affichage">1.00 parts</div>
@@ -276,6 +283,14 @@
               <option value="non">Non</option>
               <option value="oui">Oui</option>
             </select>
+          </div>
+
+          <div class="form-row">
+            <label for="demiPartSupp">
+              Demi-part supplémentaire
+              <i class="tip tip-down" data-tip="+0,5 part fiscale (avantage QF plafonné à 1 807 €).&#10;Cochez si l'un des cas s'applique :&#10;&#10;· L : célibataire/divorcé/veuf vivant seul·e ayant élevé un enfant ≥5 ans (plafond réel réduit ~1 058 €)&#10;· N : idem L mais ne vivait pas seul·e&#10;· P : pension invalidité ≥40 % ou carte invalidité/CMI&#10;· F : conjoint invalide ou décédé en 2025 remplissant ces conditions&#10;· W : carte du combattant ou pension militaire/victime de guerre + plus de 74 ans&#10;· S : marié/PACS, l'un des deux > 74 ans avec carte du combattant&#10;· G : pension de veuve de guerre (en réalité déplafonné)">i</i>
+            </label>
+            <input type="checkbox" id="demiPartSupp" class="form-checkbox">
           </div>
 
           <div class="form-row computed">
