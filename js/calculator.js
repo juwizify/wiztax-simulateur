@@ -123,11 +123,23 @@ function calculerIR(input) {
 
   // Foncier
   det.microFoncierNet = input.microFoncier * (1 - P.abat.microFoncier.taux);
-  // Déficit foncier (4BC) : imputation sur revenu global plafonnée à 10 700 €/an.
+
+  // Dispositif Jeanbrun (LF 2026) — amortissement déductible des revenus fonciers
+  // selon catégorie de loyer. Le plafond annuel borne le montant retenu.
+  // L'utilisateur saisit le foncier réel AVANT cet amortissement.
+  const jeanbrunCat = input.jeanbrunCategorie || 'intermediaire';
+  const jeanbrunPlaf = jeanbrunCat === 'tres-social' ? P.plafonds.jeanbrunPlafondTresSoc
+                     : jeanbrunCat === 'social'      ? P.plafonds.jeanbrunPlafondSocial
+                     :                                  P.plafonds.jeanbrunPlafondInter;
+  det.jeanbrunAmort = Math.min(input.jeanbrunAmort || 0, jeanbrunPlaf);
+
+  // Foncier réel après amortissement Jeanbrun, puis plafonnement du déficit (4BC) :
+  // imputation sur revenu global plafonnée à 10 700 €/an.
   // Le surplus serait reportable 10 ans (non simulé). Si bénéfice (>= 0), pas de plafonnement.
-  det.foncierReel = input.foncierReel >= 0
-    ? input.foncierReel
-    : Math.max(input.foncierReel, -P.plafonds.deficitFoncierMax);
+  const foncierApresJeanbrun = input.foncierReel - det.jeanbrunAmort;
+  det.foncierReel = foncierApresJeanbrun >= 0
+    ? foncierApresJeanbrun
+    : Math.max(foncierApresJeanbrun, -P.plafonds.deficitFoncierMax);
 
   // Meublé
   det.meubleClasseNet = input.meubleClasse * (1 - P.abat.meubleClasse.taux);

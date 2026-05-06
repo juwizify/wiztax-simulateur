@@ -439,6 +439,26 @@
             <input type="number" id="meubleNonClasse" value="0" min="0">
           </div>
 
+          <div class="form-row">
+            <label for="jeanbrunAmort">
+              Amortissement Jeanbrun (LF 2026)
+              <i class="tip" data-tip="Dispositif Jeanbrun / Statut du bailleur privé — créé par la LF 2026 (en vigueur 21/02/2026), applicable aux acquisitions jusqu'au 31/12/2028.&#10;&#10;Amortissement DÉDUCTIBLE des revenus fonciers (≠ réduction d'impôt comme Pinel). Taux annuel selon le type de loyer choisi (3,5 % / 4,5 % / 5,5 %), plafonné selon catégorie ci-dessous.&#10;&#10;Saisir le MONTANT D'AMORTISSEMENT (= prix d'achat × taux). La déduction s'applique automatiquement sur ton « Foncier réel » saisi plus haut, avec respect du plafond catégorie.&#10;&#10;⚠ Le foncier réel ci-dessus doit être saisi AVANT cet amortissement (sinon double déduction).">i</i>
+            </label>
+            <input type="number" id="jeanbrunAmort" value="0" min="0">
+          </div>
+
+          <div class="form-row">
+            <label for="jeanbrunCategorie">
+              ↳ Catégorie de loyer Jeanbrun
+              <i class="tip tip-down" data-tip="Détermine le plafond annuel d'amortissement déductible :&#10;· Intermédiaire (loyer plafonné selon zonage) : 8 000 €/an&#10;· Social : 10 000 €/an&#10;· Très social : 12 000 €/an">i</i>
+            </label>
+            <select id="jeanbrunCategorie">
+              <option value="intermediaire">Intermédiaire (plafond 8 000 €)</option>
+              <option value="social">Social (plafond 10 000 €)</option>
+              <option value="tres-social">Très social (plafond 12 000 €)</option>
+            </select>
+          </div>
+
           <div class="form-subsection"><h3>Revenus de capitaux mobiliers (RCM)</h3></div>
 
           <div class="form-row">

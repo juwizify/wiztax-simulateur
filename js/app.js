@@ -59,6 +59,8 @@ function getInputs() {
     foncierReel:  v('foncierReel'),
     meubleClasse: v('meubleClasse'),
     meubleNonClasse: v('meubleNonClasse'),
+    jeanbrunAmort:    v('jeanbrunAmort'),
+    jeanbrunCategorie: v('jeanbrunCategorie'),
     dividendes:   v('dividendes'),
     interets:     v('interets'),
     pv:           v('pv'),

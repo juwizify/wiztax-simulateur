@@ -91,6 +91,13 @@ const PARAMS = {
     // Plafond annuel pour la part hors intérêts d'emprunt. Surplus reportable 10 ans (non simulé).
     deficitFoncierMax:    10700,
 
+    // Dispositif Jeanbrun / Statut du bailleur privé (LF 2026, en vigueur 21/02/2026)
+    // Amortissement déductible des revenus fonciers selon catégorie de loyer.
+    // Applicable aux acquisitions jusqu'au 31/12/2028.
+    jeanbrunPlafondInter:    8000,   // loyer intermédiaire (taux amort. 3,5 %)
+    jeanbrunPlafondSocial:  10000,   // loyer social (4,5 %)
+    jeanbrunPlafondTresSoc: 12000,   // loyer très social (5,5 %)
+
     // Heures supplémentaires exonérées (1GH/1HH) — art. 81 quater CGI
     // Plafond annuel par déclarant ; au-delà, le surplus est imposable.
     // La part exonérée entre dans le RFR mais pas dans le revenu imposable.

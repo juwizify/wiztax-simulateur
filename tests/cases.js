@@ -39,6 +39,8 @@ function makeInput(overrides = {}) {
     // Meublé
     meubleClasse: 0,
     meubleNonClasse: 0,
+    jeanbrunAmort: 0,
+    jeanbrunCategorie: 'intermediaire',
 
     // Mobilier
     dividendes: 0,
@@ -546,6 +548,44 @@ const CASES = [
     // total niches 3 000 < 10 000 → réduction appliquée intégralement
     // impôt net = 9 304 - 3 000 = 6 304
     expected: { impotNet: 6304, revenuReference: 60000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // Dispositif Jeanbrun (LF 2026) — amortissement déductible des fonciers
+  // Plafonds annuels : 8k inter / 10k social / 12k très social.
+  // -------------------------------------------------------------------
+  {
+    name: 'Jeanbrun inter sous plafond : 40k sal + 12k foncier - 7k amort.',
+    input: makeInput({ sal1: 40000, foncierReel: 12000, jeanbrunAmort: 7000, jeanbrunCategorie: 'intermediaire' }),
+    // amort retenu = min(7 000, 8 000) = 7 000
+    // foncier final = 12 000 - 7 000 = 5 000
+    // sal net 36k + 5k = RBG 41 000
+    // QF=41k → 1 977.69 + (41-29.579)×0.30 = 5 403.99 → 5 404
+    // PS foncier = 5 000 × 17,2 % = 860
+    // total = 5 404 + 860 = 6 264
+    // (vs sans Jeanbrun : 9 568 → économie 3 304 € ≈ 7k×(30%+17,2%))
+    expected: { impotNet: 6264, revenuReference: 45000, tmi: 0.30 },
+  },
+  {
+    name: 'Jeanbrun inter cap : 40k sal + 12k foncier - 10k amort. (cap 8k)',
+    input: makeInput({ sal1: 40000, foncierReel: 12000, jeanbrunAmort: 10000, jeanbrunCategorie: 'intermediaire' }),
+    // amort retenu = min(10 000, 8 000) = 8 000
+    // foncier final = 12 000 - 8 000 = 4 000
+    // sal net 36k + 4k = RBG 40 000
+    // QF=40k → 1 977.69 + (40-29.579)×0.30 = 5 103.99 → 5 104
+    // PS foncier = 4 000 × 17,2 % = 688
+    // total = 5 104 + 688 = 5 792
+    expected: { impotNet: 5792, revenuReference: 44000, tmi: 0.30 },
+  },
+  {
+    name: 'Jeanbrun très-social transforme revenu en déficit : 40k sal + 5k foncier - 8k amort.',
+    input: makeInput({ sal1: 40000, foncierReel: 5000, jeanbrunAmort: 8000, jeanbrunCategorie: 'tres-social' }),
+    // amort retenu = min(8 000, 12 000) = 8 000
+    // foncier final = 5 000 - 8 000 = -3 000 (déficit, sous plafond -10 700)
+    // sal net 36k - 3k = RBG 33 000
+    // QF=33k → 1 977.69 + (33-29.579)×0.30 = 1 026.30 → impôt = 3 003.99 → 3 004
+    // PS foncier = max(0, -3 000) = 0 (pas de PS sur déficit)
+    expected: { impotNet: 3004, revenuReference: 37000, tmi: 0.30 },
   },
 ];
 
