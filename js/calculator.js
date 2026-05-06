@@ -71,14 +71,17 @@ function calculerIR(input) {
   // ÉTAPE 1 : REVENU BRUT GLOBAL
   // ============================================================
 
-  // Salaires (avec protection si = 0)
-  const abatSal1 = input.sal1 > 0
-    ? Math.max(P.abat.sal.min, Math.min(input.sal1 * P.abat.sal.taux, P.abat.sal.max))
+  // Salaires (1AJ/1BJ) + allocations chômage/préretraite (1AP/1BP)
+  // Abattement 10% commun par déclarant (mêmes plancher 509 € et plafond 14 555 €).
+  const totalSal1 = input.sal1 + (input.allocChomage1 || 0);
+  const totalSal2 = input.sal2 + (input.allocChomage2 || 0);
+  const abatSal1 = totalSal1 > 0
+    ? Math.max(P.abat.sal.min, Math.min(totalSal1 * P.abat.sal.taux, P.abat.sal.max))
     : 0;
-  const abatSal2 = input.sal2 > 0
-    ? Math.max(P.abat.sal.min, Math.min(input.sal2 * P.abat.sal.taux, P.abat.sal.max))
+  const abatSal2 = totalSal2 > 0
+    ? Math.max(P.abat.sal.min, Math.min(totalSal2 * P.abat.sal.taux, P.abat.sal.max))
     : 0;
-  det.salaireNet = (input.sal1 - abatSal1) + (input.sal2 - abatSal2);
+  det.salaireNet = (totalSal1 - abatSal1) + (totalSal2 - abatSal2);
 
   // Pensions
   const abatPen1 = input.pen1 > 0
@@ -301,6 +304,7 @@ function calculerIR(input) {
   // ⚠ Doit être calculé AVANT la CEHR (étape 12) qui l'utilise comme assiette
   det.revenuReference = Math.max(0,
     input.sal1 + input.sal2
+    + (input.allocChomage1 || 0) + (input.allocChomage2 || 0)
     + input.pen1 + input.pen2
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1 + input.bncReel2

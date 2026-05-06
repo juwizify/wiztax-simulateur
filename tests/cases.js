@@ -21,6 +21,7 @@ function makeInput(overrides = {}) {
 
     // Revenus salaires/pensions
     sal1: 0, sal2: 0,
+    allocChomage1: 0, allocChomage2: 0,
     pen1: 0, pen2: 0,
 
     // BNC
@@ -134,6 +135,19 @@ const CASES = [
     // plafond = Infinity → supplément = 0 → impôt = 2046
     // TMI : pas de plafonnement actif → suit le QF réel = 24000 → tranche 11%
     expected: { impotNet: 2046, revenuReference: 40000, tmi: 0.11 },
+  },
+
+  // -------------------------------------------------------------------
+  // 1AP/1BP — Allocations chômage / préretraite
+  // Combinées avec les salaires pour l'abattement 10 % (plancher 509 €,
+  // plafond 14 555 €). Entrent dans le RFR.
+  // -------------------------------------------------------------------
+  {
+    name: '1AP : 30 000 € sal + 10 000 € chômage = identique 40 000 € sal',
+    input: makeInput({ sal1: 30000, allocChomage1: 10000 }),
+    // total déclarant 1 = 40 000 → abattement = 4 000 → net = 36 000
+    // identique à un salarié 40 000 € pur (cas baseline)
+    expected: { impotNet: 3904, revenuReference: 40000, tmi: 0.30 },
   },
 ];
 
