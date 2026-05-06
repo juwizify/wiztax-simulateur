@@ -60,6 +60,7 @@ function getInputs() {
     meubleClasse: v('meubleClasse'),
     meubleNonClasse: v('meubleNonClasse'),
     dividendes:   v('dividendes'),
+    interets:     v('interets'),
     pv:           v('pv'),
     autresRevenus: v('autresRevenus'),
     optionPFU:    document.getElementById('optionPFU').value,

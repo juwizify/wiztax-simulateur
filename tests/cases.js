@@ -42,6 +42,7 @@ function makeInput(overrides = {}) {
 
     // Mobilier
     dividendes: 0,
+    interets: 0,
     pv: 0,
     optionPFU: 'pfu',
 
@@ -221,6 +222,32 @@ const CASES = [
     // total déclarant 1 = 40 000 → abat = 4 000 (sous plafond foyer 4 439)
     // → net = 36 000 → impôt = 3 904 (identique pen pure 40 000 €)
     expected: { impotNet: 3904, revenuReference: 40000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 2TR — Intérêts et placements à revenu fixe
+  // PFU 12,8 % par défaut, barème en option (sans abattement contrairement
+  // aux dividendes). PS 18,6 %.
+  // -------------------------------------------------------------------
+  {
+    name: '2TR PFU : 40 000 € sal + 1 000 € intérêts PFU',
+    input: makeInput({ sal1: 40000, interets: 1000, optionPFU: 'pfu' }),
+    // baseline 40k → 3 904
+    // + IR mob = 1 000 × 12,8 % = 128
+    // + PS = 1 000 × 18,6 % = 186
+    // total = 3 904 + 128 + 186 = 4 218
+    // RFR = 40 000 + 1 000 = 41 000
+    expected: { impotNet: 4218, revenuReference: 41000, tmi: 0.30 },
+  },
+  {
+    name: '2TR barème : 40 000 € sal + 1 000 € intérêts au barème',
+    input: makeInput({ sal1: 40000, interets: 1000, optionPFU: 'bareme' }),
+    // sal net 36 000 + intérêts 1 000 (sans abattement) → RBG 37 000
+    // QF = 37 000 → tranche 2 : 1 977.69 + tranche 3 : (37 000-29 579)×0.30 = 2 226.30
+    // impôt brut = 4 203.99 → 4 204
+    // + PS 186 (toujours dus même au barème)
+    // total = 4 204 + 186 = 4 390
+    expected: { impotNet: 4390, revenuReference: 41000, tmi: 0.30 },
   },
 ];
 

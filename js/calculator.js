@@ -130,6 +130,8 @@ function calculerIR(input) {
   // Mobilier selon option
   const isPFU = input.optionPFU === 'pfu';
   det.dividendesBareme = isPFU ? 0 : input.dividendes * (1 - P.abat.dividendes);
+  // Intérêts (2TR) : pas d'abattement au barème, contrairement aux dividendes
+  det.interetsBareme = isPFU ? 0 : (input.interets || 0);
   det.pvBareme = isPFU ? 0 : input.pv;
 
   // Autres
@@ -138,7 +140,7 @@ function calculerIR(input) {
   det.revenuBrutGlobal = det.salaireNet + det.pensionNet + det.bncMicroNet + det.bncReel
     + det.microFoncierNet + det.foncierReel
     + det.meubleClasseNet + det.meubleNonClasseNet
-    + det.dividendesBareme + det.pvBareme
+    + det.dividendesBareme + det.interetsBareme + det.pvBareme
     + det.autresRevenus;
 
   // ============================================================
@@ -228,12 +230,12 @@ function calculerIR(input) {
   // ============================================================
   // ÉTAPE 6 : IR MOBILIER (PFU)
   // ============================================================
-  det.irMobilier = isPFU ? (input.dividendes + input.pv) * P.ps.pfuIr : 0;
+  det.irMobilier = isPFU ? (input.dividendes + (input.interets || 0) + input.pv) * P.ps.pfuIr : 0;
 
   // ============================================================
   // ÉTAPE 7 : PRÉLÈVEMENTS SOCIAUX
   // ============================================================
-  det.psMobilier = (input.dividendes + input.pv) * P.ps.mobilier;
+  det.psMobilier = (input.dividendes + (input.interets || 0) + input.pv) * P.ps.mobilier;
   const revenusFonciersNets = det.microFoncierNet + det.foncierReel + det.meubleClasseNet + det.meubleNonClasseNet;
   det.psFoncier = revenusFonciersNets * P.ps.foncier;
   det.totalPS = det.psMobilier + det.psFoncier;
@@ -329,7 +331,7 @@ function calculerIR(input) {
     + input.bncReel1 + input.bncReel2
     + input.microFoncier + input.foncierReel
     + input.meubleClasse + input.meubleNonClasse
-    + input.dividendes + input.pv
+    + input.dividendes + (input.interets || 0) + input.pv
     + input.autresRevenus
     - input.per - input.pensionsAlim - input.csgDeductible - input.autresCharges
   );
