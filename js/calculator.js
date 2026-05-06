@@ -121,7 +121,11 @@ function calculerIR(input) {
 
   // Foncier
   det.microFoncierNet = input.microFoncier * (1 - P.abat.microFoncier.taux);
-  det.foncierReel = input.foncierReel;
+  // Déficit foncier (4BC) : imputation sur revenu global plafonnée à 10 700 €/an.
+  // Le surplus serait reportable 10 ans (non simulé). Si bénéfice (>= 0), pas de plafonnement.
+  det.foncierReel = input.foncierReel >= 0
+    ? input.foncierReel
+    : Math.max(input.foncierReel, -P.plafonds.deficitFoncierMax);
 
   // Meublé
   det.meubleClasseNet = input.meubleClasse * (1 - P.abat.meubleClasse.taux);
@@ -255,8 +259,9 @@ function calculerIR(input) {
   // ÉTAPE 7 : PRÉLÈVEMENTS SOCIAUX
   // ============================================================
   det.psMobilier = (input.dividendes + (input.interets || 0) + input.pv) * P.ps.mobilier;
+  // PS foncier dus uniquement sur résultat foncier net positif (pas de PS sur déficit).
   const revenusFonciersNets = det.microFoncierNet + det.foncierReel + det.meubleClasseNet + det.meubleNonClasseNet;
-  det.psFoncier = revenusFonciersNets * P.ps.foncier;
+  det.psFoncier = Math.max(0, revenusFonciersNets) * P.ps.foncier;
   // PS sur produits AV (taux foncier 17,2 %, sur le brut avant abattement)
   det.psAV = avProduits * P.ps.foncier;
   det.totalPS = det.psMobilier + det.psFoncier + det.psAV;
@@ -355,7 +360,7 @@ function calculerIR(input) {
     + (input.pensAlimRecue1 || 0) + (input.pensAlimRecue2 || 0)
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1 + input.bncReel2
-    + input.microFoncier + input.foncierReel
+    + input.microFoncier + det.foncierReel
     + input.meubleClasse + input.meubleNonClasse
     + input.dividendes + (input.interets || 0) + input.pv
     + (input.avProduits75 || 0) + (input.avProduits128 || 0)

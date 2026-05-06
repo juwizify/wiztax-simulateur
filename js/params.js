@@ -83,6 +83,10 @@ const PARAMS = {
     // ex-conjoint : montant judiciaire ; ascendants : besoins réels)
     pensionAlimEnfantMax: 6674,    // plafond par enfant majeur (2025)
 
+    // Déficit foncier imputable sur le revenu global — art. 156-I-3° CGI
+    // Plafond annuel pour la part hors intérêts d'emprunt. Surplus reportable 10 ans (non simulé).
+    deficitFoncierMax:    10700,
+
     // Heures supplémentaires exonérées (1GH/1HH) — art. 81 quater CGI
     // Plafond annuel par déclarant ; au-delà, le surplus est imposable.
     // La part exonérée entre dans le RFR mais pas dans le revenu imposable.

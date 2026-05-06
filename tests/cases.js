@@ -345,6 +345,42 @@ const CASES = [
     // (excédent remboursé par l'administration)
     expected: { impotNet: -19, revenuReference: 100, tmi: 0 },
   },
+
+  // -------------------------------------------------------------------
+  // 4BC — Déficit foncier imputable sur le revenu global
+  // Plafond 10 700 €/an. Le surplus est reportable 10 ans (non simulé).
+  // PS foncier dus uniquement sur résultat foncier net positif.
+  // -------------------------------------------------------------------
+  {
+    name: '4BC déficit modéré : 40k sal + foncier réel -5 000 €',
+    input: makeInput({ sal1: 40000, foncierReel: -5000 }),
+    // RBG = 36 000 - 5 000 = 31 000 (déficit sous plafond)
+    // QF=31 000 → tranche 2: 1 977.69 + tranche 3: (31 000-29 579)×0.30 = 426.30
+    // impôt = 2 403.99 → 2 404
+    // pas de PS (résultat foncier négatif)
+    // RFR = 40 000 + 0 + (-5 000) = 35 000
+    expected: { impotNet: 2404, revenuReference: 35000, tmi: 0.30 },
+  },
+  {
+    name: '4BC déficit plafonné : 60k sal + foncier réel -15 000 € (plafond 10 700)',
+    input: makeInput({ sal1: 60000, foncierReel: -15000 }),
+    // sal net 60 000 - 6 000 = 54 000
+    // foncierReel plafonné à -10 700
+    // RBG = 54 000 - 10 700 = 43 300
+    // QF=43 300 → tranches: 1 977.69 + (43 300-29 579)×0.30 = 6 093.99 → 6 094
+    // pas de PS, pas de décote
+    // RFR = 60 000 + (-10 700) = 49 300 (et non 45 000 si non plafonné)
+    expected: { impotNet: 6094, revenuReference: 49300, tmi: 0.30 },
+  },
+  {
+    name: '4BA non-régression : 40k sal + foncier réel +5 000 € (revenu)',
+    input: makeInput({ sal1: 40000, foncierReel: 5000 }),
+    // sal net 36 000 + foncier 5 000 → RBG 41 000
+    // QF=41 000 → 1 977.69 + (41 000-29 579)×0.30 = 5 403.99 → 5 404
+    // PS foncier = 5 000 × 17,2 % = 860
+    // total = 5 404 + 860 = 6 264
+    expected: { impotNet: 6264, revenuReference: 45000, tmi: 0.30 },
+  },
 ];
 
 if (typeof module !== 'undefined') module.exports = { CASES, makeInput };
