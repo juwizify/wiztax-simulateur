@@ -275,11 +275,28 @@ function calculerIR(input) {
   // ============================================================
   // ÉTAPE 8 : RÉDUCTIONS D'IMPÔT
   // ============================================================
-  // Dons (HORS niche) — base plafonnée à 20% du RNI (art. 200 CGI)
-  // L'excédent est reportable 5 ans mais n'est pas simulé ici.
-  det.donsBase = Math.min(input.dons, det.revenuNetImposable * P.plafonds.donsPlafondRNI);
-  det.redDons = Math.min(det.donsBase, P.plafonds.dons75Plafond) * 0.75
-    + Math.max(0, det.donsBase - P.plafonds.dons75Plafond) * 0.66;
+  // Dons — HORS niche, base plafonnée à 20 % du RNI (art. 200 CGI)
+  // L'excédent au-delà de 20 % RNI est reportable 5 ans (non simulé).
+  //
+  // Mécanisme officiel (BOI-IR-RICI-250-30-10) :
+  // - 7UD (organismes d'aide) : 75 % jusqu'à 2 000 € (LF 2026)
+  // - L'excédent 7UD au-delà de 2 000 € BASCULE sur le régime 7UF (66 %)
+  // - 7UF (intérêt général) : 66 %
+  // - Le total des deux est plafonné à 20 % RNI (priorité au 75 % puis 66 %)
+  const dons7UD = input.dons7UD || 0;
+  const dons7UF = input.dons || 0;
+  const plafondRNI = det.revenuNetImposable * P.plafonds.donsPlafondRNI;
+
+  // Étape 1 : assiette 7UD à 75 % (max 2 000 €), surplus reporté sur 7UF
+  const base7UD75   = Math.min(dons7UD, P.plafonds.dons75Plafond);
+  const surplus7UD  = Math.max(0, dons7UD - P.plafonds.dons75Plafond);
+
+  // Étape 2 : application du plafond 20 % RNI, en priorité sur le 75 %
+  const base7UD75Cap = Math.min(base7UD75, plafondRNI);
+  const base66Cap    = Math.min(surplus7UD + dons7UF, Math.max(0, plafondRNI - base7UD75Cap));
+
+  det.donsBase = base7UD75Cap + base66Cap;
+  det.redDons  = base7UD75Cap * 0.75 + base66Cap * 0.66;
 
   // Réductions dans le plafond niches
   det.redPinel       = input.pinel;

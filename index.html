@@ -572,14 +572,26 @@
         <div class="form-grid">
 
           <div class="form-row">
+            <label for="dons7UD">
+              Dons « Coluche » (7UD, 75 %)
+              <i class="tip" data-tip="Case 7UD de la déclaration.&#10;Dons aux organismes d'aide aux personnes en difficulté (Restos du Cœur, Croix-Rouge, Secours Populaire, Banque alimentaire, etc.) ou aux victimes de violences domestiques.&#10;&#10;Réduction de 75 % sur les premiers 2 000 € (LF 2026).&#10;Au-delà de 2 000 €, l'excédent bascule automatiquement sur le régime 7UF (66 %).&#10;&#10;Hors plafond des niches fiscales.">i</i>
+            </label>
+            <input type="number" id="dons7UD" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+              <span class="niche-plaf">75 % ≤ 2 000 € · surplus → 7UF</span>
+            </div>
+          </div>
+
+          <div class="form-row">
             <label for="dons">
-              Dons aux œuvres
-              <i class="tip" data-tip="Réduction d'impôt (pas de remboursement).&#10;&#10;75% sur les 2 000 premiers € versés, puis 66% au-delà.&#10;&#10;Hors plafond des niches fiscales.">i</i>
+              Dons d'intérêt général (7UF, 66 %)
+              <i class="tip" data-tip="Case 7UF de la déclaration.&#10;Dons à organismes d'intérêt général : associations sportives, culturelles, environnementales, écoles, fondations reconnues d'utilité publique, etc.&#10;&#10;Réduction de 66 %, dans la limite de 20 % du revenu net imposable (le surplus est reportable 5 ans, non simulé).&#10;&#10;Hors plafond des niches fiscales.">i</i>
             </label>
             <input type="number" id="dons" value="0" min="0">
             <div class="niche-cell">
               <span class="niche-marker niche-hors">hors plafond niches</span>
-              <span class="niche-plaf">75 % ≤ 2 000 € · puis 66 %</span>
+              <span class="niche-plaf">66 % · plafond 20 % du RNI</span>
             </div>
           </div>
 

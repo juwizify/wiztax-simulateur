@@ -62,6 +62,7 @@ function makeInput(overrides = {}) {
 
     // Réductions d'impôt
     dons: 0,
+    dons7UD: 0,
     pinel: 0,
     girardinPD: 0,
     girardinAG: 0,
@@ -399,6 +400,44 @@ const CASES = [
     //   → impôt = 14 103.99 → 14 104
     // Économie 3 000 € (= 10 000 × TMI 30 %)
     expected: { impotNet: 14104, revenuReference: 80000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 7UD / 7UF — Distinction dons "Coluche" (75 %) vs intérêt général (66 %)
+  // Surplus 7UD au-delà de 2 000 € bascule sur 7UF.
+  // Plafond commun 20 % RNI (priorité au 75 %).
+  // -------------------------------------------------------------------
+  {
+    name: '7UD pur : 40k sal + 500 € dons Coluche',
+    input: makeInput({ sal1: 40000, dons7UD: 500 }),
+    // 500 ≤ 2 000 → 500 × 75 % = 375 €
+    // impôt = 3 904 - 375 = 3 529
+    expected: { impotNet: 3529, revenuReference: 40000, tmi: 0.30 },
+  },
+  {
+    name: '7UF pur : 40k sal + 2 000 € dons intérêt général',
+    input: makeInput({ sal1: 40000, dons: 2000 }),
+    // pas de 7UD → base 75 % = 0, base 66 % = 2 000 (sous plafond 20 % RNI=7 200)
+    // red = 2 000 × 66 % = 1 320 €
+    // impôt = 3 904 - 1 320 = 2 584
+    // (ancien comportement aurait donné 1 500 → 2 404, écart 180 €)
+    expected: { impotNet: 2584, revenuReference: 40000, tmi: 0.30 },
+  },
+  {
+    name: '7UD + 7UF mixte : 40k sal + 500 € Coluche + 1 500 € intérêt général',
+    input: makeInput({ sal1: 40000, dons7UD: 500, dons: 1500 }),
+    // 7UD : 500 × 75 % = 375
+    // 7UF : 1 500 × 66 % = 990
+    // red = 1 365 → impôt = 3 904 - 1 365 = 2 539
+    expected: { impotNet: 2539, revenuReference: 40000, tmi: 0.30 },
+  },
+  {
+    name: '7UD au-delà 2 000 : 40k sal + 3 000 € Coluche (bascule sur 7UF)',
+    input: makeInput({ sal1: 40000, dons7UD: 3000 }),
+    // 7UD : 2 000 × 75 % = 1 500
+    // surplus 1 000 → bascule 7UF : 1 000 × 66 % = 660
+    // red = 2 160 → impôt = 3 904 - 2 160 = 1 744
+    expected: { impotNet: 1744, revenuReference: 40000, tmi: 0.30 },
   },
 ];
 

@@ -78,6 +78,7 @@ function getInputs() {
 
     // Réductions / Crédits
     dons:            v('dons'),
+    dons7UD:         v('dons7UD'),
     emploiDomicile:  v('emploiDomicile'),
     gardeEnfants:    v('gardeEnfants'),
     pinel:           v('pinel'),
