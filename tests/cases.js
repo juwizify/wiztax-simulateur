@@ -26,6 +26,7 @@ function makeInput(overrides = {}) {
     heuresSupExo1: 0, heuresSupExo2: 0,
     pen1: 0, pen2: 0,
     pensInvalidite1: 0, pensInvalidite2: 0,
+    pensAlimRecue1: 0, pensAlimRecue2: 0,
 
     // BNC
     bncMicro1: 0, bncMicro2: 0,
@@ -206,6 +207,19 @@ const CASES = [
     input: makeInput({ pen1: 20000, pensInvalidite1: 20000 }),
     // total déclarant 1 = 40 000 € → abat = 4 000 (sous plafond foyer 4 439)
     // → net = 36 000 → impôt = 3 904 (identique baseline 40 000 € sal)
+    expected: { impotNet: 3904, revenuReference: 40000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 1AO/1BO — Pensions alimentaires perçues
+  // Mêmes règles que pensions retraite/invalidité : abattement 10%
+  // commun, plancher 454 €/bénéficiaire, plafond foyer 4 439 €.
+  // -------------------------------------------------------------------
+  {
+    name: '1AO : 30 000 € pen + 10 000 € pension alimentaire reçue',
+    input: makeInput({ pen1: 30000, pensAlimRecue1: 10000 }),
+    // total déclarant 1 = 40 000 → abat = 4 000 (sous plafond foyer 4 439)
+    // → net = 36 000 → impôt = 3 904 (identique pen pure 40 000 €)
     expected: { impotNet: 3904, revenuReference: 40000, tmi: 0.30 },
   },
 ];

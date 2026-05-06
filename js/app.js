@@ -49,6 +49,8 @@ function getInputs() {
     pen2:         v('pen2'),
     pensInvalidite1: v('pensInvalidite1'),
     pensInvalidite2: v('pensInvalidite2'),
+    pensAlimRecue1: v('pensAlimRecue1'),
+    pensAlimRecue2: v('pensAlimRecue2'),
     bncMicro1:    v('bncMicro1'),
     bncMicro2:    v('bncMicro2'),
     bncReel1:     v('bncReel1'),
