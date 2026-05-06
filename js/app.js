@@ -85,6 +85,8 @@ function getInputs() {
     fraisScolCollege: v('fraisScolCollege'),
     fraisScolLycee:   v('fraisScolLycee'),
     fraisScolSup:     v('fraisScolSup'),
+    ehpadFrais:      v('ehpadFrais'),
+    ehpadNbPers:     v('ehpadNbPers'),
     pinel:           v('pinel'),
     girardinPD:      v('girardinPD'),
     girardinAG:      v('girardinAG'),

@@ -303,6 +303,12 @@ function calculerIR(input) {
                 + (input.fraisScolLycee   || 0) * P.plafonds.fraisScolLycee
                 + (input.fraisScolSup     || 0) * P.plafonds.fraisScolSup;
 
+  // Frais d'hébergement EHPAD ascendants (7CD/7CE/7CF) — HORS niches
+  // Réduction 25 % sur dépenses plafonnées à 10 000 €/personne hébergée.
+  const ehpadNbPers = Math.max(1, input.ehpadNbPers || 1);
+  const ehpadBase = Math.min(input.ehpadFrais || 0, P.plafonds.ehpadPlafondParPers * ehpadNbPers);
+  det.redEhpad = ehpadBase * P.plafonds.ehpadTaux;
+
   // Réductions dans le plafond niches
   det.redPinel       = input.pinel;
   det.redGirardinPD  = input.girardinPD;
@@ -364,7 +370,7 @@ function calculerIR(input) {
   }
   det.reductionsAppliquees = Math.min(
     det.impotApresDecote + det.irMobilier,
-    det.redDons + det.fraisScol + reductionsDansNichesEffectives
+    det.redDons + det.fraisScol + det.redEhpad + reductionsDansNichesEffectives
   );
 
   // Application des crédits avec plafonnement niches

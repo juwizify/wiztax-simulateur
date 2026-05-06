@@ -75,6 +75,7 @@ function makeInput(overrides = {}) {
     gardeEnfants: 0,
     cotSyndicales: 0,
     fraisScolCollege: 0, fraisScolLycee: 0, fraisScolSup: 0,
+    ehpadFrais: 0, ehpadNbPers: 1,
     autresCredits: 0,
 
     ...overrides,
@@ -477,6 +478,26 @@ const CASES = [
     // - réduction 7EC 153 → impôt net 1 944
     // TMI : plafonnement actif → suit qfBase 36k → 30 %
     expected: { impotNet: 1944, revenuReference: 40000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 7CD — Frais d'hébergement EHPAD ascendants (réduction 25 %, hors niches)
+  // Plafond 10 000 €/personne hébergée.
+  // -------------------------------------------------------------------
+  {
+    name: '7CD : 40k sal + 8 000 € EHPAD pour 1 ascendant (sous plafond)',
+    input: makeInput({ sal1: 40000, ehpadFrais: 8000 }),
+    // base = min(8 000, 10 000) = 8 000 → réduction 8 000 × 25 % = 2 000
+    // impôt = 3 904 - 2 000 = 1 904
+    expected: { impotNet: 1904, revenuReference: 40000, tmi: 0.30 },
+  },
+  {
+    name: '7CD : 40k sal + 25 000 € EHPAD pour 2 ascendants (cap 20 000)',
+    input: makeInput({ sal1: 40000, ehpadFrais: 25000, ehpadNbPers: 2 }),
+    // plafond = 10 000 × 2 = 20 000 → base = min(25 000, 20 000) = 20 000
+    // réduction 20 000 × 25 % = 5 000
+    // impôt = 3 904 - 5 000 = max(0, -1 096) = 0 (réduction non remboursable, capée)
+    expected: { impotNet: 0, revenuReference: 40000, tmi: 0.30 },
   },
 ];
 

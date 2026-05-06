@@ -92,6 +92,12 @@ const PARAMS = {
     // La part exonérée entre dans le RFR mais pas dans le revenu imposable.
     heuresSupExoPlafond:  7500,
 
+    // Frais d'hébergement EHPAD ascendants (7CD/7CE/7CF) — art. 199 quindecies CGI
+    // Réduction 25 % plafonnée à 10 000 € de dépenses PAR personne hébergée.
+    // HORS plafond niches.
+    ehpadTaux:           0.25,
+    ehpadPlafondParPers: 10000,
+
     // Frais de scolarité enfants (7EA/7EC/7EF) — art. 199 quater F CGI
     // Réduction forfaitaire par enfant à charge selon niveau scolaire.
     // HORS plafond niches.
