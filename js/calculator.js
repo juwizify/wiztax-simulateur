@@ -1,5 +1,7 @@
 /**
- * MOTEUR DE CALCUL IR — Revenus 2025 (Déclaration 2026)
+ * MOTEUR DE CALCUL IR — Projection sur Revenus 2026 (Déclaration 2027)
+ * Mécanique invariante d'une année sur l'autre. Seuls les paramètres dans
+ * params.js sont susceptibles d'évoluer avec la LF 2027 (réindexation inflation).
  */
 
 /**

@@ -11,7 +11,7 @@
 
 <header>
   <h1>WizTax — Simulateur d'impôt sur le revenu</h1>
-  <span>Revenus 2025 · Déclaration 2026</span>
+  <span>Projection — Revenus 2026 · Déclaration 2027</span>
 </header>
 
 <nav class="tabs-nav">
@@ -724,8 +724,8 @@
 
           <div class="form-row">
             <label for="fcpi">
-              FCPI / FIP classique (souscriptions 2025)
-              <i class="tip" data-tip="Cases 7GQ / 7FQ de la déclaration.&#10;Fonds Communs de Placement dans l'Innovation (FCPI) ou Fonds d'Investissement de Proximité (FIP) métropolitain.&#10;&#10;Taux applicable selon date de souscription en 2025 :&#10;· Avant 28/09/2025 : 18 %&#10;· Du 28/09/2025 au 31/12/2025 : 25 % (boost transitoire LF 2025)&#10;&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue (pas le montant souscrit).&#10;Plafond global niches : 10 000 €.&#10;&#10;⚠ DISPOSITIF SUPPRIMÉ pour les souscriptions 2026+ :&#10;· FIP classique métropolitain : supprimé au 01/01/2026 (LF 2025)&#10;· FCPI classique : supprimé au 21/02/2026 (LF 2026)&#10;Reste possible : FIP Corse/Outre-mer (30 %) et FCPI JEI (30 %, nouveau).">i</i>
+              FCPI / FIP classique (extinction)
+              <i class="tip" data-tip="Cases 7GQ / 7FQ de la déclaration.&#10;Fonds Communs de Placement dans l'Innovation (FCPI) ou Fonds d'Investissement de Proximité (FIP) métropolitain.&#10;&#10;⚠ DISPOSITIF QUASI ÉTEINT pour les souscriptions 2026 :&#10;· FIP classique métropolitain : supprimé au 01/01/2026 (LF 2025)&#10;· FCPI classique : supprimé au 21/02/2026 (LF 2026)&#10;&#10;Ce champ reste utile pour :&#10;· Souscription FCPI classique faite entre le 01/01/2026 et le 20/02/2026 (taux 25 % boost transitoire)&#10;· Reports d'années antérieures non encore consommés&#10;&#10;Pour les nouvelles souscriptions 2026, utiliser plutôt :&#10;· FCPI JEI (30 %)&#10;· FIP Corse / Outre-mer (30 %)&#10;· IR-PME / Madelin (25 %)&#10;&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue (pas le montant souscrit).&#10;Plafond global niches : 10 000 €.">i</i>
             </label>
             <input type="number" id="fcpi" value="0" min="0">
             <div class="niche-cell">
@@ -736,7 +736,7 @@
           <div class="form-row">
             <label for="fcpiJei">
               FCPI JEI — Jeunes Entreprises Innovantes (30 %)
-              <i class="tip" data-tip="Nouveau dispositif créé par la LF 2026 pour remplacer le FCPI classique supprimé.&#10;Les FCPI investissant dans des Jeunes Entreprises Innovantes (JEI) bénéficient d'un taux MAJORÉ à 30 %.&#10;&#10;⚠ S'applique aux souscriptions à partir du 21/02/2026 — donc à reporter sur la déclaration 2027.&#10;À remplir UNIQUEMENT si tu as anticipé une souscription post-21/02/2026 dans ta simulation prospective.&#10;&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.&#10;Plafond global niches : 10 000 €.">i</i>
+              <i class="tip" data-tip="Dispositif créé par la LF 2026 pour remplacer le FCPI classique supprimé.&#10;Les FCPI investissant dans des Jeunes Entreprises Innovantes (JEI) bénéficient d'un taux MAJORÉ à 30 %.&#10;&#10;Applicable aux souscriptions à partir du 21/02/2026 (donc concerne tes versements 2026 à projeter ici).&#10;&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue (= souscription × 30 % dans la limite de 12 000 € single / 24 000 € couple).&#10;Plafond global niches : 10 000 €.">i</i>
             </label>
             <input type="number" id="fcpiJei" value="0" min="0">
             <div class="niche-cell">
@@ -1111,8 +1111,9 @@
 
   <div class="param-card param-card--scope">
     <h2>Cadre temporel de ce simulateur</h2>
-    <p>Ce simulateur couvre les <strong>revenus 2025</strong> à déclarer en mai-juin 2026, avec les paramètres de la <strong>Loi de Finances 2026</strong> (barème publié le 07/04/2026, PS 18,6 % LFSS 2026).</p>
-    <p style="margin-top:0.6rem">Pour les investissements défiscalisant réalisés en 2026 (Girardin, Pinel…), leur impact s'appliquera sur la <strong>déclaration 2027</strong> (revenus 2026). Le barème 2026 ne sera connu qu'à la publication de la LF 2027 (~décembre 2026) — ce simulateur ne peut pas encore le couvrir.</p>
+    <p>Mode <strong>projection</strong> : ce simulateur estime l'impôt sur les <strong>revenus 2026</strong> qui seront déclarés en mai-juin 2027.</p>
+    <p style="margin-top:0.6rem">Les paramètres utilisés sont ceux de la <strong>Loi de Finances 2026</strong> (barème publié le 07/04/2026, PS 18,6 % LFSS 2026). Le barème pour les revenus 2026 sera officiellement fixé par la LF 2027 (~décembre 2026), avec probablement une réindexation inflation de l'ordre de 1-2 % sur les tranches et plafonds. <strong>L'écart avec le calcul réel de la déclaration 2027 sera marginal</strong>.</p>
+    <p style="margin-top:0.6rem">⚠ Évolutions LF 2026 déjà prises en compte : suppression FIP classique métropolitain (01/01/2026) et FCPI classique (21/02/2026), création FCPI JEI (30 %), maintien FIP Corse/Outre-mer (30 %), maintien IR-PME (25 %), hausse PS revenus mobiliers à 18,6 %.</p>
   </div>
 
 </div>

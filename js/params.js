@@ -1,6 +1,10 @@
 /**
- * PARAMÈTRES FISCAUX — Revenus 2025 (Déclaration 2026)
- * Sources : BOFiP, brochure IR 2026, service-public.gouv.fr
+ * PARAMÈTRES FISCAUX — Projection sur Revenus 2026 (Déclaration 2027)
+ * Basés sur la Loi de Finances 2026 (paramètres officiels les plus récents).
+ * Le barème pour les revenus 2026 sera fixé par la LF 2027 (publiée fin 2026)
+ * — sans doute légèrement réindexé inflation (~1-2 %), ce qui n'invalide pas
+ * la projection à court terme.
+ * Sources : BOFiP, brochure IR 2026, service-public.gouv.fr, LFSS 2026.
  */
 
 const PARAMS = {
