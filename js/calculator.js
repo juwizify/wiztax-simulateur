@@ -321,6 +321,17 @@ function calculerIR(input) {
 
   det.totalCredits = det.credDomicile + det.credGarde + det.credAutres;
 
+  // Cotisations syndicales (7AC/7AE/7AG) — HORS plafond niches
+  // Crédit 66 % plafonné à 1 % des revenus d'activité (sal + chômage + pensions).
+  const baseSyndicMax = (
+    input.sal1 + input.sal2
+    + (input.allocChomage1 || 0) + (input.allocChomage2 || 0)
+    + input.pen1 + input.pen2
+    + (input.pensInvalidite1 || 0) + (input.pensInvalidite2 || 0)
+  ) * P.plafonds.cotSyndicalesPlafondPct;
+  det.cotSyndicalesBase = Math.min(input.cotSyndicales || 0, baseSyndicMax);
+  det.credSyndic = det.cotSyndicalesBase * P.plafonds.cotSyndicalesTaux;
+
   // ============================================================
   // ÉTAPE 10 : PLAFONNEMENT DES NICHES FISCALES
   // ============================================================
@@ -367,7 +378,7 @@ function calculerIR(input) {
 
   det.impotNet = Math.max(0,
     det.impotApresDecote + det.irMobilier + det.irAV - det.reductionsAppliquees
-  ) - det.creditsAppliques + det.totalPS - det.pfnlVerse;
+  ) - det.creditsAppliques - det.credSyndic + det.totalPS - det.pfnlVerse;
 
   // Revenu de référence = somme des revenus bruts déclarés (avant abattements) moins les charges
   // C'est ce que l'administration utilise pour calculer le taux moyen affiché

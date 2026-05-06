@@ -73,6 +73,7 @@ function makeInput(overrides = {}) {
     // Crédits d'impôt
     emploiDomicile: 0,
     gardeEnfants: 0,
+    cotSyndicales: 0,
     autresCredits: 0,
 
     ...overrides,
@@ -438,6 +439,26 @@ const CASES = [
     // surplus 1 000 → bascule 7UF : 1 000 × 66 % = 660
     // red = 2 160 → impôt = 3 904 - 2 160 = 1 744
     expected: { impotNet: 1744, revenuReference: 40000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 7AC — Cotisations syndicales (66 %, plafond 1 % revenus, hors niches)
+  // -------------------------------------------------------------------
+  {
+    name: '7AC sous plafond : 40k sal + 200 € cot syndicales',
+    input: makeInput({ sal1: 40000, cotSyndicales: 200 }),
+    // plafond 1 % × 40 000 = 400 → 200 ≤ 400 retenu intégralement
+    // crédit 200 × 66 % = 132
+    // impôt = 3 904 - 132 = 3 772
+    expected: { impotNet: 3772, revenuReference: 40000, tmi: 0.30 },
+  },
+  {
+    name: '7AC plafond atteint : 40k sal + 1 000 € cot (cap 400)',
+    input: makeInput({ sal1: 40000, cotSyndicales: 1000 }),
+    // plafond 400, cot retenue = 400
+    // crédit 400 × 66 % = 264
+    // impôt = 3 904 - 264 = 3 640
+    expected: { impotNet: 3640, revenuReference: 40000, tmi: 0.30 },
   },
 ];
 

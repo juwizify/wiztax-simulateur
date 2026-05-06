@@ -92,6 +92,12 @@ const PARAMS = {
     // La part exonérée entre dans le RFR mais pas dans le revenu imposable.
     heuresSupExoPlafond:  7500,
 
+    // Cotisations syndicales (7AC/7AE/7AG) — art. 199 quater C CGI
+    // Crédit d'impôt 66 % plafonné à 1 % des salaires + alloc chômage + pensions.
+    // HORS plafond niches.
+    cotSyndicalesTaux:    0.66,
+    cotSyndicalesPlafondPct: 0.01,
+
     // Emploi à domicile & garde enfants
     emploiDomTaux:        0.50,
     emploiDomMax:         12000,

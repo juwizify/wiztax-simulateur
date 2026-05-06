@@ -81,6 +81,7 @@ function getInputs() {
     dons7UD:         v('dons7UD'),
     emploiDomicile:  v('emploiDomicile'),
     gardeEnfants:    v('gardeEnfants'),
+    cotSyndicales:   v('cotSyndicales'),
     pinel:           v('pinel'),
     girardinPD:      v('girardinPD'),
     girardinAG:      v('girardinAG'),
