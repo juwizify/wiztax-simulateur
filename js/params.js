@@ -19,6 +19,10 @@ const PARAMS = {
     parentIsole1er:     4262,
     parentIsoleDemi:    2131,
     veufPartSupp:       2011,
+    // Plafond spécifique de la demi-part "vieux parent isolé" (case L) — art. 197 I 2 al. 2 CGI
+    // Cas le plus restrictif des demi-parts supplémentaires ; appliqué par défaut quand
+    // la case "demi-part supplémentaire" est cochée (cohérent avec le simulateur officiel).
+    plafondDemiPartL:   1079,
   },
 
   // --- DÉCOTE (BOI-IR-LIQ-20-20-30 du 07/04/2026) ---

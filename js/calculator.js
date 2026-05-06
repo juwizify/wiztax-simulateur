@@ -175,10 +175,17 @@ function calculerIR(input) {
   det.avantageQF = det.impotBrutBase - det.impotBrut;
   det.demiPartsSupp = (parts.total - parts.base) * 2;
 
+  // La demi-part supplémentaire (case L par défaut) a un plafond spécifique 1 079 €,
+  // distinct du plafond standard 1 807 € qui s'applique aux autres demi-parts.
+  // On l'isole du décompte des demi-parts standard pour appliquer son plafond propre.
+  const demiPartSuppL = input.demiPartSupp ? 1 : 0;
+  const demiPartsStandard = det.demiPartsSupp - demiPartSuppL;
+  const plafondL = demiPartSuppL * P.qf.plafondDemiPartL;
+
   if (input.parentIsole && input.nbEnfants > 0) {
-    det.plafondQF = P.qf.parentIsole1er + Math.max(0, det.demiPartsSupp - 2) * P.qf.plafondDemiPart;
+    det.plafondQF = P.qf.parentIsole1er + Math.max(0, demiPartsStandard - 2) * P.qf.plafondDemiPart + plafondL;
   } else {
-    det.plafondQF = det.demiPartsSupp * P.qf.plafondDemiPart;
+    det.plafondQF = demiPartsStandard * P.qf.plafondDemiPart + plafondL;
   }
 
   det.supplementQF = Math.max(0, det.avantageQF - det.plafondQF);

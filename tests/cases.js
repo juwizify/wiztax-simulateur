@@ -106,22 +106,23 @@ const CASES = [
   },
 
   // -------------------------------------------------------------------
-  // Demi-part supplémentaire (cases L/N/P/F/W/S/G de la 2042)
-  // → +0,5 part, avantage QF plafonné à 1 807 €
+  // Demi-part supplémentaire — régime case L (vieux parent isolé)
+  // → +0,5 part, avantage QF plafonné à 1 079 € (au lieu du standard 1 807 €)
+  // Validé contre simulateur officiel impots.gouv.fr (07/05/2026) : 2 825 €
   // -------------------------------------------------------------------
   {
-    name: 'Célibataire 1,5 part (demi-part supp), salaire 40 000 €',
+    name: 'Célibataire 1,5 part (demi-part supp case L), salaire 40 000 €',
     input: makeInput({ sal1: 40000, demiPartSupp: true }),
     // QF = 36000/1.5 = 24000 → impôt par part = (24000-11600)*0.11 = 1364
     // impôt brut = 1364 × 1,5 = 2046
     // qfBase = 36000/1 = 36000 → impôt brut base = 3904
     // avantage QF = 3904 - 2046 = 1858
-    // plafond = 1 demi-part × 1807 = 1807
-    // supplément QF = 1858 - 1807 = 51
-    // impôt après QF = 2046 + 51 = 2097, > seuil décote → pas de décote
+    // plafond case L = 1 079 € (au lieu de 1 807 € standard)
+    // supplément QF = 1858 - 1079 = 779
+    // impôt après QF = 2046 + 779 = 2825, > seuil décote → pas de décote
     // TMI : plafonnement actif → basé sur qfBase = 36000 → tranche 30%
     expected: {
-      impotNet: 2097,
+      impotNet: 2825,
       revenuReference: 40000,
       tmi: 0.30,
     },
