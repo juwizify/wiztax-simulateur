@@ -249,6 +249,34 @@ const CASES = [
     // total = 4 204 + 186 = 4 390
     expected: { impotNet: 4390, revenuReference: 41000, tmi: 0.30 },
   },
+
+  // -------------------------------------------------------------------
+  // 2OP — Option barème global mobilier (dividendes + intérêts + PV)
+  // L'option couvre TOUS les revenus mobiliers d'un coup.
+  // -------------------------------------------------------------------
+  {
+    name: '2OP non coché (PFU) : 40k sal + 1k div + 1k intérêts + 1k PV',
+    input: makeInput({ sal1: 40000, dividendes: 1000, interets: 1000, pv: 1000, optionPFU: 'pfu' }),
+    // baseline 40k → 3 904
+    // IR mob = 3 000 × 12,8 % = 384
+    // PS = 3 000 × 18,6 % = 558
+    // total = 3 904 + 384 + 558 = 4 846
+    // RFR = 40 000 + 3 000 = 43 000
+    expected: { impotNet: 4846, revenuReference: 43000, tmi: 0.30 },
+  },
+  {
+    name: '2OP coché (barème) : 40k sal + 1k div + 1k intérêts + 1k PV',
+    input: makeInput({ sal1: 40000, dividendes: 1000, interets: 1000, pv: 1000, optionPFU: 'bareme' }),
+    // sal net 36 000
+    // + dividendes 600 (abattement 40 %) + intérêts 1 000 (pas d'abat) + PV 1 000 (pas d'abat)
+    // RBG = 38 600
+    // QF = 38 600 → tranche 2 : 1 977.69 + tranche 3 : (38 600-29 579)×0.30 = 2 706.30
+    // impôt brut = 4 683.99 → 4 684
+    // + PS 558 (toujours dus)
+    // total = 4 684 + 558 = 5 242
+    // PFU plus avantageux ici de 396 € à TMI 30 %
+    expected: { impotNet: 5242, revenuReference: 43000, tmi: 0.30 },
+  },
 ];
 
 if (typeof module !== 'undefined') module.exports = { CASES, makeInput };
