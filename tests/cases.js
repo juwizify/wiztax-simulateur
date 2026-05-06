@@ -22,6 +22,7 @@ function makeInput(overrides = {}) {
     // Revenus salaires/pensions
     sal1: 0, sal2: 0,
     allocChomage1: 0, allocChomage2: 0,
+    fraisReels1: 0, fraisReels2: 0,
     pen1: 0, pen2: 0,
 
     // BNC
@@ -148,6 +149,21 @@ const CASES = [
     // total déclarant 1 = 40 000 → abattement = 4 000 → net = 36 000
     // identique à un salarié 40 000 € pur (cas baseline)
     expected: { impotNet: 3904, revenuReference: 40000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 1AK/1BK — Frais réels (option, remplace l'abattement 10 %)
+  // -------------------------------------------------------------------
+  {
+    name: '1AK : 40 000 € sal + 5 000 € frais réels (option déclarant 1)',
+    input: makeInput({ sal1: 40000, fraisReels1: 5000 }),
+    // 5 000 € de frais réels remplacent l'abattement 10% (qui aurait été 4 000)
+    // salaire net = 40 000 - 5 000 = 35 000
+    // QF = 35 000 → tranche 3 (29 579-35 000) : 5 421 × 0.30 = 1 626.30
+    //       + tranche 2 : 17 979 × 0.11 = 1 977.69
+    //       = 3 603.99 → arrondi 3 604
+    // économie vs baseline : 300 € (= 1 000 € × 30% TMI)
+    expected: { impotNet: 3604, revenuReference: 40000, tmi: 0.30 },
   },
 ];
 

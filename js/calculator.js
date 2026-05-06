@@ -73,14 +73,19 @@ function calculerIR(input) {
 
   // Salaires (1AJ/1BJ) + allocations chômage/préretraite (1AP/1BP)
   // Abattement 10% commun par déclarant (mêmes plancher 509 € et plafond 14 555 €).
+  // Si frais réels (1AK/1BK) > 0 pour un déclarant : ils remplacent son abattement 10%.
   const totalSal1 = input.sal1 + (input.allocChomage1 || 0);
   const totalSal2 = input.sal2 + (input.allocChomage2 || 0);
-  const abatSal1 = totalSal1 > 0
-    ? Math.max(P.abat.sal.min, Math.min(totalSal1 * P.abat.sal.taux, P.abat.sal.max))
-    : 0;
-  const abatSal2 = totalSal2 > 0
-    ? Math.max(P.abat.sal.min, Math.min(totalSal2 * P.abat.sal.taux, P.abat.sal.max))
-    : 0;
+  const abatSal1 = (input.fraisReels1 || 0) > 0
+    ? input.fraisReels1
+    : (totalSal1 > 0
+        ? Math.max(P.abat.sal.min, Math.min(totalSal1 * P.abat.sal.taux, P.abat.sal.max))
+        : 0);
+  const abatSal2 = (input.fraisReels2 || 0) > 0
+    ? input.fraisReels2
+    : (totalSal2 > 0
+        ? Math.max(P.abat.sal.min, Math.min(totalSal2 * P.abat.sal.taux, P.abat.sal.max))
+        : 0);
   det.salaireNet = (totalSal1 - abatSal1) + (totalSal2 - abatSal2);
 
   // Pensions

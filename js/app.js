@@ -41,6 +41,8 @@ function getInputs() {
     sal2:         v('sal2'),
     allocChomage1: v('allocChomage1'),
     allocChomage2: v('allocChomage2'),
+    fraisReels1:  v('fraisReels1'),
+    fraisReels2:  v('fraisReels2'),
     pen1:         v('pen1'),
     pen2:         v('pen2'),
     bncMicro1:    v('bncMicro1'),
