@@ -156,9 +156,15 @@ function calculerIR(input) {
   const revenuPro = input.sal1 + input.sal2
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1  + input.bncReel2;
-  det.perCap = revenuPro > 0
-    ? Math.max(P.plafonds.perPlancher, Math.min(revenuPro * P.plafonds.perTaux, P.plafonds.perMaxSalarie))
-    : P.plafonds.perPlancher;
+  // Plafond manuel (cases 6PS/6PT) : si l'utilisateur saisit > 0, on l'utilise
+  // au lieu du calcul auto (utile quand il a des reports de plafonds non utilisés
+  // des 3 dernières années, non modélisés ici).
+  const perCapManuel = input.perPlafondManuel || 0;
+  det.perCap = perCapManuel > 0
+    ? perCapManuel
+    : (revenuPro > 0
+        ? Math.max(P.plafonds.perPlancher, Math.min(revenuPro * P.plafonds.perTaux, P.plafonds.perMaxSalarie))
+        : P.plafonds.perPlancher);
   det.per = Math.min(input.per, det.perCap);
 
   // Pensions alimentaires — plafond (art. 156-II CGI)

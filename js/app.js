@@ -70,6 +70,7 @@ function getInputs() {
 
     // Charges
     per:               v('per'),
+    perPlafondManuel:  v('perPlafondManuel'),
     pensionsAlim:      v('pensionsAlim'),
     nbBeneficiairesPA: v('nbBeneficiairesPA'),
     csgDeductible:     v('csgDeductible'),

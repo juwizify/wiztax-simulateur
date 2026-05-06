@@ -54,6 +54,7 @@ function makeInput(overrides = {}) {
 
     // Charges déductibles
     per: 0,
+    perPlafondManuel: 0,
     pensionsAlim: 0,
     nbBeneficiairesPA: 0,
     csgDeductible: 0,
@@ -380,6 +381,24 @@ const CASES = [
     // PS foncier = 5 000 × 17,2 % = 860
     // total = 5 404 + 860 = 6 264
     expected: { impotNet: 6264, revenuReference: 45000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 6PS/6PT — Plafond PER manuel (option, écrase le calcul auto)
+  // Cas usage : utilisateur avec plafonds reportés des 3 années précédentes,
+  // dont le plafond réel est supérieur au calcul auto basé sur 10 % × revenu pro.
+  // -------------------------------------------------------------------
+  {
+    name: '6PS : 100k sal + 20k PER, plafond manuel 25k (vs auto 10k)',
+    input: makeInput({ sal1: 100000, per: 20000, perPlafondManuel: 25000 }),
+    // Sans plafond manuel : auto = 100 000 × 10% = 10 000 → PER déduit 10 000
+    //   → RNI = 90 000 - 10 000 = 80 000 → impôt 17 104 €
+    // Avec plafond manuel 25 000 : PER déduit min(20 000, 25 000) = 20 000
+    //   → RNI = 90 000 - 20 000 = 70 000
+    //   → tranches : 1 977.69 + (70 000-29 579)×0.30 = 1 977.69 + 12 126.30
+    //   → impôt = 14 103.99 → 14 104
+    // Économie 3 000 € (= 10 000 × TMI 30 %)
+    expected: { impotNet: 14104, revenuReference: 80000, tmi: 0.30 },
   },
 ];
 

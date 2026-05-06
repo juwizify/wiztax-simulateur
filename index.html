@@ -520,10 +520,18 @@
           <div class="form-row">
             <label for="per">
               Versements PER (part déductible)
-              <i class="tip" data-tip="Plan d'Épargne Retraite — versements volontaires.&#10;&#10;⚙ Plafond calculé automatiquement :&#10;max(4 710 €, min(10% × revenus pro, 37 680 €))&#10;&#10;Le simulateur utilise les revenus N comme proxy des revenus N-1.&#10;Non déductibles pour les plus de 70 ans (LF 2026).">i</i>
+              <i class="tip" data-tip="Cases 6NS / 6NT de la déclaration.&#10;Plan d'Épargne Retraite — versements volontaires.&#10;Inclut aussi les anciens contrats PERP, PREFON, COREM, CGOS (mêmes règles fiscales, cases 6RS/6RT).&#10;&#10;⚙ Plafond calculé automatiquement :&#10;max(4 710 €, min(10 % × revenus pro, 37 680 €))&#10;&#10;Le simulateur utilise les revenus N comme proxy des revenus N-1.&#10;Non déductibles pour les plus de 70 ans (LF 2026).&#10;&#10;⚠ Le plafond auto ne tient pas compte du REPORT des plafonds non utilisés sur 3 ans. Si tu connais ton vrai plafond (sur ton avis d'imposition), saisis-le ci-dessous pour écraser le calcul automatique.">i</i>
             </label>
             <input type="number" id="per" value="0" min="0">
             <div class="per-cap-note">Plafond déductible : <strong id="per-cap-live">—</strong></div>
+          </div>
+
+          <div class="form-row">
+            <label for="perPlafondManuel">
+              ↳ Plafond PER manuel (option, cases 6PS/6PT)
+              <i class="tip tip-down" data-tip="Si tu connais ton plafond exact (lu sur ton avis d'imposition, section « Plafond épargne retraite »), saisis-le ici pour ÉCRASER le calcul automatique.&#10;&#10;Utile notamment quand tu as accumulé des plafonds non utilisés des 3 dernières années (reportables) — ton plafond réel est souvent supérieur au calcul auto.&#10;&#10;Laisser à 0 pour utiliser le calcul automatique.&#10;&#10;Le plafond saisi ici est appliqué au foyer entier (somme des cases 6PS + 6PT).">i</i>
+            </label>
+            <input type="number" id="perPlafondManuel" value="0" min="0">
           </div>
 
           <div class="form-row">
