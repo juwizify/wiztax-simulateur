@@ -452,7 +452,7 @@
           <div class="form-row">
             <label for="interets">
               Intérêts et placements à revenu fixe
-              <i class="tip" data-tip="Case 2TR de la déclaration.&#10;Intérêts de comptes à terme, livrets fiscalisés (CSL, livret B), obligations grand public, PEL > 12 ans, etc.&#10;&#10;· Si PFU : PS 18,6% + IR 12,8% = 30,8%&#10;· Si barème : intégration directe au revenu imposable (PAS d'abattement, contrairement aux dividendes) + PS 18,6%&#10;&#10;Le choix se fait via l'option ci-dessous (commune avec dividendes/PV).">i</i>
+              <i class="tip" data-tip="Case 2TR de la déclaration.&#10;Intérêts de comptes à terme, livrets fiscalisés (CSL, livret B), obligations grand public, PEL > 12 ans, etc.&#10;&#10;· Si PFU : PS 18,6% + IR 12,8% = 30,8%&#10;· Si barème : intégration directe au revenu imposable (PAS d'abattement, contrairement aux dividendes) + PS 18,6%&#10;&#10;Le choix se fait via l'option ci-dessous (commune avec dividendes/PV).&#10;&#10;⚠ Les produits d'assurance-vie de moins de 8 ans (versements après 27/09/2017, case 2ZZ) sont fiscalement équivalents aux intérêts : à saisir ici si PFU 12,8 %.">i</i>
             </label>
             <input type="number" id="interets" value="0" min="0">
           </div>
@@ -466,22 +466,19 @@
           </div>
 
           <div class="form-row">
-            <label for="avProduits">
-              Produits assurance-vie &gt; 8 ans
-              <i class="tip" data-tip="Cases 2CH / 2VV / 2WW de la déclaration.&#10;Saisir uniquement les PRODUITS (intérêts/gains) du rachat, pas le capital initial.&#10;&#10;Abattement annuel automatique selon la situation du foyer :&#10;· célibataire / divorcé / veuf : 4 600 €&#10;· couple marié / pacsé : 9 200 €&#10;&#10;L'abattement s'applique à l'IR uniquement. Les prélèvements sociaux (17,2 %) sont dus sur le total brut.&#10;&#10;Choisir le taux applicable ci-dessous.">i</i>
+            <label for="avProduits75">
+              Produits AV &gt; 8 ans taxés à 7,5 %
+              <i class="tip" data-tip="Cases 2CH (versements avant 27/09/2017) ou 2VV (versements après 27/09/2017 dans la limite de 150 000 € de primes nettes versées par déclarant).&#10;&#10;Saisir uniquement les PRODUITS (intérêts/gains) du rachat, pas le capital initial.&#10;&#10;Abattement annuel commun avec la case 12,8 % (4 600 € single / 9 200 € couple), imputé en priorité sur le taux 12,8 % puis sur le 7,5 %.&#10;&#10;PS 17,2 % dus sur le brut (avant abattement).">i</i>
             </label>
-            <input type="number" id="avProduits" value="0" min="0">
+            <input type="number" id="avProduits75" value="0" min="0">
           </div>
 
           <div class="form-row">
-            <label for="avTaux">
-              Taux IR sur la part imposable
-              <i class="tip" data-tip="Taux d'imposition à appliquer sur la part dépassant l'abattement annuel.&#10;&#10;7,5 % (cas le plus courant) :&#10;· versements effectués AVANT le 27/09/2017 (case 2CH)&#10;· versements après cette date dans la limite de 150 000 € de primes nettes (case 2VV)&#10;&#10;12,8 % :&#10;· versements après le 27/09/2017 au-delà de 150 000 € de primes nettes (case 2WW)">i</i>
+            <label for="avProduits128">
+              Produits AV &gt; 8 ans taxés à 12,8 %
+              <i class="tip" data-tip="Case 2WW de la déclaration.&#10;Versements effectués après le 27/09/2017 au-delà de 150 000 € de primes nettes versées par déclarant.&#10;&#10;Saisir uniquement les PRODUITS (intérêts/gains) du rachat, pas le capital initial.&#10;&#10;Abattement annuel commun avec la case 7,5 % (4 600 € single / 9 200 € couple), imputé EN PRIORITÉ ici (taux le plus élevé) avant le solde sur le 7,5 % — règle BOI-RPPM-RCM-20-10-30 favorable au contribuable.&#10;&#10;PS 17,2 % dus sur le brut (avant abattement).">i</i>
             </label>
-            <select id="avTaux">
-              <option value="7.5">7,5 % (versements avant 27/09/2017 ou ≤ 150 k€ de primes après)</option>
-              <option value="12.8">12,8 % (versements après 27/09/2017 au-delà de 150 k€ de primes)</option>
-            </select>
+            <input type="number" id="avProduits128" value="0" min="0">
           </div>
 
           <div class="form-row">

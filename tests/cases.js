@@ -44,8 +44,8 @@ function makeInput(overrides = {}) {
     dividendes: 0,
     interets: 0,
     pv: 0,
-    avProduits: 0,
-    avTaux: '7.5',
+    avProduits75: 0,
+    avProduits128: 0,
     optionPFU: 'pfu',
 
     // Autres revenus
@@ -286,32 +286,39 @@ const CASES = [
   // PS 17,2 % sur le brut. Imposition séparée du barème.
   // -------------------------------------------------------------------
   {
-    name: 'AV > 8 ans : célib 40k sal + 5k produits, dépasse abat 4 600 € (taux 7,5 %)',
-    input: makeInput({ sal1: 40000, avProduits: 5000, avTaux: '7.5' }),
-    // baseline 40k sal → impôt barème 3 904
-    // abattement = 4 600 → imposable = 5 000 - 4 600 = 400
+    name: 'AV > 8 ans : célib 40k sal + 5k produits 7,5 % (dépasse abat 4 600)',
+    input: makeInput({ sal1: 40000, avProduits75: 5000 }),
+    // abattement 4 600 imputé sur 7,5 % (pas de 12,8 %) → imposable 400
     // IR AV = 400 × 7,5 % = 30
     // PS AV = 5 000 × 17,2 % = 860
     // total = 3 904 + 30 + 860 = 4 794
-    // RFR = 40 000 + 5 000 = 45 000
     expected: { impotNet: 4794, revenuReference: 45000, tmi: 0.30 },
   },
   {
-    name: 'AV > 8 ans : célib 40k sal + 3k produits, intégralement abattu',
-    input: makeInput({ sal1: 40000, avProduits: 3000, avTaux: '7.5' }),
-    // 3 000 ≤ abattement 4 600 → 0 € imposable, 0 € d'IR AV
+    name: 'AV > 8 ans : célib 40k sal + 3k produits 7,5 % (intégralement abattus)',
+    input: makeInput({ sal1: 40000, avProduits75: 3000 }),
+    // 3 000 ≤ 4 600 → 0 € imposable, 0 € IR AV
     // PS AV = 3 000 × 17,2 % = 516
-    // total = 3 904 + 0 + 516 = 4 420
     expected: { impotNet: 4420, revenuReference: 43000, tmi: 0.30 },
   },
   {
-    name: 'AV > 8 ans : célib 40k sal + 10k produits taxés à 12,8 % (au-delà 150k primes)',
-    input: makeInput({ sal1: 40000, avProduits: 10000, avTaux: '12.8' }),
-    // imposable = 10 000 - 4 600 = 5 400
+    name: 'AV > 8 ans : célib 40k sal + 10k produits 12,8 % (au-delà 150k primes)',
+    input: makeInput({ sal1: 40000, avProduits128: 10000 }),
+    // abattement 4 600 imputé en priorité sur le 12,8 % → imposable 5 400
     // IR AV = 5 400 × 12,8 % = 691,2
     // PS AV = 10 000 × 17,2 % = 1 720
-    // total = 3 904 + 691,2 + 1 720 = 6 315,2 → arrondi 6 315
+    // total = 3 904 + 691,2 + 1 720 = 6 315,2 → 6 315
     expected: { impotNet: 6315, revenuReference: 50000, tmi: 0.30 },
+  },
+  {
+    name: 'AV > 8 ans MIXTE : célib 40k sal + 150k @ 7,5 % + 50k @ 12,8 %',
+    input: makeInput({ sal1: 40000, avProduits75: 150000, avProduits128: 50000 }),
+    // abattement 4 600 imputé en priorité sur le 12,8 % → 50 000 - 4 600 = 45 400 imposable
+    // IR AV = 45 400 × 12,8 % + 150 000 × 7,5 % = 5 811,2 + 11 250 = 17 061,2
+    // PS AV = 200 000 × 17,2 % = 34 400
+    // total = 3 904 + 17 061,2 + 34 400 = 55 365,2 → 55 365
+    // RFR = 40 000 + 200 000 = 240 000 (déclenche CEHR à partir de 250k → ici non)
+    expected: { impotNet: 55365, revenuReference: 240000, tmi: 0.30 },
   },
 ];
 

@@ -234,16 +234,22 @@ function calculerIR(input) {
 
   // ============================================================
   // ÉTAPE 6bis : IR sur produits assurance-vie > 8 ans (2CH/2VV/2WW)
-  // Abattement annuel selon situation foyer, puis taux 7,5% ou 12,8%.
+  // Abattement annuel commun aux deux taux (7,5 % et 12,8 %), imputé
+  // EN PRIORITÉ sur le taux le plus élevé (12,8 %) puis sur le 7,5 %
+  // — règle BOI-RPPM-RCM-20-10-30 favorable au contribuable.
   // L'abattement ne s'applique qu'à l'IR ; les PS sont dues sur le brut.
   // Imposition séparée du barème (n'entre pas dans le RNI ni le QF).
   // ============================================================
-  const avProduits = input.avProduits || 0;
+  const av75  = input.avProduits75  || 0;
+  const av128 = input.avProduits128 || 0;
   const avAbat = isCouple ? P.abat.avCouple : P.abat.avSingle;
-  det.avAbattement = Math.min(avProduits, avAbat);
-  det.avImposable = Math.max(0, avProduits - avAbat);
-  const avTauxNum = parseFloat(input.avTaux) || 7.5;
-  det.irAV = det.avImposable * (avTauxNum / 100);
+  // Imputation prioritaire sur 12,8 % puis solde sur 7,5 %
+  const abat128 = Math.min(av128, avAbat);
+  const abat75  = Math.min(av75,  avAbat - abat128);
+  det.avAbattement = abat128 + abat75;
+  det.avImposable  = (av128 - abat128) + (av75 - abat75);
+  det.irAV = (av128 - abat128) * 0.128 + (av75 - abat75) * 0.075;
+  const avProduits = av75 + av128;
 
   // ============================================================
   // ÉTAPE 7 : PRÉLÈVEMENTS SOCIAUX
@@ -347,7 +353,7 @@ function calculerIR(input) {
     + input.microFoncier + input.foncierReel
     + input.meubleClasse + input.meubleNonClasse
     + input.dividendes + (input.interets || 0) + input.pv
-    + (input.avProduits || 0)
+    + (input.avProduits75 || 0) + (input.avProduits128 || 0)
     + input.autresRevenus
     - input.per - input.pensionsAlim - input.csgDeductible - input.autresCharges
   );
