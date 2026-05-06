@@ -587,6 +587,148 @@ const CASES = [
     // PS foncier = max(0, -3 000) = 0 (pas de PS sur déficit)
     expected: { impotNet: 3004, revenuReference: 37000, tmi: 0.30 },
   },
+
+  // ===================================================================
+  // STRESS TESTS — 10 profils variés couvrant un maximum de fonctionnalités
+  // ===================================================================
+
+  // Profil 1 : Célibataire jeune cadre + dons d'intérêt général
+  {
+    name: 'Profil 1 — Célib 50k sal + 1k dons 7UF',
+    input: makeInput({ sal1: 50000, dons: 1000 }),
+    // sal net 45k → tranches 1977.69 + (45-29.579)×0.30 = 6603.99 → 6604
+    // dons 7UF : 1000 × 66% = 660
+    // impôt net = 6604 - 660 = 5944
+    expected: { impotNet: 5944, revenuReference: 50000, tmi: 0.30 },
+  },
+
+  // Profil 2 : Couple marié monorevenu 2 enfants — illustre le plafonnement QF
+  {
+    name: 'Profil 2 — Couple 90k sal + 2 enfants au lycée (plafonnement QF actif)',
+    input: makeInput({ situation: 'marie-pacse', sal1: 90000, nbEnfants: 2, fraisScolLycee: 2 }),
+    // 3 parts. Sal net 81k. QF = 27k → 1694 par part → brut 5082
+    // QF base = 81k/2 = 40 500 → impôt par part 5 253.99 → BRUT BASE = round(5253.99×2) = 10 508
+    // Avantage QF = 10 508 - 5 082 = 5 426
+    // Plafond = 2 demi-parts × 1 807 = 3 614 → supplément = 5 426 - 3 614 = 1 812
+    // Impôt après QF = 5 082 + 1 812 = 6 894 (le plafonnement s'active sur monorevenu)
+    // Pas de décote (6 894 > seuil couple 3 277)
+    // Réduction frais scolarité 2 × 153 = 306 → impôt net = 6 894 - 306 = 6 588
+    // TMI : plafonnement actif → suit qfBase 40 500 → tranche 30 %
+    expected: { impotNet: 6588, revenuReference: 90000, tmi: 0.30 },
+  },
+
+  // Profil 3 : Parent isolé recomposé + garde alternée → impôt à 0 par décote
+  {
+    name: 'Profil 3 — Parent isolé 35k + 1 enfant à charge + 1 garde alternée',
+    input: makeInput({ sal1: 35000, nbEnfants: 1, gardeAlternee: 1, parentIsole: true }),
+    // 1 + 0.5 + 0.25 + 0.5 = 2.25 parts. Sal net 31500
+    // QF = 14000 → impôt par part 264 → brut 594
+    // QF base 31500 → 2554. Avantage 1960. Plafond PI 4262 + (2.5-2)×1807 = 5165 → pas de supp
+    // Décote célib seuil 1982 → 594 < seuil → décote = max(0, 897 - 594×0.4525) = 628
+    // Impôt après décote = max(0, 594-628) = 0
+    expected: { impotNet: 0, revenuReference: 35000, tmi: 0.11 },
+  },
+
+  // Profil 4 : Couple retraité avec rachat AV > 8 ans (dans abattement)
+  {
+    name: 'Profil 4 — Couple retraité 40k pension + 5k AV 7,5 %',
+    input: makeInput({ situation: 'marie-pacse', pen1: 40000, avProduits75: 5000 }),
+    // pen net 36000. QF = 18000 (couple) → 704 par part → brut 1408
+    // Pas de QF supp (parts.base=2). Décote couple seuil 3277 → 1408 < seuil
+    // décote = max(0, 1483 - 1408×0.4525) = 845.88 → impôt apres dec = 562.12
+    // AV 5k × 7.5% : 5000 ≤ abat couple 9200 → IR AV = 0
+    // PS AV = 5000 × 17.2% = 860
+    // Total = 562.12 + 0 + 860 = 1422.12 → 1422
+    expected: { impotNet: 1422, revenuReference: 45000, tmi: 0.11 },
+  },
+
+  // Profil 5 : Investisseur diversifié — sal + div PFU + intérêts + foncier
+  {
+    name: 'Profil 5 — Investisseur 80k sal + 3k div + 1.5k int + 4k foncier',
+    input: makeInput({ sal1: 80000, dividendes: 3000, interets: 1500, foncierReel: 4000 }),
+    // sal net 72k + foncier 4k = RBG 76k
+    // QF = 76k → 1977.69 + (76-29.579)×0.30 = 15903.99 → 15904
+    // IR mob PFU = (3000+1500)×12.8% = 576
+    // PS mob = 4500 × 18.6% = 837
+    // PS foncier = 4000 × 17.2% = 688
+    // Total PS = 1525
+    // Total = 15904 + 576 + 1525 = 18005
+    expected: { impotNet: 18005, revenuReference: 88500, tmi: 0.30 },
+  },
+
+  // Profil 6 : Cadre supérieur diversifié — PER + Pinel + dons mixtes
+  {
+    name: 'Profil 6 — Cadre 130k + 8k PER + 4k Pinel + 1k 7UD + 500 7UF',
+    input: makeInput({ sal1: 130000, per: 8000, pinel: 4000, dons7UD: 1000, dons: 500 }),
+    // sal net 117k - 8k PER = RNI 109k
+    // QF = 109k → tranches: 1977.69 + 16499.40 + (109-84.577)×0.41 = 28490.52 → 28491
+    // Réductions :
+    //   7UD 1000 × 75% = 750 (sous plafond 2000)
+    //   7UF 500 × 66% = 330
+    //   Pinel 4000 (sous niche 10k)
+    //   Total = 5080
+    // Impôt net = 28491 - 5080 = 23411 (PS=0, pas de mob/foncier)
+    // RFR = 130000 - 8000 = 122000
+    expected: { impotNet: 23411, revenuReference: 122000, tmi: 0.41 },
+  },
+
+  // Profil 7 : Propriétaire en déficit foncier + EHPAD ascendant
+  {
+    name: 'Profil 7 — 60k sal + foncier -8k + EHPAD 6k pour 1 ascendant',
+    input: makeInput({ sal1: 60000, foncierReel: -8000, ehpadFrais: 6000 }),
+    // sal net 54k - 8k déficit = RBG 46k (sous plafond -10700)
+    // QF = 46k → 1977.69 + (46-29.579)×0.30 = 6903.99 → 6904
+    // EHPAD : min(6000, 10000) × 25% = 1500
+    // Pas de PS foncier (déficit)
+    // Impôt net = 6904 - 1500 = 5404
+    // RFR = 60000 + 0 + (-8000) = 52000
+    expected: { impotNet: 5404, revenuReference: 52000, tmi: 0.30 },
+  },
+
+  // Profil 8 : Veuf avec enfant + pension invalidité + demi-part supp invalidité (P)
+  {
+    name: 'Profil 8 — Veuf 1 enfant + 50k pension invalidité + demi-part cas P',
+    input: makeInput({ situation: 'veuf', pensInvalidite1: 50000, nbEnfants: 1, demiPartSupp: true, demiPartCas: 'P' }),
+    // veuf+enfants → partsBase=2. +0.5 enfant +0.5 demi-part supp = 3 parts
+    // pen net = 50000 - 4439 (plafond foyer) = 45561
+    // QF = 45561/3 = 15187 → 394.57 par part → brut round(394.57*3) = 1184
+    // QF base 45561/2 = 22780.5 → impot par part base 1229.86 → brut round(2*1229.86) = 2460
+    // Avantage 2460-1184 = 1276
+    // demiPartsSupp = 2. demiPartsStd = 2-1=1. Plafond P = 1×1807 + 1807 = 3614
+    // 1276 < 3614 → pas de supp
+    // Décote célib seuil 1982 (veuf=pas couple) → 1184 < seuil → décote 361.24
+    // Impôt après décote = 1184-361.24 = 822.76 → 823
+    expected: { impotNet: 823, revenuReference: 50000, tmi: 0.11 },
+  },
+
+  // Profil 9 : Très haut revenu — déclenche CEHR
+  {
+    name: 'Profil 9 — Célib 300k sal + 5k div PFU → CEHR active',
+    input: makeInput({ sal1: 300000, dividendes: 5000 }),
+    // sal net = 300000 - 14555 (cap) = 285445
+    // QF = 285445 → tranches:
+    //   0+1977.69+16499.40+97340×0.41+(285445-181917)×0.45 = 1977.69+16499.40+39909.40+46587.60 = 104973.62 (round)
+    //   en fait : Math.round(impotParPart*1) = round(104973.62) = 104974
+    // IR mob PFU = 5000 × 12.8% = 640
+    // PS mob = 5000 × 18.6% = 930
+    // RFR = 305000 → CEHR : (305000-250000)×3% = 1650
+    // Total = 104974 + 640 + 930 + 1650 = 108194
+    expected: { impotNet: 108194, revenuReference: 305000, tmi: 0.45 },
+  },
+
+  // Profil 10 : Cas remboursement — faible revenu + crédit garde enfants
+  {
+    name: 'Profil 10 — Célib 1 enfant + 15k sal + 6k garde enfants → remboursement',
+    input: makeInput({ sal1: 15000, nbEnfants: 1, gardeEnfants: 6000 }),
+    // 1.5 part. Sal net 13500. QF = 9000 < 11600 → impôt par part 0 → brut 0
+    // QF base 13500 → 209. Avantage 209, plafond 1×1807 → pas de supp
+    // Décote: 0 < 1982 → décote 897 → impotApresDecote = max(0, 0-897) = 0
+    // Crédit garde : min(6000, 3500×1) × 50% = 1750
+    // Niches utilisées 1750 < 10000 → pas de plafonnement
+    // Impôt net = max(0, 0+0-0) - 1750 + 0 PS = -1750 (= remboursement)
+    // TMI : pas de plafonnement, qf 9000 < 11600 → tranche 0%
+    expected: { impotNet: -1750, revenuReference: 15000, tmi: 0 },
+  },
 ];
 
 if (typeof module !== 'undefined') module.exports = { CASES, makeInput };
