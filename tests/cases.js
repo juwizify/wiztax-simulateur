@@ -71,6 +71,7 @@ function makeInput(overrides = {}) {
     gfi: 0,
     irPme: 0,
     malraux: 0,
+    locAvantages: 0,
     sofica: 0,
     autresReductions: 0,
 
@@ -531,6 +532,19 @@ const CASES = [
     // - réduction Malraux 5 000 (hors niches, plafonnée à l'impôt dû)
     // impôt net = 9 304 - 5 000 = 4 304
     expected: { impotNet: 4304, revenuReference: 60000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 7QO/7QP/7QR — Loc'Avantages (réduction DANS plafond niches 10 000 €)
+  // L'utilisateur saisit le montant de la réduction (15/35/65 % selon décote).
+  // -------------------------------------------------------------------
+  {
+    name: "Loc'Avantages : 60k sal + 3 000 € (Loc 2, sous niche)",
+    input: makeInput({ sal1: 60000, locAvantages: 3000 }),
+    // sal net 54k → impôt baseline 9 304
+    // total niches 3 000 < 10 000 → réduction appliquée intégralement
+    // impôt net = 9 304 - 3 000 = 6 304
+    expected: { impotNet: 6304, revenuReference: 60000, tmi: 0.30 },
   },
 ];
 

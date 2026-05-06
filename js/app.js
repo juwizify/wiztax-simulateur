@@ -95,6 +95,7 @@ function getInputs() {
     gfi:             v('gfi'),
     irPme:           v('irPme'),
     malraux:         v('malraux'),
+    locAvantages:    v('locAvantages'),
     sofica:          v('sofica'),
     autresReductions: v('autresReductions'),
     autresCredits:   v('autresCredits'),
