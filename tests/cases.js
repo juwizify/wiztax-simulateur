@@ -17,6 +17,7 @@ function makeInput(overrides = {}) {
     gardeAlternee: 0,
     parentIsole: false,
     demiPartSupp: false,
+    demiPartCas: 'L',
 
     // Revenus salaires/pensions
     sal1: 0, sal2: 0,
@@ -106,26 +107,33 @@ const CASES = [
   },
 
   // -------------------------------------------------------------------
-  // Demi-part supplémentaire — régime case L (vieux parent isolé)
-  // → +0,5 part, avantage QF plafonné à 1 079 € (au lieu du standard 1 807 €)
-  // Validé contre simulateur officiel impots.gouv.fr (07/05/2026) : 2 825 €
+  // Demi-part supplémentaire — selon le cas L/N/P/F/W/S/G
+  // Tous appliqués sur célibataire 40 000 € pour comparer les plafonds
   // -------------------------------------------------------------------
+  // Cas L (vieux parent isolé) — plafond 1 079 €
+  // Validé contre simulateur officiel impots.gouv.fr : 2 825 €
   {
-    name: 'Célibataire 1,5 part (demi-part supp case L), salaire 40 000 €',
-    input: makeInput({ sal1: 40000, demiPartSupp: true }),
-    // QF = 36000/1.5 = 24000 → impôt par part = (24000-11600)*0.11 = 1364
-    // impôt brut = 1364 × 1,5 = 2046
-    // qfBase = 36000/1 = 36000 → impôt brut base = 3904
-    // avantage QF = 3904 - 2046 = 1858
-    // plafond case L = 1 079 € (au lieu de 1 807 € standard)
-    // supplément QF = 1858 - 1079 = 779
-    // impôt après QF = 2046 + 779 = 2825, > seuil décote → pas de décote
-    // TMI : plafonnement actif → basé sur qfBase = 36000 → tranche 30%
-    expected: {
-      impotNet: 2825,
-      revenuReference: 40000,
-      tmi: 0.30,
-    },
+    name: 'Demi-part supp cas L (plafond 1 079 €), célib 40 000 €',
+    input: makeInput({ sal1: 40000, demiPartSupp: true, demiPartCas: 'L' }),
+    // avantage QF = 1858, plafond = 1079, supplément = 779 → impôt = 2046 + 779 = 2825
+    expected: { impotNet: 2825, revenuReference: 40000, tmi: 0.30 },
+  },
+
+  // Cas N/P/F/W/S — plafond standard 1 807 € (testé via P, identique pour les 4 autres)
+  {
+    name: 'Demi-part supp cas P (plafond 1 807 €), célib 40 000 €',
+    input: makeInput({ sal1: 40000, demiPartSupp: true, demiPartCas: 'P' }),
+    // avantage QF = 1858, plafond = 1807, supplément = 51 → impôt = 2046 + 51 = 2097
+    expected: { impotNet: 2097, revenuReference: 40000, tmi: 0.30 },
+  },
+
+  // Cas G (veuve de guerre) — déplafonné
+  {
+    name: 'Demi-part supp cas G (déplafonné), célib 40 000 €',
+    input: makeInput({ sal1: 40000, demiPartSupp: true, demiPartCas: 'G' }),
+    // plafond = Infinity → supplément = 0 → impôt = 2046
+    // TMI : pas de plafonnement actif → suit le QF réel = 24000 → tranche 11%
+    expected: { impotNet: 2046, revenuReference: 40000, tmi: 0.11 },
   },
 ];
 

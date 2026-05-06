@@ -67,13 +67,6 @@
             </select>
           </div>
 
-          <div class="form-row">
-            <label for="s-demiPartSupp">Demi-part supplémentaire
-              <i class="tip tip-down" data-tip="+0,5 part fiscale, avantage QF plafonné à 1 079 € (régime case L appliqué par défaut, comme le simulateur officiel).&#10;&#10;Cas applicables :&#10;· L : vous viviez seul·e et avez élevé un enfant ≥5 ans (cas simulé)&#10;· N : idem L sans avoir vécu seul·e (plafond réel 1 807 €)&#10;· P : pension invalidité ≥40 % ou carte invalidité/CMI (plafond réel 1 807 €)&#10;· F : conjoint dans ces conditions ou décédé en 2025 (plafond réel 1 807 €)&#10;· W : carte du combattant ou pension militaire + plus de 74 ans (plafond réel 1 807 €)&#10;· S : marié/PACS, l'un des deux > 74 ans avec carte du combattant (plafond réel 1 807 €)&#10;· G : pension de veuve de guerre (déplafonné en réalité)&#10;&#10;⚠ Pour les cas N/P/F/W/S, l'avantage simulé est sous-estimé d'au plus 728 €.&#10;⚠ La case L n'est pas cumulable avec parent isolé (case T).">i</i>
-            </label>
-            <input type="checkbox" id="s-demiPartSupp" class="form-checkbox">
-          </div>
-
           <div class="form-row computed">
             <label>→ Nombre de parts fiscales</label>
             <div class="computed-val" id="s-parts-affichage">1.00 parts</div>
@@ -288,9 +281,25 @@
           <div class="form-row">
             <label for="demiPartSupp">
               Demi-part supplémentaire
-              <i class="tip tip-down" data-tip="+0,5 part fiscale, avantage QF plafonné à 1 079 € (régime case L appliqué par défaut, comme le simulateur officiel).&#10;&#10;Cas applicables :&#10;· L : vous viviez seul·e et avez élevé un enfant ≥5 ans (cas simulé)&#10;· N : idem L sans avoir vécu seul·e (plafond réel 1 807 €)&#10;· P : pension invalidité ≥40 % ou carte invalidité/CMI (plafond réel 1 807 €)&#10;· F : conjoint dans ces conditions ou décédé en 2025 (plafond réel 1 807 €)&#10;· W : carte du combattant ou pension militaire + plus de 74 ans (plafond réel 1 807 €)&#10;· S : marié/PACS, l'un des deux > 74 ans avec carte du combattant (plafond réel 1 807 €)&#10;· G : pension de veuve de guerre (déplafonné en réalité)&#10;&#10;⚠ Pour les cas N/P/F/W/S, l'avantage simulé est sous-estimé d'au plus 728 €.&#10;⚠ La case L n'est pas cumulable avec parent isolé (case T).">i</i>
+              <i class="tip tip-down" data-tip="+0,5 part fiscale (cases L, N, P, F, W, S, G de la 2042).&#10;Si coché, choisir le cas applicable ci-dessous : le plafond de l'avantage QF dépend du cas.">i</i>
             </label>
             <input type="checkbox" id="demiPartSupp" class="form-checkbox">
+          </div>
+
+          <div class="form-row" id="demiPartCasRow" style="display:none">
+            <label for="demiPartCas">
+              Cas applicable
+              <i class="tip tip-down" data-tip="Choisissez le cas correspondant à votre situation. Le plafond de l'avantage QF varie selon le cas.">i</i>
+            </label>
+            <select id="demiPartCas">
+              <option value="L">L — Vieux parent isolé : vous viviez seul·e et avez élevé un enfant ≥5 ans (plafond 1 079 €) — non cumulable avec case T</option>
+              <option value="N">N — Idem L mais sans avoir vécu seul·e (plafond 1 807 €)</option>
+              <option value="P">P — Invalidité ≥40 % ou carte invalidité/CMI (plafond 1 807 €)</option>
+              <option value="F">F — Conjoint invalide ou décédé en 2025 dans ces conditions (plafond 1 807 €)</option>
+              <option value="W">W — Carte du combattant ou pension militaire + plus de 74 ans (plafond 1 807 €)</option>
+              <option value="S">S — Marié/PACS, l'un des deux > 74 ans avec carte du combattant (plafond 1 807 €)</option>
+              <option value="G">G — Pension de veuve de guerre (déplafonné)</option>
+            </select>
           </div>
 
           <div class="form-row computed">

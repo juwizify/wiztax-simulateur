@@ -34,6 +34,7 @@ function getInputs() {
     gardeAlternee: v('gardeAlternee'),
     parentIsole:  document.getElementById('parentIsole').value === 'oui',
     demiPartSupp: document.getElementById('demiPartSupp').checked,
+    demiPartCas:  document.getElementById('demiPartCas').value,
 
     // Revenus
     sal1:         v('sal1'),
@@ -230,7 +231,6 @@ function getInputsSimple() {
     nbEnfants:    v('s-nbEnfants'),
     gardeAlternee: v('s-gardeAlternee'),
     parentIsole:  v('s-parentIsole') === 'oui',
-    demiPartSupp: document.getElementById('s-demiPartSupp').checked,
 
     // Revenus — champs simplifiés
     sal1:         v('s-sal'),
@@ -332,12 +332,21 @@ function recalculerSimple() {
 // ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Écouter tous les inputs — chaque champ déclenche son propre simulateur
-  document.querySelectorAll('input[type="number"], select').forEach(el => {
+  document.querySelectorAll('input[type="number"], input[type="checkbox"], select').forEach(el => {
     const isSimple = el.id && el.id.startsWith('s-');
     const handler = isSimple ? recalculerSimple : recalculer;
     el.addEventListener('input',  handler);
     el.addEventListener('change', handler);
   });
+
+  // Demi-part supplémentaire : afficher le select des cas seulement si cochée
+  const demiPartCb = document.getElementById('demiPartSupp');
+  const demiPartCasRow = document.getElementById('demiPartCasRow');
+  const toggleDemiPartCas = () => {
+    demiPartCasRow.style.display = demiPartCb.checked ? '' : 'none';
+  };
+  demiPartCb.addEventListener('change', toggleDemiPartCas);
+  toggleDemiPartCas();
 
   // Premiers calculs
   recalculer();
