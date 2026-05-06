@@ -214,6 +214,27 @@ header span {
   padding: 8px 20px 16px;
 }
 
+/* Sous-section : titre catégorie à l'intérieur d'une section-card */
+.form-subsection {
+  margin: 16px 0 4px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(117, 117, 136, 0.18);
+}
+.form-subsection:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+.form-subsection h3 {
+  font-family: var(--font-headline);
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 130px 130px;

@@ -314,6 +314,9 @@
       <div class="section-card">
         <h2>B — Revenus</h2>
         <div class="form-grid">
+
+          <div class="form-subsection"><h3>Traitements et salaires</h3></div>
+
           <div class="form-row">
             <label></label>
             <div class="col-header">Déclarant 1</div>
@@ -356,6 +359,8 @@
             <input type="number" id="heuresSupExo2" value="0" min="0">
           </div>
 
+          <div class="form-subsection"><h3>Pensions, retraites, rentes</h3></div>
+
           <div class="form-row">
             <label for="pen1">
               Pensions / retraites
@@ -383,6 +388,8 @@
             <input type="number" id="pensAlimRecue2" value="0" min="0">
           </div>
 
+          <div class="form-subsection"><h3>Bénéfices non commerciaux (BNC)</h3></div>
+
           <div class="form-row">
             <label for="bncMicro1">
               BNC micro (chiffre d'affaires brut)
@@ -397,6 +404,8 @@
             <input type="number" id="bncReel1" value="0" min="0">
             <input type="number" id="bncReel2" value="0" min="0">
           </div>
+
+          <div class="form-subsection"><h3>Revenus fonciers et locatifs</h3></div>
 
           <div class="form-row">
             <label for="microFoncier">
@@ -429,6 +438,8 @@
             </label>
             <input type="number" id="meubleNonClasse" value="0" min="0">
           </div>
+
+          <div class="form-subsection"><h3>Revenus de capitaux mobiliers (RCM)</h3></div>
 
           <div class="form-row">
             <label for="dividendes">
@@ -474,11 +485,6 @@
           </div>
 
           <div class="form-row">
-            <label for="autresRevenus">Autres revenus imposables</label>
-            <input type="number" id="autresRevenus" value="0" min="0">
-          </div>
-
-          <div class="form-row">
             <label for="optionPFU">
               Option imposition mobilier (case 2OP)
               <i class="tip" data-tip="Option GLOBALE qui s'applique à tous les revenus mobiliers du foyer : dividendes, intérêts (2TR) et plus-values.&#10;Cocher 2OP sur la déclaration officielle = choisir « Barème » ici.&#10;&#10;PFU (par défaut) : taux unique 30,8 % (12,8 % IR + 18,6 % PS). Simple, souvent avantageux à TMI ≥ 30 %.&#10;&#10;Barème progressif : dividendes (avec abattement 40 %), intérêts (sans abattement) et PV intégrés au revenu imposable. Peut être avantageux si TMI ≤ 11 % ou si vous avez beaucoup d'intérêts à faible montant.&#10;&#10;⚠ Le choix est global et irrévocable pour l'année.">i</i>
@@ -487,6 +493,16 @@
               <option value="pfu">PFU (flat tax 30,8 %)</option>
               <option value="bareme">Barème progressif (option 2OP)</option>
             </select>
+          </div>
+
+          <div class="form-subsection"><h3>Autres</h3></div>
+
+          <div class="form-row">
+            <label for="autresRevenus">
+              Autres revenus imposables
+              <i class="tip" data-tip="Tout revenu imposable ne rentrant pas dans les catégories ci-dessus.&#10;Ajouté directement au revenu brut global, sans abattement.">i</i>
+            </label>
+            <input type="number" id="autresRevenus" value="0" min="0">
           </div>
         </div>
       </div>
