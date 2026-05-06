@@ -25,6 +25,7 @@ function makeInput(overrides = {}) {
     fraisReels1: 0, fraisReels2: 0,
     heuresSupExo1: 0, heuresSupExo2: 0,
     pen1: 0, pen2: 0,
+    pensInvalidite1: 0, pensInvalidite2: 0,
 
     // BNC
     bncMicro1: 0, bncMicro2: 0,
@@ -193,6 +194,19 @@ const CASES = [
     // impôt par part = 3 228.99 → 3 229
     // RFR = 35 000 + 10 000 = 45 000
     expected: { impotNet: 3229, revenuReference: 45000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 1AZ/1BZ — Pensions d'invalidité
+  // Mêmes règles que pensions retraite (1AS/1BS) : abattement 10%
+  // commun, plancher 454 €/pensionné, plafond foyer 4 439 €.
+  // -------------------------------------------------------------------
+  {
+    name: '1AZ : 20 000 € pen + 20 000 € pen invalidité = identique 40 000 € pen',
+    input: makeInput({ pen1: 20000, pensInvalidite1: 20000 }),
+    // total déclarant 1 = 40 000 € → abat = 4 000 (sous plafond foyer 4 439)
+    // → net = 36 000 → impôt = 3 904 (identique baseline 40 000 € sal)
+    expected: { impotNet: 3904, revenuReference: 40000, tmi: 0.30 },
   },
 ];
 

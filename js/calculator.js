@@ -92,15 +92,19 @@ function calculerIR(input) {
         : 0);
   det.salaireNet = (totalSal1 - abatSal1) + (totalSal2 - abatSal2);
 
-  // Pensions
-  const abatPen1 = input.pen1 > 0
-    ? Math.max(P.abat.pen.min, input.pen1 * P.abat.pen.taux)
+  // Pensions retraite (1AS/1BS) + pensions d'invalidité (1AZ/1BZ)
+  // Même traitement : abattement 10 % commun par pensionné (plancher 454 €),
+  // plafond foyer 4 439 €.
+  const totalPen1 = input.pen1 + (input.pensInvalidite1 || 0);
+  const totalPen2 = input.pen2 + (input.pensInvalidite2 || 0);
+  const abatPen1 = totalPen1 > 0
+    ? Math.max(P.abat.pen.min, totalPen1 * P.abat.pen.taux)
     : 0;
-  const abatPen2 = input.pen2 > 0
-    ? Math.max(P.abat.pen.min, input.pen2 * P.abat.pen.taux)
+  const abatPen2 = totalPen2 > 0
+    ? Math.max(P.abat.pen.min, totalPen2 * P.abat.pen.taux)
     : 0;
   const abatPenTotal = Math.min(P.abat.pen.maxFoyer, abatPen1 + abatPen2);
-  det.pensionNet = (input.pen1 + input.pen2) - abatPenTotal;
+  det.pensionNet = (totalPen1 + totalPen2) - abatPenTotal;
 
   // BNC micro
   const abatBNC1 = input.bncMicro1 > 0
@@ -318,6 +322,7 @@ function calculerIR(input) {
     + (input.allocChomage1 || 0) + (input.allocChomage2 || 0)
     + (input.heuresSupExo1 || 0) + (input.heuresSupExo2 || 0)
     + input.pen1 + input.pen2
+    + (input.pensInvalidite1 || 0) + (input.pensInvalidite2 || 0)
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1 + input.bncReel2
     + input.microFoncier + input.foncierReel
