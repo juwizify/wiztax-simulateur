@@ -72,10 +72,14 @@ function calculerIR(input) {
   // ============================================================
 
   // Salaires (1AJ/1BJ) + allocations chômage/préretraite (1AP/1BP)
+  // + surplus d'heures sup au-dessus du plafond d'exonération (1GH/1HH > 7 500 €).
   // Abattement 10% commun par déclarant (mêmes plancher 509 € et plafond 14 555 €).
   // Si frais réels (1AK/1BK) > 0 pour un déclarant : ils remplacent son abattement 10%.
-  const totalSal1 = input.sal1 + (input.allocChomage1 || 0);
-  const totalSal2 = input.sal2 + (input.allocChomage2 || 0);
+  const hsExoPlafond = P.plafonds.heuresSupExoPlafond;
+  const hsImpos1 = Math.max(0, (input.heuresSupExo1 || 0) - hsExoPlafond);
+  const hsImpos2 = Math.max(0, (input.heuresSupExo2 || 0) - hsExoPlafond);
+  const totalSal1 = input.sal1 + (input.allocChomage1 || 0) + hsImpos1;
+  const totalSal2 = input.sal2 + (input.allocChomage2 || 0) + hsImpos2;
   const abatSal1 = (input.fraisReels1 || 0) > 0
     ? input.fraisReels1
     : (totalSal1 > 0
@@ -307,9 +311,12 @@ function calculerIR(input) {
   // Revenu de référence = somme des revenus bruts déclarés (avant abattements) moins les charges
   // C'est ce que l'administration utilise pour calculer le taux moyen affiché
   // ⚠ Doit être calculé AVANT la CEHR (étape 12) qui l'utilise comme assiette
+  // Heures sup exonérées entrent intégralement dans le RFR (part exonérée comprise),
+  // alors que seul le surplus > 7 500 € est compté dans le revenu imposable.
   det.revenuReference = Math.max(0,
     input.sal1 + input.sal2
     + (input.allocChomage1 || 0) + (input.allocChomage2 || 0)
+    + (input.heuresSupExo1 || 0) + (input.heuresSupExo2 || 0)
     + input.pen1 + input.pen2
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1 + input.bncReel2

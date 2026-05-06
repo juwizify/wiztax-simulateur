@@ -79,6 +79,11 @@ const PARAMS = {
     // ex-conjoint : montant judiciaire ; ascendants : besoins réels)
     pensionAlimEnfantMax: 6674,    // plafond par enfant majeur (2025)
 
+    // Heures supplémentaires exonérées (1GH/1HH) — art. 81 quater CGI
+    // Plafond annuel par déclarant ; au-delà, le surplus est imposable.
+    // La part exonérée entre dans le RFR mais pas dans le revenu imposable.
+    heuresSupExoPlafond:  7500,
+
     // Emploi à domicile & garde enfants
     emploiDomTaux:        0.50,
     emploiDomMax:         12000,

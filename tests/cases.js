@@ -23,6 +23,7 @@ function makeInput(overrides = {}) {
     sal1: 0, sal2: 0,
     allocChomage1: 0, allocChomage2: 0,
     fraisReels1: 0, fraisReels2: 0,
+    heuresSupExo1: 0, heuresSupExo2: 0,
     pen1: 0, pen2: 0,
 
     // BNC
@@ -164,6 +165,34 @@ const CASES = [
     //       = 3 603.99 → arrondi 3 604
     // économie vs baseline : 300 € (= 1 000 € × 30% TMI)
     expected: { impotNet: 3604, revenuReference: 40000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 1GH/1HH — Heures supplémentaires et RTT exonérés
+  // Plafond annuel 7 500 € / déclarant. Au-delà : surplus imposable.
+  // Part exonérée entre dans le RFR mais pas dans le revenu imposable.
+  // -------------------------------------------------------------------
+  {
+    name: '1GH sous plafond : 35 000 € sal + 5 000 € HS exo (intégralement exo)',
+    input: makeInput({ sal1: 35000, heuresSupExo1: 5000 }),
+    // 5 000 ≤ 7 500 → 0 € imposable, 5 000 € dans le RFR
+    // total imposable = 35 000 → abat 10% = 3 500 → net = 31 500
+    // tranche 2 : 17 979 × 0.11 = 1 977.69
+    // tranche 3 : (31 500-29 579) × 0.30 = 576.30
+    // impôt par part = 2 553.99 → 2 554
+    // RFR = 35 000 + 5 000 = 40 000
+    expected: { impotNet: 2554, revenuReference: 40000, tmi: 0.30 },
+  },
+  {
+    name: '1GH au-dessus plafond : 35 000 € sal + 10 000 € HS (2 500 imposables)',
+    input: makeInput({ sal1: 35000, heuresSupExo1: 10000 }),
+    // 10 000 - 7 500 = 2 500 € imposables, ajoutés au pool sal
+    // total imposable = 35 000 + 2 500 = 37 500 → abat 10% = 3 750 → net = 33 750
+    // tranche 2 : 17 979 × 0.11 = 1 977.69
+    // tranche 3 : (33 750-29 579) × 0.30 = 1 251.30
+    // impôt par part = 3 228.99 → 3 229
+    // RFR = 35 000 + 10 000 = 45 000
+    expected: { impotNet: 3229, revenuReference: 45000, tmi: 0.30 },
   },
 ];
 
