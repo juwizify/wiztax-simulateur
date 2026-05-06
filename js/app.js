@@ -64,6 +64,7 @@ function getInputs() {
     pv:           v('pv'),
     avProduits75:  v('avProduits75'),
     avProduits128: v('avProduits128'),
+    pfnlVerse:    v('pfnlVerse'),
     autresRevenus: v('autresRevenus'),
     optionPFU:    document.getElementById('optionPFU').value,
 

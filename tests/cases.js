@@ -46,6 +46,7 @@ function makeInput(overrides = {}) {
     pv: 0,
     avProduits75: 0,
     avProduits128: 0,
+    pfnlVerse: 0,
     optionPFU: 'pfu',
 
     // Autres revenus
@@ -319,6 +320,30 @@ const CASES = [
     // total = 3 904 + 17 061,2 + 34 400 = 55 365,2 → 55 365
     // RFR = 40 000 + 200 000 = 240 000 (déclenche CEHR à partir de 250k → ici non)
     expected: { impotNet: 55365, revenuReference: 240000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 2CK — PFNL (Prélèvement Forfaitaire Non Libératoire) déjà versé
+  // Acompte 12,8 % prélevé à la source par la banque. Crédit d'impôt
+  // hors plafond niches, à imputer intégralement sur l'IR final.
+  // -------------------------------------------------------------------
+  {
+    name: '2CK : 40k sal + 1k div PFU avec PFNL 128 € déjà prélevé',
+    input: makeInput({ sal1: 40000, dividendes: 1000, optionPFU: 'pfu', pfnlVerse: 128 }),
+    // sans PFNL : 4 218 € (baseline 3 904 + 128 IR mob + 186 PS)
+    // - PFNL 128 € déjà versé = 4 090 €
+    expected: { impotNet: 4090, revenuReference: 41000, tmi: 0.30 },
+  },
+  {
+    name: '2CK : PFNL > impôt dû → impôt net négatif (remboursement)',
+    input: makeInput({ sal1: 0, interets: 100, optionPFU: 'pfu', pfnlVerse: 50 }),
+    // pas de salaire → impôt barème = 0 (et < décote, mais base 0)
+    // IR mobilier = 100 × 12,8 % = 12,8
+    // PS mobilier = 100 × 18,6 % = 18,6
+    // total = 0 + 12,8 + 18,6 = 31,4 €
+    // - PFNL 50 € déjà versé = -18,6 € → arrondi -19 €
+    // (excédent remboursé par l'administration)
+    expected: { impotNet: -19, revenuReference: 100, tmi: 0 },
   },
 ];
 

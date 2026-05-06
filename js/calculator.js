@@ -332,9 +332,14 @@ function calculerIR(input) {
   }
   det.creditsAppliques = creditsEffectifs;
 
+  // PFNL (acompte 2CK déjà versé à la source par la banque) : crédit d'impôt
+  // sans plafond niches, imputé sur l'IR final. Si supérieur à l'impôt dû,
+  // l'excédent est remboursé (impôt net peut devenir négatif).
+  det.pfnlVerse = input.pfnlVerse || 0;
+
   det.impotNet = Math.max(0,
     det.impotApresDecote + det.irMobilier + det.irAV - det.reductionsAppliquees
-  ) - det.creditsAppliques + det.totalPS;
+  ) - det.creditsAppliques + det.totalPS - det.pfnlVerse;
 
   // Revenu de référence = somme des revenus bruts déclarés (avant abattements) moins les charges
   // C'est ce que l'administration utilise pour calculer le taux moyen affiché
