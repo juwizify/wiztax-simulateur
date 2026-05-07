@@ -229,3 +229,30 @@ Dispositifs à toggle : Pinel, Denormandie, Girardin (PD/AG), SOFICA, dons (66 /
 ### Hors scope ici
 À traiter dans une session dédiée ; ce log sert juste à mémoriser la demande.
 
+---
+
+## #7 — RFR : charges déductibles soustraites à tort (PER, pensions alim, CSG, autres)
+
+**Statut** : Corrigé (commit suivant) — à valider sur Cas 10
+**Détecté sur** : Cas 10 (PER 30 000 €) — l'utilisateur observait une CEHR sous-estimée vs simulateur officiel.
+
+### Symptôme observé
+Le wiztax soustrayait `input.per`, `input.pensionsAlim`, `input.csgDeductible`, `input.autresCharges` du RFR. Or ces charges réduisent le **revenu net imposable** mais **pas le RFR** : le simulateur officiel impots.gouv calcule le RFR comme si ces déductions n'avaient pas eu lieu.
+
+Sur Cas 10 (PER 30 000 €) :
+- RFR wiztax avant : 574 645 - 30 000 = 544 645
+- RFR officiel    : 574 645
+- CEHR sous-estimée de 30 000 × 3 % = **900 €**
+
+### Cause dans le code
+[`js/calculator.js:467-468`](../js/calculator.js#L467) (avant fix) — la dernière ligne du calcul du RFR retirait toutes les charges déductibles, ce qui mélangeait revenu imposable et revenu fiscal de référence.
+
+### Fix appliqué
+Suppression de la soustraction `- input.per - input.pensionsAlim - input.csgDeductible - input.autresCharges` du calcul de `det.revenuReference`. Le commentaire d'en-tête a été enrichi pour expliquer la règle.
+
+Oracle `tests/run100.js` aligné sur la même règle.
+2 expected `revenuReference` mis à jour dans `tests/cases.js` (les cas avec PER : 6PS et Profil 6).
+
+### Tests
+52/52 dirigés + 100/100 oracle + 21/21 leviers — verts.
+

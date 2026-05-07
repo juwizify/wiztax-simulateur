@@ -354,7 +354,8 @@ function oracleCalc(input) {
 
   // --- RFR / CEHR ---
   // Salaires / pensions retenus NETS d'abattement 10 %. Heures sup exonérées
-  // (≤ 7 500 €) réintégrées explicitement.
+  // (≤ 7 500 €) réintégrées explicitement. Les charges déductibles (PER,
+  // pensions alim, CSG déductible, autres) NE réduisent PAS le RFR.
   const hsExoRFR1 = Math.min(i.heuresSupExo1 || 0, 7500);
   const hsExoRFR2 = Math.min(i.heuresSupExo2 || 0, 7500);
   const rfr = Math.max(0,
@@ -366,7 +367,6 @@ function oracleCalc(input) {
     + i.dividendes + (i.interets || 0) + i.pv
     + (i.avProduits75 || 0) + (i.avProduits128 || 0)
     + i.autresRevenus
-    - i.per - i.pensionsAlim - i.csgDeductible - i.autresCharges
   );
 
   const cs1 = isCouple ? 500000 : 250000;

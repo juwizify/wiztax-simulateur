@@ -456,6 +456,10 @@ function calculerIR(input) {
   //   - Heures sup exonérées entrent intégralement dans le RFR (part exonérée
   //     comprise), alors que seul le surplus > 7 500 € est dans le revenu
   //     imposable — donc la part exonérée doit être réajoutée ici.
+  //   - Charges déductibles (PER, pensions alim versées, CSG déductible,
+  //     autres) : NE RÉDUISENT PAS le RFR. Elles ne baissent que le revenu
+  //     imposable. Le simulateur officiel impots.gouv calcule le RFR comme
+  //     si ces déductions n'avaient pas eu lieu.
   // ⚠ Doit être calculé AVANT la CEHR (étape 12) qui l'utilise comme assiette.
   const hsExoRFR1 = Math.min(input.heuresSupExo1 || 0, P.plafonds.heuresSupExoPlafond);
   const hsExoRFR2 = Math.min(input.heuresSupExo2 || 0, P.plafonds.heuresSupExoPlafond);
@@ -469,7 +473,6 @@ function calculerIR(input) {
     + input.dividendes + (input.interets || 0) + input.pv
     + (input.avProduits75 || 0) + (input.avProduits128 || 0)
     + input.autresRevenus
-    - input.per - input.pensionsAlim - input.csgDeductible - input.autresCharges
   );
 
   det.tauxMoyen = det.revenuReference > 0

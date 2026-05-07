@@ -451,7 +451,8 @@ const CASES = [
     //   → tranches : 1 977.69 + (70 000-29 579)×0.30 = 1 977.69 + 12 126.30
     //   → impôt = 14 103.99 → 14 104
     // Économie 3 000 € (= 10 000 × TMI 30 %)
-    expected: { impotNet: 14104, revenuReference: 70000, tmi: 0.30 },
+    // RFR = 100 000 - 10 000 (abat 10 %) = 90 000 (PER NE réduit pas le RFR)
+    expected: { impotNet: 14104, revenuReference: 90000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -709,8 +710,8 @@ const CASES = [
     //   Pinel 4000 (sous niche 10k)
     //   Total = 5080
     // Impôt net = 28491 - 5080 = 23411 (PS=0, pas de mob/foncier)
-    // RFR = 130000 - 8000 = 122000
-    expected: { impotNet: 23411, revenuReference: 109000, tmi: 0.41 },
+    // RFR = 130000 - 13000 (abat 10 %) = 117000 (PER ne réduit pas le RFR)
+    expected: { impotNet: 23411, revenuReference: 117000, tmi: 0.41 },
   },
 
   // Profil 7 : Propriétaire en déficit foncier + EHPAD ascendant
