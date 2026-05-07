@@ -133,7 +133,7 @@
 | Donnée | Valeur | Case impôts.gouv | Champ wiztax |
 |---|---|---|---|
 | Pension de retraite | 28 000 € | **1AS** | `pen1` |
-| Produits AV > 8 ans (encours < 150 k€) | 6 000 € | **2CH** | `avProduits75` |
+| Produits AV > 8 ans, PFL 7,5 % prélevé à la source (encours < 150 k€) | 6 000 € | **2DH** | `avProduits75` |
 
 **Résultats à comparer**
 
@@ -182,7 +182,7 @@
 | Dividendes bruts | 8 000 € | **2DC** | `dividendes` |
 | Intérêts (livrets fiscalisés, CAT) | 1 200 € | **2TR** | `interets` |
 | Plus-values mobilières (PEA hors, comptes-titres) | 15 000 € | **3VG** | `pv` |
-| Produits AV (taux 12,8 %, encours > 150 k€ ou < 8 ans) | 4 000 € | **2CG** | `avProduits128` |
+| Produits AV PFL 12,8 % prélevé à la source : <br>• contrat < 8 ans <br>• ou contrat > 8 ans avec encours > 150 k€ | 4 000 € | **2VV** (< 8 ans) <br>**2BH** (> 8 ans, encours > 150 k€) | `avProduits128` |
 | Acompte 12,8 % déjà prélevé par la banque (PFNL) | montant retenu sur dividendes + intérêts | **2CK** | `pfnlVerse` |
 | Option PFU | Activée (PFU) | (case **2OP** *non cochée*) | `optionPFU` = "PFU" |
 
@@ -261,7 +261,7 @@ Pour comparer **uniquement le moteur fiscal**, l'option **4BC directe** est suff
 | BNC réel déclarant 2 (AGA) | 180 000 € | **5RC** | `bncReel2` |
 | Dividendes bruts | 50 000 € | **2DC** | `dividendes` |
 | Plus-values mobilières | 30 000 € | **3VG** | `pv` |
-| Produits AV > 8 ans | 9 200 € | **2CH** | `avProduits75` |
+| Produits AV > 8 ans, PFL 7,5 % prélevé à la source | 9 200 € | **2DH** | `avProduits75` |
 | Option PFU | Activée | (2OP *non cochée*) | `optionPFU` = "PFU" |
 | Versement PER | 30 000 € | **6NS** | `per` |
 | **Réductions / crédits (niches)** | | | |
