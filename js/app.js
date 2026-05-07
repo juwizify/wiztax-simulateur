@@ -442,8 +442,9 @@ function renderPreconisations() {
     const tr = document.createElement('tr');
     tr.dataset.rowId = p.id;
 
-    // Levier select
+    // Levier select + tooltip info contextuel
     const tdLev = document.createElement('td');
+    tdLev.className = 'preco-lever-cell';
     const sel = document.createElement('select');
     sel.className = 'preco-lever-select';
     sel.innerHTML = '<option value="">— Choisir un levier —</option>'
@@ -454,6 +455,20 @@ function renderPreconisations() {
       renderPreconisations();      // Full re-render car la colonne param peut apparaître/disparaître
     });
     tdLev.appendChild(sel);
+
+    // Info tooltip dépendant du levier sélectionné
+    const levSelected = P.LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
+    if (levSelected && levSelected.info) {
+      const tip = document.createElement('i');
+      tip.className = 'tip preco-lever-tip';
+      tip.textContent = 'i';
+      let tipText = levSelected.info;
+      if (levSelected.budget === 'exclu') {
+        tipText = '⚠ EXCLU du budget annuel (financement crédit, manque à gagner ou amortissement)\n\n' + tipText;
+      }
+      tip.setAttribute('data-tip', tipText);
+      tdLev.appendChild(tip);
+    }
     tr.appendChild(tdLev);
 
     // Montant
@@ -554,7 +569,14 @@ function refreshPreconisationsCalculs() {
   const detApres = calculerIR(inputApres);
 
   // Jauges
-  const totalAlloue = state.preconisations.reduce((s, p) => s + (p.montant || 0), 0);
+  // Budget alloué : ne compte QUE les leviers à cash sortant réel (budget: 'cash').
+  // Les leviers immo financés à crédit ou amortissement (budget: 'exclu') ne réduisent
+  // pas le budget annuel disponible du client.
+  const totalAlloue = state.preconisations.reduce((s, p) => {
+    const lev = P.LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
+    if (!lev || lev.budget === 'exclu') return s;
+    return s + (p.montant || 0);
+  }, 0);
   setJauge('Budget', totalAlloue, state.budgetDispo);
   setJauge('Niches', detApres.nichesUtilisees, detApres.plafondNiches);
   const perTotal = inputApres.per || 0;

@@ -821,7 +821,13 @@ header span {
 .preco-table tbody tr:last-child td {
   border-bottom: none;
 }
+.preco-lever-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .preco-lever-select, .preco-param-select {
+  flex: 1;
   width: 100%;
   padding: 6px 8px;
   border: 1px solid rgba(117, 117, 136, 0.25);
@@ -829,6 +835,9 @@ header span {
   background: white;
   font-size: .85rem;
   font-family: inherit;
+}
+.preco-lever-tip {
+  flex: 0 0 auto;
 }
 .preco-montant-input {
   width: 110px;
