@@ -44,8 +44,9 @@ const PARAMS = {
     pen:    { taux: 0.10, min: 454,   maxFoyer: 4439 },
     bncMicro: { taux: 0.34, min: 305 },
     microFoncier: { taux: 0.30, plafond: 15000 },
-    meubleClasse:    { taux: 0.50, plafond: 77700 },
-    meubleNonClasse: { taux: 0.30, plafond: 15000 },
+    meubleClasse:    { taux: 0.50, plafond: 77700 },  // 5NG — chambres d'hôtes + meublé tourisme classé
+    meubleNonClasse: { taux: 0.30, plafond: 15000 },  // 5NH — meublé tourisme non classé
+    autresMeubles:   { taux: 0.50, plafond: 77700 },  // 5NI — autres locations meublées (LMNP année)
     dividendes: 0.40,
     // Assurance-vie > 8 ans (cases 2CH/2VV/2WW) — art. 125-0 A CGI
     // Abattement annuel sur les produits, applicable à l'IR uniquement (PS dues sur le brut).

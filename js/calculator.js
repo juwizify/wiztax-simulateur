@@ -144,6 +144,7 @@ function calculerIR(input) {
   // Meublé
   det.meubleClasseNet = input.meubleClasse * (1 - P.abat.meubleClasse.taux);
   det.meubleNonClasseNet = input.meubleNonClasse * (1 - P.abat.meubleNonClasse.taux);
+  det.autresMeublesNet = (input.autresMeubles || 0) * (1 - P.abat.autresMeubles.taux);
 
   // Mobilier selon option
   const isPFU = input.optionPFU === 'pfu';
@@ -157,7 +158,7 @@ function calculerIR(input) {
 
   det.revenuBrutGlobal = det.salaireNet + det.pensionNet + det.bncMicroNet + det.bncReel
     + det.microFoncierNet + det.foncierReel
-    + det.meubleClasseNet + det.meubleNonClasseNet
+    + det.meubleClasseNet + det.meubleNonClasseNet + det.autresMeublesNet
     + det.dividendesBareme + det.interetsBareme + det.pvBareme
     + det.autresRevenus;
 
@@ -303,7 +304,7 @@ function calculerIR(input) {
   det.psDividendes = input.dividendes * P.ps.mobilier;
   det.psInterets   = (input.interets || 0) * P.ps.mobilier;
   det.psPV         = input.pv * P.ps.mobilier;
-  const revenusFonciersNets = det.microFoncierNet + det.foncierReel + det.meubleClasseNet + det.meubleNonClasseNet;
+  const revenusFonciersNets = det.microFoncierNet + det.foncierReel + det.meubleClasseNet + det.meubleNonClasseNet + det.autresMeublesNet;
   det.psFoncier    = Math.max(0, revenusFonciersNets) * P.ps.foncier;
   det.psRole       = det.psDividendes + det.psInterets + det.psPV + det.psFoncier;
   // PS prélevés à la source ET libératoires (info uniquement, exclus impôt dû)
@@ -460,7 +461,7 @@ function calculerIR(input) {
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1 + input.bncReel2
     + input.microFoncier + det.foncierReel
-    + input.meubleClasse + input.meubleNonClasse
+    + input.meubleClasse + input.meubleNonClasse + (input.autresMeubles || 0)
     + input.dividendes + (input.interets || 0) + input.pv
     + (input.avProduits75 || 0) + (input.avProduits128 || 0)
     + input.autresRevenus

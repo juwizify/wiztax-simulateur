@@ -150,3 +150,26 @@ PS foncier / LMNP affichées à 17,2 % côté wiztax alors que le simulateur off
 ### Note de mapping (Cas 9, à part)
 Sur le simulateur officiel on saisit **une seule fois** chaque recette LMNP (5NG / 5NH / 5NI). Les cases « base PS » 5NJ/5NK/5NL n'apparaissent que sur la déclaration finale 2042 C PRO et ne doivent pas être saisies dans le simulateur (sinon doublement d'assiette).
 
+---
+
+## #4 — À investiguer : PS LMNP/foncier calculées sur le NET au lieu du BRUT
+
+**Statut** : Open (non confirmé)
+**Détecté en relisant** : [`js/calculator.js:306`](../js/calculator.js#L306)
+
+### Hypothèse
+`det.psFoncier = Math.max(0, revenusFonciersNets) * P.ps.foncier;` applique les PS sur les montants **nets après abattement** (`meubleClasseNet`, `meubleNonClasseNet`, `autresMeublesNet` — abattements 50 / 30 / 50 %).
+
+Or fiscalement les PS LMNP non-pro doivent être calculées sur les recettes **brutes** (cases 5NJ/5NK/5NL = même montant que 5NG/5NH/5NI). Sur le simulateur officiel impots.gouv, les PS sont calculées sur le brut.
+
+### Impact attendu
+Sur Cas 9 (18 000 classé + 9 500 non classé) :
+- wiztax actuel : (9 000 + 6 650) × 18,6 % = **2 911 €**
+- impots.gouv : (18 000 + 9 500) × 18,6 % = **5 115 €**
+- Écart = **2 204 €**
+
+À confirmer en lançant le Cas 9 sur les deux moteurs après le fix bug #3.
+
+### Si confirmé, fix
+Calculer `psFoncier` sur les recettes brutes plutôt que sur les nets. Conserver le micro-foncier nu sur le net (où abattement 30 % et PS sur revenu net me paraît être la règle — à revérifier avec une source officielle).
+

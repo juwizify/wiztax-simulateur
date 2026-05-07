@@ -39,6 +39,7 @@ function makeInput(overrides = {}) {
     // Meublé
     meubleClasse: 0,
     meubleNonClasse: 0,
+    autresMeubles: 0,
     jeanbrunAmort: 0,
     jeanbrunCategorie: 'intermediaire',
 
@@ -416,6 +417,23 @@ const CASES = [
     // PS foncier = 5 000 × 18,6 % = 930 (CFA LFSS 2026)
     // total = 5 404 + 930 = 6 334
     expected: { impotNet: 6334, revenuReference: 45000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 5NI — Autres locations meublées (LMNP année, locataire principal)
+  // Abattement 50 %, plafond 77 700 €. Distinct du tourisme classé (5NG)
+  // qui partage les mêmes paramètres mais correspond à une autre activité.
+  // -------------------------------------------------------------------
+  {
+    name: '5NI : 40k sal + 20k autres meubles (LMNP année, abat 50 %)',
+    input: makeInput({ sal1: 40000, autresMeubles: 20000 }),
+    // sal net 36 000 + LMNP net 10 000 (20k × 50%) = RBG 46 000
+    // QF=46k → 1 977.69 + (46-29.579)×0.30 = 6 903.99 → 6 904
+    // PS foncier = 10 000 × 18,6 % = 1 860 (calculé sur le NET côté wiztax —
+    //   à investiguer : impots.gouv calcule sur le BRUT 5NL)
+    // total = 6 904 + 1 860 = 8 764
+    // RFR = sal 40 000 + LMNP brut 20 000 = 60 000
+    expected: { impotNet: 8764, revenuReference: 60000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------

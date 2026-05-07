@@ -249,7 +249,7 @@ Pour comparer **uniquement le moteur fiscal**, l'option **4BC directe** est suff
 
 → **Sur le simulateur impots.gouv** : ne saisir qu'**une seule fois** chaque recette (5NG ou 5NH). Les cases « base PS » 5NJ/5NK/5NL n'existent que sur la déclaration finale 2042 C PRO ; le simulateur applique automatiquement les PS si tu indiques bien que tu es LMNP non-pro non affilié SSI.
 
-→ **Note** : si tu veux tester un *vrai* LMNP année (locataire principal, abat 50 %, plafond 77 700 €), la case officielle est **5NI**. Le wiztax ne dispose pas de champ dédié — on peut le saisir dans `meubleClasse` (mêmes paramètres) en sachant que le mapping côté impots.gouv change. Hors scope cas 9.
+→ **Note** : si tu veux tester un *vrai* LMNP année (locataire principal, abat 50 %, plafond 77 700 €), la case officielle est **5NI** et le champ wiztax est `autresMeubles` (ajouté pour cette grille).
 
 ---
 

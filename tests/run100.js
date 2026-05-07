@@ -58,7 +58,7 @@ function makeInput(o = {}) {
     pensAlimRecue1: 0, pensAlimRecue2: 0,
     bncMicro1: 0, bncMicro2: 0, bncReel1: 0, bncReel2: 0,
     microFoncier: 0, foncierReel: 0,
-    meubleClasse: 0, meubleNonClasse: 0,
+    meubleClasse: 0, meubleNonClasse: 0, autresMeubles: 0,
     jeanbrunAmort: 0, jeanbrunCategorie: 'intermediaire',
     dividendes: 0, interets: 0, pv: 0,
     avProduits75: 0, avProduits128: 0, pfnlVerse: 0,
@@ -174,6 +174,7 @@ function oracleCalc(input) {
 
   const meuClNet = i.meubleClasse * 0.50;
   const meuNcNet = i.meubleNonClasse * 0.70;
+  const autMeuNet = (i.autresMeubles || 0) * 0.50;
 
   const isPFU = i.optionPFU === 'pfu';
   const divNet = isPFU ? 0 : i.dividendes * 0.60;
@@ -182,7 +183,7 @@ function oracleCalc(input) {
 
   const rbg = salNet + penNet + bncMicroNet + bncReelNet
             + microFoncierNet + foncierReelNet
-            + meuClNet + meuNcNet
+            + meuClNet + meuNcNet + autMeuNet
             + divNet + intNet + pvNet
             + i.autresRevenus;
 
@@ -263,7 +264,7 @@ function oracleCalc(input) {
   const psDividendes = i.dividendes * 0.186;
   const psInterets   = (i.interets || 0) * 0.186;
   const psPV         = i.pv * 0.186;
-  const fonciersNets = microFoncierNet + foncierReelNet + meuClNet + meuNcNet;
+  const fonciersNets = microFoncierNet + foncierReelNet + meuClNet + meuNcNet + autMeuNet;
   const psFoncier    = Math.max(0, fonciersNets) * 0.186;
   const psRole       = psDividendes + psInterets + psPV + psFoncier;
   // PS prélevés à la source ET libératoires (info, exclus de l'impôt à payer)
@@ -359,7 +360,7 @@ function oracleCalc(input) {
     + (i.pensAlimRecue1 || 0) + (i.pensAlimRecue2 || 0)
     + i.bncMicro1 + i.bncMicro2 + i.bncReel1 + i.bncReel2
     + i.microFoncier + foncierReelNet
-    + i.meubleClasse + i.meubleNonClasse
+    + i.meubleClasse + i.meubleNonClasse + (i.autresMeubles || 0)
     + i.dividendes + (i.interets || 0) + i.pv
     + (i.avProduits75 || 0) + (i.avProduits128 || 0)
     + i.autresRevenus
@@ -446,6 +447,7 @@ function generateProfile(idx) {
       }
       profile.meubleClasse = rand() < 0.3 ? randInt(5000, 50000) : 0;
       profile.meubleNonClasse = rand() < 0.3 ? randInt(2000, 14000) : 0;
+      profile.autresMeubles = rand() < 0.3 ? randInt(5000, 50000) : 0;
       break;
     case 'finance-heavy':
       profile.sal1 = randInt(40000, 120000);
