@@ -67,7 +67,8 @@ mais ne doit jamais être additionné à l'IR (sinon double comptage).
 - Tests : `node tests/run.js` (cas dirigés) + `tests/run100.js` (oracle vs calc) + `tests/run_leviers.js` (catalogue préconisations)
 
 ## Workflow Git
-- Branche : main
 - Remote : git@github.com:wizify/wiztax-simulateur.git
 - SSH configuré (clé ~/.ssh/github_wizify)
-- Après chaque modif : `git add . && git commit -m "..." && git push`
+- **Ne pas pusher directement sur `main`** : d'autres devs travaillent sur le repo (cf. branche `gsn`).
+- Workflow : créer une branche feature locale, commiter, pousser la branche, ouvrir une PR.
+- `main` est mis à jour uniquement via PR mergée.
