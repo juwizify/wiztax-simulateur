@@ -183,10 +183,10 @@
 | Intérêts (livrets fiscalisés, CAT) | 1 200 € | **2TR** | `interets` |
 | Plus-values mobilières (PEA hors, comptes-titres) | 15 000 € | **3VG** | `pv` |
 | Produits AV PFL 12,8 % prélevé à la source : <br>• contrat < 8 ans <br>• ou contrat > 8 ans avec encours > 150 k€ | 4 000 € | **2VV** (< 8 ans) <br>**2BH** (> 8 ans, encours > 150 k€) | `avProduits128` |
-| Acompte 12,8 % déjà prélevé par la banque (PFNL) | montant retenu sur dividendes + intérêts | **2CK** | `pfnlVerse` |
+| Acompte 12,8 % déjà prélevé par la banque sur div + intérêts (PFNL) | 1 178 € *(= (8 000 + 1 200) × 12,8 %)* | **2CK** | `pfnlVerse` |
 | Option PFU | Activée (PFU) | (case **2OP** *non cochée*) | `optionPFU` = "PFU" |
 
-**Note 2CK** : à reporter tel qu'indiqué sur l'IFU de la banque. Si la banque a appliqué le PFNL forfaitaire, c'est `(dividendes + intérêts) × 12,8 %` ≈ 1 178 €. **Saisir le chiffre exact de l'IFU**, pas une estimation.
+**Note 2CK** : on suppose que la banque a appliqué le PFNL forfaitaire de 12,8 % sur dividendes + intérêts. La case 2CK doit être saisie identique des deux côtés (1 178 €) pour que la comparaison soit valide.
 
 **Résultats à comparer**
 
