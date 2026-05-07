@@ -368,8 +368,8 @@ function recalculer() {
   const det = calculerIR(input);
   updateResults(det);
   updateCalcDetaille(det);
-  // Met à jour aussi l'onglet préconisations (recalcul comparatif)
-  if (typeof renderPreconisations === 'function') renderPreconisations();
+  // Met à jour aussi l'onglet préconisations (calculs uniquement, sans toucher aux inputs)
+  if (typeof refreshPreconisationsCalculs === 'function') refreshPreconisationsCalculs();
 }
 
 function recalculerSimple() {
@@ -416,7 +416,7 @@ function initPreconisations() {
   if (budgetInput) {
     budgetInput.addEventListener('input', () => {
       window.PRECONISATIONS.setBudget(budgetInput.value);
-      renderPreconisations();
+      refreshPreconisationsCalculs();
     });
   }
   const addBtn = document.getElementById('precoAddBtn');
@@ -428,17 +428,15 @@ function initPreconisations() {
   }
 }
 
+// Render structurel : recrée toutes les lignes du tableau.
+// Appelé seulement à add/remove/changement de levier (sinon perte du focus input).
 function renderPreconisations() {
   if (typeof window.PRECONISATIONS === 'undefined') return;
   const P = window.PRECONISATIONS;
   const tbody = document.getElementById('precoRows');
   if (!tbody) return;
 
-  const inputAvant = getInputs();
-  const detAvant = calculerIR(inputAvant);
   const state = P.getState();
-
-  // ---- Render des lignes
   tbody.innerHTML = '';
   state.preconisations.forEach(p => {
     const tr = document.createElement('tr');
@@ -453,7 +451,7 @@ function renderPreconisations() {
     sel.value = p.leverId;
     sel.addEventListener('change', () => {
       P.updateLever(p.id, 'leverId', sel.value);
-      renderPreconisations();
+      renderPreconisations();      // Full re-render car la colonne param peut apparaître/disparaître
     });
     tdLev.appendChild(sel);
     tr.appendChild(tdLev);
@@ -467,7 +465,7 @@ function renderPreconisations() {
     inMt.className = 'preco-montant-input';
     inMt.addEventListener('input', () => {
       P.updateLever(p.id, 'montant', inMt.value);
-      renderPreconisations();
+      refreshPreconisationsCalculs();   // Update partiel — préserve le focus de l'input
     });
     tdMt.appendChild(inMt);
     tr.appendChild(tdMt);
@@ -483,7 +481,7 @@ function renderPreconisations() {
       psel.value = p.paramValue || lev.params[0].options[0].value;
       psel.addEventListener('change', () => {
         P.updateLever(p.id, 'paramValue', psel.value);
-        renderPreconisations();
+        refreshPreconisationsCalculs();
       });
       tdParam.appendChild(psel);
     } else {
@@ -491,19 +489,15 @@ function renderPreconisations() {
     }
     tr.appendChild(tdParam);
 
-    // Avantage estimé
+    // Cellules calculées (vides au render structurel, remplies par refresh)
     const tdAv = document.createElement('td');
-    const av = P.avantageEstime(p, inputAvant);
     tdAv.className = 'preco-avantage';
-    if (av === null) tdAv.textContent = '—';
-    else tdAv.textContent = av > 0 ? '−' + fmt(av) : fmt(0);
+    tdAv.dataset.col = 'avantage';
     tr.appendChild(tdAv);
 
-    // Plafond
     const tdPl = document.createElement('td');
-    const ck = P.checkPlafond(p, inputAvant);
-    tdPl.className = 'preco-plafond ' + (ck.ok ? 'preco-ok' : 'preco-warn');
-    tdPl.textContent = ck.ok ? '✓' : '⚠ ' + ck.msg;
+    tdPl.className = 'preco-plafond';
+    tdPl.dataset.col = 'plafond';
     tr.appendChild(tdPl);
 
     // Bouton suppression
@@ -522,18 +516,49 @@ function renderPreconisations() {
     tbody.appendChild(tr);
   });
 
-  // ---- Recalcul projeté
+  // Premier remplissage des calculs
+  refreshPreconisationsCalculs();
+}
+
+// Update partiel : met à jour les colonnes calculées + jauges + comparaison
+// SANS toucher aux inputs (préserve le focus en cours de saisie).
+function refreshPreconisationsCalculs() {
+  if (typeof window.PRECONISATIONS === 'undefined') return;
+  const P = window.PRECONISATIONS;
+  const tbody = document.getElementById('precoRows');
+  if (!tbody) return;
+
+  const inputAvant = getInputs();
+  const detAvant = calculerIR(inputAvant);
+  const state = P.getState();
+
+  // Update des cellules computed dans chaque ligne
+  state.preconisations.forEach(p => {
+    const tr = tbody.querySelector(`tr[data-row-id="${p.id}"]`);
+    if (!tr) return;
+    const tdAv = tr.querySelector('td[data-col="avantage"]');
+    const tdPl = tr.querySelector('td[data-col="plafond"]');
+    if (tdAv) {
+      const av = P.avantageEstime(p, inputAvant);
+      tdAv.textContent = av === null ? '—' : (av > 0 ? '−' + fmt(av) : fmt(0));
+    }
+    if (tdPl) {
+      const ck = P.checkPlafond(p, inputAvant);
+      tdPl.className = 'preco-plafond ' + (ck.ok ? 'preco-ok' : 'preco-warn');
+      tdPl.textContent = ck.ok ? '✓' : '⚠ ' + ck.msg;
+    }
+  });
+
+  // Recalcul projeté
   const inputApres = P.appliquerPreconisations(inputAvant, state.preconisations);
   const detApres = calculerIR(inputApres);
 
-  // ---- Jauges
+  // Jauges
   const totalAlloue = state.preconisations.reduce((s, p) => s + (p.montant || 0), 0);
   setJauge('Budget', totalAlloue, state.budgetDispo);
   setJauge('Niches', detApres.nichesUtilisees, detApres.plafondNiches);
-  // PER : input.per total (existant + préconisé)
   const perTotal = inputApres.per || 0;
   setJauge('Per', perTotal, detApres.perCap);
-  // Dons : 7UD + 7UF totaux dans inputApres
   const donsTotal = (inputApres.dons7UD || 0) + (inputApres.dons || 0);
   const donsCap = detApres.revenuNetImposable * 0.20;
   setJauge('Dons', donsTotal, donsCap);
@@ -546,7 +571,7 @@ function renderPreconisations() {
     ecoEl.className = 'preco-jauge-economie-val ' + (economie > 0 ? 'preco-economie-pos' : '');
   }
 
-  // ---- Tableau comparatif
+  // Tableau comparatif
   setCmp('rni',   detAvant.revenuNetImposable, detApres.revenuNetImposable);
   setCmp('ibr',   detAvant.impotBrut,          detApres.impotBrut);
   setCmp('red',   detAvant.reductionsAppliquees, detApres.reductionsAppliquees, true);
