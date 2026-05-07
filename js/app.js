@@ -143,7 +143,7 @@ function updateResults(d) {
   set('res-decote',      fmt(d.decote));
   set('res-apres-decote',fmt(d.impotApresDecote));
   set('res-ir-mob',      fmt(d.irMobilier));
-  set('res-ps',          fmt(d.totalPS));
+  set('res-ps',          fmt(d.psRole));
   set('res-cehr',        fmt(d.cehr));
   set('res-reductions',  fmt(d.totalReductions));
   set('res-credits',     fmt(d.totalCredits));
@@ -217,10 +217,14 @@ function updateCalcDetaille(d) {
     ['cd-irav',    '▶ IR sur produits AV (7,5 % et 12,8 %)',     d.irAV,              'total'],
     ['cd-pfnlav',  '− PFNL prélevé à la source par la banque',   d.pfnlAV,            'av75 × 7,5% + av128 × 12,8% (crédit auto)'],
     // Étape 7 — PS
-    ['cd-psmob',   'PS mobilier (18,6 %)',                       d.psMobilier,        ''],
-    ['cd-psfon',   'PS foncier (17,2 %)',                        d.psFoncier,         ''],
-    ['cd-psav',    'PS sur produits AV (17,2 %)',                d.psAV,              'Sur le brut, abat. ne porte que sur l\'IR'],
-    ['cd-tps',     '▶ TOTAL PS',                                 d.totalPS,           'total'],
+    ['cd-psdiv',   'PS dividendes (18,6 %) — prélevés source',   d.psDividendes,      'Acquittés par la banque, exclus de l\'avis IR'],
+    ['cd-psint',   'PS intérêts (18,6 %) — prélevés source',     d.psInterets,        'Acquittés par la banque, exclus de l\'avis IR'],
+    ['cd-psav',    'PS sur produits AV (17,2 %) — prélevés source', d.psAV,           'Acquittés par l\'assureur, exclus de l\'avis IR'],
+    ['cd-pssrc',   '▶ Sous-total PS prélevés à la source',       d.psSource,          'INFO — n\'entre pas dans l\'impôt à payer'],
+    ['cd-pspv',    'PS plus-values mobilières (18,6 %) — voie de rôle', d.psPV,       'À payer via avis IR'],
+    ['cd-psfon',   'PS foncier (17,2 %) — voie de rôle',         d.psFoncier,         'À payer via avis IR'],
+    ['cd-psrol',   '▶ Sous-total PS dus via avis IR',            d.psRole,            'total'],
+    ['cd-tps',     '▶ TOTAL PS (charge fiscale globale)',        d.totalPS,           'source + avis'],
     // Étape 8 — Réductions
     ['cd-rdons',     'Dons 7UD/7UF (75 % puis 66 %) — HORS NICHE', d.redDons,         ''],
     ['cd-rscol',     'Frais de scolarité 7EA/7EC/7EF — HORS NICHE', d.fraisScol,      ''],
@@ -255,7 +259,7 @@ function updateCalcDetaille(d) {
     ['cd-rapp',    '− Réductions appliquées',                     d.reductionsAppliquees, 'plafonnées à l\'impôt et aux niches'],
     ['cd-capp',    '− Crédits appliqués (niches)',                d.creditsAppliques,  ''],
     ['cd-csynd2',  '− Crédit cotisations syndicales (hors niches)', d.credSyndic,      ''],
-    ['cd-ps2',     '+ Prélèvements sociaux',                     d.totalPS,           ''],
+    ['cd-ps2',     '+ PS dus via avis IR (PV mob + foncier)',     d.psRole,            'PS source exclus, déjà acquittés'],
     ['cd-pfnl2',   '− PFNL déjà versé (acompte 2CK)',             d.pfnlVerse,         'crédit hors niches, remboursable'],
     ['cd-pfnlav2', '− PFNL AV prélevé à la source',               d.pfnlAV,            'crédit auto sur produits 2CH/2VV/2WW'],
     ['cd-cehr2',   '+ CEHR (contribution hauts revenus)',         d.cehr,              d.cehr > 0 ? 'art. 223 sexies CGI' : '—'],
@@ -332,7 +336,7 @@ function updateResultsSimple(d) {
   set('s-res-decote',       fmt(d.decote));
   set('s-res-apres-decote', fmt(d.impotApresDecote));
   set('s-res-ir-mob',       fmt(d.irMobilier));
-  set('s-res-ps',           fmt(d.totalPS));
+  set('s-res-ps',           fmt(d.psRole));
   set('s-res-cehr',         fmt(d.cehr));
   // Plafond PER live
   set('s-per-cap-live',     fmt(d.perCap));
@@ -618,7 +622,7 @@ function refreshPreconisationsCalculs() {
   setCmp('csy',   detAvant.credSyndic,         detApres.credSyndic, true);
   setCmp('irmob', detAvant.irMobilier,         detApres.irMobilier);
   setCmp('irav',  detAvant.irAV,               detApres.irAV);
-  setCmp('ps',    detAvant.totalPS,            detApres.totalPS);
+  setCmp('ps',    detAvant.psRole,             detApres.psRole);
   setCmp('cehr',  detAvant.cehr,               detApres.cehr);
   setCmp('net',   detAvant.impotNet,           detApres.impotNet);
 

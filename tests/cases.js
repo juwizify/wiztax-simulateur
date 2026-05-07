@@ -253,7 +253,7 @@ const CASES = [
     // + PS = 1 000 × 18,6 % = 186
     // total = 3 904 + 128 + 186 = 4 218
     // RFR = 40 000 + 1 000 = 41 000
-    expected: { impotNet: 4218, revenuReference: 41000, tmi: 0.30 },
+    expected: { impotNet: 4032, revenuReference: 41000, tmi: 0.30 },
   },
   {
     name: '2TR barème : 40 000 € sal + 1 000 € intérêts au barème',
@@ -263,7 +263,7 @@ const CASES = [
     // impôt brut = 4 203.99 → 4 204
     // + PS 186 (toujours dus même au barème)
     // total = 4 204 + 186 = 4 390
-    expected: { impotNet: 4390, revenuReference: 41000, tmi: 0.30 },
+    expected: { impotNet: 4204, revenuReference: 41000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -278,7 +278,7 @@ const CASES = [
     // PS = 3 000 × 18,6 % = 558
     // total = 3 904 + 384 + 558 = 4 846
     // RFR = 40 000 + 3 000 = 43 000
-    expected: { impotNet: 4846, revenuReference: 43000, tmi: 0.30 },
+    expected: { impotNet: 4474, revenuReference: 43000, tmi: 0.30 },
   },
   {
     name: '2OP coché (barème) : 40k sal + 1k div + 1k intérêts + 1k PV',
@@ -291,7 +291,7 @@ const CASES = [
     // + PS 558 (toujours dus)
     // total = 4 684 + 558 = 5 242
     // PFU plus avantageux ici de 396 € à TMI 30 %
-    expected: { impotNet: 5242, revenuReference: 43000, tmi: 0.30 },
+    expected: { impotNet: 4870, revenuReference: 43000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -307,7 +307,7 @@ const CASES = [
     // PFNL prélevé à la source par la banque = 5 000 × 7,5 % = 375 (crédit d'impôt)
     // PS AV = 5 000 × 17,2 % = 860
     // total = 3 904 + 30 - 375 + 860 = 4 419
-    expected: { impotNet: 4419, revenuReference: 45000, tmi: 0.30 },
+    expected: { impotNet: 3559, revenuReference: 45000, tmi: 0.30 },
   },
   {
     name: 'AV > 8 ans : célib 40k sal + 3k produits 7,5 % (intégralement abattus)',
@@ -316,7 +316,7 @@ const CASES = [
     // PFNL prélevé à la source = 3 000 × 7,5 % = 225 (intégralement remboursé)
     // PS AV = 3 000 × 17,2 % = 516
     // total = 3 904 + 0 - 225 + 516 = 4 195
-    expected: { impotNet: 4195, revenuReference: 43000, tmi: 0.30 },
+    expected: { impotNet: 3679, revenuReference: 43000, tmi: 0.30 },
   },
   {
     name: 'AV > 8 ans : célib 40k sal + 10k produits 12,8 % (au-delà 150k primes)',
@@ -326,7 +326,7 @@ const CASES = [
     // PFNL prélevé à la source = 10 000 × 12,8 % = 1 280 (crédit d'impôt)
     // PS AV = 10 000 × 17,2 % = 1 720
     // total = 3 904 + 691,2 - 1 280 + 1 720 = 5 035
-    expected: { impotNet: 5035, revenuReference: 50000, tmi: 0.30 },
+    expected: { impotNet: 3315, revenuReference: 50000, tmi: 0.30 },
   },
   {
     name: 'AV > 8 ans MIXTE : célib 40k sal + 150k @ 7,5 % + 50k @ 12,8 %',
@@ -337,7 +337,7 @@ const CASES = [
     // PS AV = 200 000 × 17,2 % = 34 400
     // total = 3 904 + 17 061,2 - 17 650 + 34 400 = 37 715
     // RFR = 40 000 + 200 000 = 240 000 (sous seuil CEHR 250k célib)
-    expected: { impotNet: 37715, revenuReference: 240000, tmi: 0.30 },
+    expected: { impotNet: 3315, revenuReference: 240000, tmi: 0.30 },
   },
   // -------------------------------------------------------------------
   // Cas validé contre simulateur officiel impots.gouv.fr (2026-05-07)
@@ -352,9 +352,10 @@ const CASES = [
     // AV : abattement 4 600 imputé sur 7,5 % → imposable 5 400
     //   IR AV définitif = 5 400 × 7,5 % = 405
     //   PFNL prélevé = 10 000 × 7,5 % = 750 → remboursement net = 750 - 405 = 345 €
-    //   PS AV = 10 000 × 17,2 % = 1 720
-    // impôt net = 12 004 + 405 - 750 + 1 720 = 13 379
-    expected: { impotNet: 13379, revenuReference: 80000, tmi: 0.30 },
+    //   PS AV = 10 000 × 17,2 % = 1 720 (prélevés à la source par l'assureur, EXCLUS)
+    // impôt net "à payer" = 12 004 + 405 - 750 = 11 659
+    // (= IR sans AV 12 004 - 345 € de bonus AV — match impots.gouv.fr)
+    expected: { impotNet: 11659, revenuReference: 80000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -367,7 +368,7 @@ const CASES = [
     input: makeInput({ sal1: 40000, dividendes: 1000, optionPFU: 'pfu', pfnlVerse: 128 }),
     // sans PFNL : 4 218 € (baseline 3 904 + 128 IR mob + 186 PS)
     // - PFNL 128 € déjà versé = 4 090 €
-    expected: { impotNet: 4090, revenuReference: 41000, tmi: 0.30 },
+    expected: { impotNet: 3904, revenuReference: 41000, tmi: 0.30 },
   },
   {
     name: '2CK : PFNL > impôt dû → impôt net négatif (remboursement)',
@@ -378,7 +379,7 @@ const CASES = [
     // total = 0 + 12,8 + 18,6 = 31,4 €
     // - PFNL 50 € déjà versé = -18,6 € → arrondi -19 €
     // (excédent remboursé par l'administration)
-    expected: { impotNet: -19, revenuReference: 100, tmi: 0 },
+    expected: { impotNet: -37, revenuReference: 100, tmi: 0 },
   },
 
   // -------------------------------------------------------------------
@@ -662,7 +663,7 @@ const CASES = [
     // PFNL prélevé à la source = 5000 × 7.5% = 375 (intégralement remboursé)
     // PS AV = 5000 × 17.2% = 860
     // Total = 562.12 + 0 - 375 + 860 = 1047.12 → 1047
-    expected: { impotNet: 1047, revenuReference: 45000, tmi: 0.11 },
+    expected: { impotNet: 187, revenuReference: 45000, tmi: 0.11 },
   },
 
   // Profil 5 : Investisseur diversifié — sal + div PFU + intérêts + foncier
@@ -676,7 +677,7 @@ const CASES = [
     // PS foncier = 4000 × 17.2% = 688
     // Total PS = 1525
     // Total = 15904 + 576 + 1525 = 18005
-    expected: { impotNet: 18005, revenuReference: 88500, tmi: 0.30 },
+    expected: { impotNet: 17168, revenuReference: 88500, tmi: 0.30 },
   },
 
   // Profil 6 : Cadre supérieur diversifié — PER + Pinel + dons mixtes
@@ -736,7 +737,7 @@ const CASES = [
     // PS mob = 5000 × 18.6% = 930
     // RFR = 305000 → CEHR : (305000-250000)×3% = 1650
     // Total = 104974 + 640 + 930 + 1650 = 108194
-    expected: { impotNet: 108194, revenuReference: 305000, tmi: 0.45 },
+    expected: { impotNet: 107264, revenuReference: 305000, tmi: 0.45 },
   },
 
   // Profil 10 : Cas remboursement — faible revenu + crédit garde enfants

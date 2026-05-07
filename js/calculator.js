@@ -286,14 +286,30 @@ function calculerIR(input) {
 
   // ============================================================
   // ÉTAPE 7 : PRÉLÈVEMENTS SOCIAUX
+  //
+  // Mode de recouvrement (source : service-public.gouv.fr / BOFiP) :
+  //   - Prélevés À LA SOURCE par le débiteur (banque/assureur), donc déjà
+  //     acquittés au moment du paiement du revenu, EXCLUS de l'impôt à payer :
+  //       • dividendes (PFU et barème)
+  //       • intérêts
+  //       • produits assurance-vie > 8 ans (av75, av128)
+  //   - Recouvrés PAR VOIE DE RÔLE (avis IR), à payer en sus de l'IR :
+  //       • plus-values mobilières
+  //       • revenus fonciers (nu, LMNP, micro-foncier)
   // ============================================================
-  det.psMobilier = (input.dividendes + (input.interets || 0) + input.pv) * P.ps.mobilier;
-  // PS foncier dus uniquement sur résultat foncier net positif (pas de PS sur déficit).
+  // PS prélevés à la source (info uniquement, n'entrent pas dans l'impôt dû)
+  det.psDividendes = input.dividendes * P.ps.mobilier;
+  det.psInterets   = (input.interets || 0) * P.ps.mobilier;
+  det.psAV         = avProduits * P.ps.foncier;
+  det.psSource     = det.psDividendes + det.psInterets + det.psAV;
+  // PS recouvrés via avis (intégrés à l'impôt à payer)
+  det.psPV = input.pv * P.ps.mobilier;
   const revenusFonciersNets = det.microFoncierNet + det.foncierReel + det.meubleClasseNet + det.meubleNonClasseNet;
   det.psFoncier = Math.max(0, revenusFonciersNets) * P.ps.foncier;
-  // PS sur produits AV (taux foncier 17,2 %, sur le brut avant abattement)
-  det.psAV = avProduits * P.ps.foncier;
-  det.totalPS = det.psMobilier + det.psFoncier + det.psAV;
+  det.psRole    = det.psPV + det.psFoncier;
+  // Conservé pour rétro-compat / affichage de la charge fiscale totale
+  det.psMobilier = det.psDividendes + det.psInterets + det.psPV;
+  det.totalPS    = det.psSource + det.psRole;
 
   // ============================================================
   // ÉTAPE 8 : RÉDUCTIONS D'IMPÔT
@@ -425,7 +441,7 @@ function calculerIR(input) {
 
   det.impotNet = Math.max(0,
     det.impotApresDecote + det.irMobilier + det.irAV - det.reductionsAppliquees
-  ) - det.creditsAppliques - det.credSyndic + det.totalPS - det.pfnlVerse - det.pfnlAV;
+  ) - det.creditsAppliques - det.credSyndic + det.psRole - det.pfnlVerse - det.pfnlAV;
 
   // Revenu de référence = somme des revenus bruts déclarés (avant abattements) moins les charges
   // C'est ce que l'administration utilise pour calculer le taux moyen affiché

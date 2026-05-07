@@ -210,7 +210,7 @@
         <div class="res-row highlight"><span class="res-label">Impôt après décote</span><span class="res-val" id="s-res-apres-decote">—</span></div>
         <div class="res-row separator"></div>
         <div class="res-row"><span class="res-label">IR mobilier (PFU)</span><span class="res-val" id="s-res-ir-mob">—</span></div>
-        <div class="res-row"><span class="res-label">Prélèvements sociaux</span><span class="res-val" id="s-res-ps">—</span></div>
+        <div class="res-row"><span class="res-label">PS dus via avis IR</span><span class="res-val" id="s-res-ps">—</span></div>
         <div class="res-row"><span class="res-label">CEHR hauts revenus</span><span class="res-val" id="s-res-cehr">—</span></div>
         <div class="res-row"><span class="res-label">Réductions / crédits</span><span class="res-val" id="s-res-avantages">—</span></div>
         <div class="res-row separator"></div>
@@ -870,7 +870,7 @@
         <div class="res-row highlight"><span class="res-label">Après décote</span><span class="res-val" id="res-apres-decote">—</span></div>
         <div class="res-row separator"></div>
         <div class="res-row"><span class="res-label">IR mobilier (PFU)</span><span class="res-val" id="res-ir-mob">—</span></div>
-        <div class="res-row"><span class="res-label">Prélèvements sociaux</span><span class="res-val" id="res-ps">—</span></div>
+        <div class="res-row"><span class="res-label">PS dus via avis IR</span><span class="res-val" id="res-ps">—</span></div>
         <div class="res-row"><span class="res-label">CEHR hauts revenus</span><span class="res-val" id="res-cehr">—</span></div>
         <div class="res-row separator"></div>
         <div class="res-row"><span class="res-label">Total réductions</span><span class="res-val" id="res-reductions">—</span></div>
@@ -976,10 +976,14 @@
   <div class="calc-section">
     <h2>Étape 7 — Prélèvements sociaux</h2>
     <table class="calc-table">
-      <tr><td class="td-label"><span class="td-label-inner">PS mobilier — dividendes + PV (18,6 %) <i class="tip" data-tip="Formule : (dividendes + PV) × 18,6%&#10;&#10;Composition : CSG 10,6% + CRDS 0,5% + prélèvement solidarité 7,5%&#10;&#10;S'applique que l'option soit PFU ou barème.">i</i></span></td><td class="td-val" id="cd-psmob-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">PS foncier — revenus fonciers nets (17,2 %) <i class="tip" data-tip="Formule : max(0, revenus fonciers nets) × 17,2 %&#10;&#10;Revenus fonciers nets = micro-foncier×70% + foncier réel + meublé classé×50% + meublé non classé×70%&#10;&#10;Pas de PS sur résultat foncier négatif (déficit).">i</i></span></td><td class="td-val" id="cd-psfon-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">PS sur produits AV (17,2 %) <i class="tip" data-tip="Formule : (produits AV 7,5 % + 12,8 %) × 17,2 %&#10;&#10;Calculés sur le BRUT, sans abattement annuel (l'abattement ne porte que sur l'IR).&#10;Taux 17,2 % maintenu pour l'AV (exclusion explicite LFSS 2026).">i</i></span></td><td class="td-val" id="cd-psav-val">—</td></tr>
-      <tr class="total-row"><td class="td-label"><span class="td-label-inner">▶ TOTAL PRÉLÈVEMENTS SOCIAUX</span></td><td class="td-val" id="cd-tps-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS dividendes (18,6 %) — prélevés à la source <i class="tip" data-tip="Formule : dividendes × 18,6 %&#10;&#10;Prélevés directement par la banque au moment du versement (CSG 10,6 % + CRDS 0,5 % + solidarité 7,5 %). Déjà acquittés, EXCLUS de l'avis IR.">i</i></span></td><td class="td-val" id="cd-psdiv-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS intérêts (18,6 %) — prélevés à la source <i class="tip" data-tip="Formule : intérêts × 18,6 %&#10;&#10;Prélevés par la banque sur les livrets imposables, comptes-titres, PEL/CEL > 12 ans, etc. Déjà acquittés, EXCLUS de l'avis IR.">i</i></span></td><td class="td-val" id="cd-psint-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS sur produits AV (17,2 %) — prélevés à la source <i class="tip" data-tip="Formule : (av75 + av128) × 17,2 %&#10;&#10;Calculés sur le BRUT (l'abattement ne porte que sur l'IR). Prélevés par l'assureur au rachat. Taux 17,2 % maintenu pour l'AV (LFSS 2026). Déjà acquittés, EXCLUS de l'avis IR.">i</i></span></td><td class="td-val" id="cd-psav-val">—</td></tr>
+      <tr class="total-row"><td class="td-label"><span class="td-label-inner">▶ Sous-total PS prélevés à la source <i class="tip" data-tip="Information uniquement — ces PS ont déjà été acquittés par la banque/l'assureur au moment du versement. Ils ne figurent PAS sur l'avis IR.">i</i></span></td><td class="td-val" id="cd-pssrc-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS plus-values mobilières (18,6 %) — voie de rôle <i class="tip" data-tip="Formule : PV mobilières × 18,6 %&#10;&#10;Contrairement aux dividendes/intérêts, les PV mobilières sont déclarées par le contribuable et les PS sont recouvrées via l'avis IR (pas de prélèvement à la source).">i</i></span></td><td class="td-val" id="cd-pspv-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS foncier — revenus fonciers nets (17,2 %) — voie de rôle <i class="tip" data-tip="Formule : max(0, revenus fonciers nets) × 17,2 %&#10;&#10;Revenus fonciers nets = micro-foncier×70% + foncier réel + meublé classé×50% + meublé non classé×70%&#10;&#10;Pas de PS sur résultat foncier négatif (déficit). Recouvrement via avis IR.">i</i></span></td><td class="td-val" id="cd-psfon-val">—</td></tr>
+      <tr class="total-row"><td class="td-label"><span class="td-label-inner">▶ Sous-total PS dus via avis IR</span></td><td class="td-val" id="cd-psrol-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">▶ TOTAL PS (charge fiscale globale) <i class="tip" data-tip="Source + voie de rôle. Représente la charge fiscale totale en PS, y compris ce qui a déjà été prélevé par la banque/l'assureur.">i</i></span></td><td class="td-val" id="cd-tps-val">—</td></tr>
     </table>
   </div>
 
@@ -1034,7 +1038,7 @@
       <tr><td class="td-label"><span class="td-label-inner">− Réductions appliquées <i class="tip" data-tip="Plafonnées à l'impôt (pas de remboursement) et aux niches (réduction proportionnelle si dépassement).&#10;Les réductions HORS NICHE (dons, scolarité, EHPAD, Malraux) sont préservées en priorité.">i</i></span></td><td class="td-val" id="cd-rapp-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">− Crédits appliqués (niches) <i class="tip" data-tip="Crédits dans les niches (emploi domicile, garde enfants, autres). Remboursables si supérieurs à l'impôt.">i</i></span></td><td class="td-val" id="cd-capp-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">− Crédit cotisations syndicales (hors niches)</span></td><td class="td-val" id="cd-csynd2-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">+ Prélèvements sociaux</span></td><td class="td-val" id="cd-ps2-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">+ PS dus via avis IR (PV mob + foncier) <i class="tip" data-tip="Seuls les PS recouvrés par voie de rôle entrent dans l'impôt à payer. Les PS sur dividendes/intérêts/AV sont prélevés à la source par la banque/assureur, déjà acquittés, donc exclus.">i</i></span></td><td class="td-val" id="cd-ps2-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">− PFNL déjà versé (acompte 2CK) <i class="tip" data-tip="Acompte 12,8 % prélevé à la source par la banque sur dividendes/intérêts. Crédit hors plafond niches, remboursable.">i</i></span></td><td class="td-val" id="cd-pfnl2-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">− PFNL AV prélevé à la source <i class="tip" data-tip="PFNL automatique sur produits AV > 8 ans (cases 2CH/2VV/2WW) : av75 × 7,5 % + av128 × 12,8 % du BRUT. Crédit auto hors plafond niches. Si > IR définitif (cas typique avec abattement), l'excédent est remboursé.">i</i></span></td><td class="td-val" id="cd-pfnlav2-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">+ CEHR <i class="tip" data-tip="Contribution exceptionnelle sur les hauts revenus (art. 223 sexies CGI).&#10;Assiette : revenu fiscal de référence.&#10;Célibataire : 3% de 250k à 500k€ · 4% au-delà&#10;Couple : 3% de 500k à 1M€ · 4% au-delà">i</i></span></td><td class="td-val" id="cd-cehr2-val">—</td></tr>

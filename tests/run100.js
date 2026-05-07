@@ -257,11 +257,17 @@ function oracleCalc(input) {
   const avProduits = av75 + av128;
 
   // --- Étape 7 : PS ---
-  const psMobilier = (i.dividendes + (i.interets || 0) + i.pv) * 0.186;
+  // PS prélevés à la source (info, exclus de l'impôt à payer)
+  const psDividendes = i.dividendes * 0.186;
+  const psInterets   = (i.interets || 0) * 0.186;
+  const psAV         = avProduits * 0.172;
+  const psSource     = psDividendes + psInterets + psAV;
+  // PS recouvrés via avis (intégrés à l'impôt à payer)
+  const psPV         = i.pv * 0.186;
   const fonciersNets = microFoncierNet + foncierReelNet + meuClNet + meuNcNet;
-  const psFoncier = Math.max(0, fonciersNets) * 0.172;
-  const psAV = avProduits * 0.172;
-  const totalPS = psMobilier + psFoncier + psAV;
+  const psFoncier    = Math.max(0, fonciersNets) * 0.172;
+  const psRole       = psPV + psFoncier;
+  const totalPS      = psSource + psRole;
 
   // --- Étape 8 : réductions ---
   const d7UD = i.dons7UD || 0;
@@ -340,7 +346,7 @@ function oracleCalc(input) {
 
   let impotNet = Math.max(0,
     impotApresDecote + irMobilier + irAV - redApp
-  ) - credEff - credSynd + totalPS - pfnl - pfnlAV;
+  ) - credEff - credSynd + psRole - pfnl - pfnlAV;
 
   // --- RFR / CEHR ---
   const rfr = Math.max(0,
