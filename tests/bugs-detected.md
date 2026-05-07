@@ -204,3 +204,28 @@ L'utilisateur a pointé que l'abattement 10 % ne s'applique qu'aux salaires. Vra
 
 Les autres composantes du RFR (BNC, foncier, mobilier, AV) restent comme avant ; à valider sur d'autres cas.
 
+---
+
+## #6 — Amélioration : toggle input « réduction » vs « investissement » pour les niches
+
+**Statut** : Open (amélioration UX, pas un bug fonctionnel)
+**Détecté sur** : Cas 10 (confrontation impots.gouv)
+
+### Sujet
+Pour les dispositifs de réduction d'impôt (Pinel, SOFICA, Girardin, dons, GFI, FCPI, FIP, IR-PME, Loc'Avantages, Malraux), le wiztax demande directement le **montant de la réduction** déjà calculée. Le simulateur officiel impots.gouv demande à l'inverse le **montant de l'investissement / versement / don** et calcule la réduction lui-même selon le taux du dispositif (qui dépend souvent du scénario : SOFICA 30 / 36 / 48 %, Girardin avec/sans agrément, dons 66 / 75 %, etc.).
+
+Conséquence : pour confronter wiztax vs impots.gouv il faut faire la conversion à la main, ce qui est source d'erreur.
+
+### Proposition
+Pour chaque dispositif concerné, ajouter un **toggle de mode de saisie** :
+- Mode « réduction » (actuel) : l'utilisateur saisit la réduction finale, le simulateur la prend telle quelle.
+- Mode « investissement » : l'utilisateur saisit le versement et choisit le taux/scénario applicable ; le simulateur calcule la réduction et la plafonne automatiquement (plafonds dispositifs + niches).
+
+Bénéfice pédagogique : l'utilisateur peut directement reprendre les chiffres de son courrier de souscription / IFU / attestation, sans pré-calcul.
+
+### Périmètre
+Dispositifs à toggle : Pinel, Denormandie, Girardin (PD/AG), SOFICA, dons (66 / 75 %), GFI, FCPI JEI, FIP Corse, IR-PME, Loc'Avantages, Malraux.
+
+### Hors scope ici
+À traiter dans une session dédiée ; ce log sert juste à mémoriser la demande.
+

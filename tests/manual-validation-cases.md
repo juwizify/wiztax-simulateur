@@ -269,12 +269,14 @@ Pour comparer **uniquement le moteur fiscal**, l'option **4BC directe** est suff
 | Option PFU | Activée | (2OP *non cochée*) | `optionPFU` = "PFU" |
 | Versement PER | 30 000 € | **6NS** | `per` |
 | **Réductions / crédits (niches)** | | | |
-| Girardin industriel plein droit | 12 000 € | **7UY** | `girardinPD` |
-| SOFICA | 6 000 € | **7GN** | `sofica` |
-| Pinel (engagement en cours) | 4 500 € | **7QI** (ou 7QA selon durée/année) | `pinel` |
+| Girardin industriel plein droit | 12 000 € *(réduction)* | rubrique **« Investissements réalisés en 2025 → Investissements donnés en location à une entreprise exploitante à laquelle vous rétrocédez la réduction d'impôt »** ⚠ saisir **27 273 €** côté impots.gouv (= 12 000 / 0,44, rétrocession 56 %) | `girardinPD` |
+| SOFICA | 6 000 € *(réduction)* | **7FN** (taux 36 %) ⚠ saisir **16 667 €** côté impots.gouv (= 6 000 / 0,36) — ou 7GN/7EN selon scénario taux 30 %/48 % | `sofica` |
+| Pinel | 4 500 € *(réduction annuelle)* | **7QA-7QI** selon durée d'engagement et année d'investissement ⚠ valeur à saisir côté impots.gouv = montant investi qui produit cette réduction annuelle, dépend du scénario (cf note ci-dessous) | `pinel` |
 | Emploi à domicile | 8 000 € | **7DB** | `emploiDomicile` |
-| Dons d'intérêt général | 1 500 € | **7UF** | `dons` |
-| Groupements forestiers | 2 500 € | **7UN** | `gfi` |
+| Dons d'intérêt général | 1 500 € *(réduction = don × 66 % ou 75 %)* | **7UF** ⚠ saisir le **don** côté impots.gouv (≈ 2 273 € pour 1 500 € de réduction au taux 66 %) | `dons` |
+| Groupements forestiers | 2 500 € *(réduction)* | **7UN** ⚠ saisir le **versement** correspondant côté impots.gouv | `gfi` |
+
+> ⚠️ **Note d'asymétrie wiztax / impots.gouv** : le wiztax demande directement le **montant de la réduction d'impôt** (déjà calculée par l'utilisateur) pour Pinel, Girardin, SOFICA, dons, GFI. Le simulateur impots.gouv demande le **montant de l'investissement / versement / don**, calcule la réduction lui-même selon le taux du dispositif. Pour confronter les deux moteurs, il faut convertir : `montant_à_saisir_impots = réduction_wiztax / taux_dispositif`. Voir [bug #6](bugs-detected.md) pour la proposition d'amélioration (toggle input réduction/investissement).
 
 **Résultats à comparer**
 
