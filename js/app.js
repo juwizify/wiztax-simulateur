@@ -215,6 +215,7 @@ function updateCalcDetaille(d) {
     ['cd-avabat',  '− Abattement annuel utilisé',                d.avAbattement,      'Imputé en priorité sur 12,8 %'],
     ['cd-avimpos', '= Produits imposables',                       d.avImposable,       ''],
     ['cd-irav',    '▶ IR sur produits AV (7,5 % et 12,8 %)',     d.irAV,              'total'],
+    ['cd-pfnlav',  '− PFNL prélevé à la source par la banque',   d.pfnlAV,            'av75 × 7,5% + av128 × 12,8% (crédit auto)'],
     // Étape 7 — PS
     ['cd-psmob',   'PS mobilier (18,6 %)',                       d.psMobilier,        ''],
     ['cd-psfon',   'PS foncier (17,2 %)',                        d.psFoncier,         ''],
@@ -256,6 +257,7 @@ function updateCalcDetaille(d) {
     ['cd-csynd2',  '− Crédit cotisations syndicales (hors niches)', d.credSyndic,      ''],
     ['cd-ps2',     '+ Prélèvements sociaux',                     d.totalPS,           ''],
     ['cd-pfnl2',   '− PFNL déjà versé (acompte 2CK)',             d.pfnlVerse,         'crédit hors niches, remboursable'],
+    ['cd-pfnlav2', '− PFNL AV prélevé à la source',               d.pfnlAV,            'crédit auto sur produits 2CH/2VV/2WW'],
     ['cd-cehr2',   '+ CEHR (contribution hauts revenus)',         d.cehr,              d.cehr > 0 ? 'art. 223 sexies CGI' : '—'],
     ['cd-inet',    '▶ IMPÔT NET FINAL',                         d.impotNet,          'total'],
     ['cd-tm',      'Taux moyen d\'imposition',                   null,                fmtPct(d.tauxMoyen)],

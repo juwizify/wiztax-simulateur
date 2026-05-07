@@ -303,36 +303,58 @@ const CASES = [
     name: 'AV > 8 ans : célib 40k sal + 5k produits 7,5 % (dépasse abat 4 600)',
     input: makeInput({ sal1: 40000, avProduits75: 5000 }),
     // abattement 4 600 imputé sur 7,5 % (pas de 12,8 %) → imposable 400
-    // IR AV = 400 × 7,5 % = 30
+    // IR AV définitif = 400 × 7,5 % = 30
+    // PFNL prélevé à la source par la banque = 5 000 × 7,5 % = 375 (crédit d'impôt)
     // PS AV = 5 000 × 17,2 % = 860
-    // total = 3 904 + 30 + 860 = 4 794
-    expected: { impotNet: 4794, revenuReference: 45000, tmi: 0.30 },
+    // total = 3 904 + 30 - 375 + 860 = 4 419
+    expected: { impotNet: 4419, revenuReference: 45000, tmi: 0.30 },
   },
   {
     name: 'AV > 8 ans : célib 40k sal + 3k produits 7,5 % (intégralement abattus)',
     input: makeInput({ sal1: 40000, avProduits75: 3000 }),
-    // 3 000 ≤ 4 600 → 0 € imposable, 0 € IR AV
+    // 3 000 ≤ 4 600 → 0 € imposable, 0 € IR AV définitif
+    // PFNL prélevé à la source = 3 000 × 7,5 % = 225 (intégralement remboursé)
     // PS AV = 3 000 × 17,2 % = 516
-    expected: { impotNet: 4420, revenuReference: 43000, tmi: 0.30 },
+    // total = 3 904 + 0 - 225 + 516 = 4 195
+    expected: { impotNet: 4195, revenuReference: 43000, tmi: 0.30 },
   },
   {
     name: 'AV > 8 ans : célib 40k sal + 10k produits 12,8 % (au-delà 150k primes)',
     input: makeInput({ sal1: 40000, avProduits128: 10000 }),
     // abattement 4 600 imputé en priorité sur le 12,8 % → imposable 5 400
-    // IR AV = 5 400 × 12,8 % = 691,2
+    // IR AV définitif = 5 400 × 12,8 % = 691,2
+    // PFNL prélevé à la source = 10 000 × 12,8 % = 1 280 (crédit d'impôt)
     // PS AV = 10 000 × 17,2 % = 1 720
-    // total = 3 904 + 691,2 + 1 720 = 6 315,2 → 6 315
-    expected: { impotNet: 6315, revenuReference: 50000, tmi: 0.30 },
+    // total = 3 904 + 691,2 - 1 280 + 1 720 = 5 035
+    expected: { impotNet: 5035, revenuReference: 50000, tmi: 0.30 },
   },
   {
     name: 'AV > 8 ans MIXTE : célib 40k sal + 150k @ 7,5 % + 50k @ 12,8 %',
     input: makeInput({ sal1: 40000, avProduits75: 150000, avProduits128: 50000 }),
     // abattement 4 600 imputé en priorité sur le 12,8 % → 50 000 - 4 600 = 45 400 imposable
-    // IR AV = 45 400 × 12,8 % + 150 000 × 7,5 % = 5 811,2 + 11 250 = 17 061,2
+    // IR AV définitif = 45 400 × 12,8 % + 150 000 × 7,5 % = 5 811,2 + 11 250 = 17 061,2
+    // PFNL prélevé = 150 000 × 7,5 % + 50 000 × 12,8 % = 11 250 + 6 400 = 17 650
     // PS AV = 200 000 × 17,2 % = 34 400
-    // total = 3 904 + 17 061,2 + 34 400 = 55 365,2 → 55 365
-    // RFR = 40 000 + 200 000 = 240 000 (déclenche CEHR à partir de 250k → ici non)
-    expected: { impotNet: 55365, revenuReference: 240000, tmi: 0.30 },
+    // total = 3 904 + 17 061,2 - 17 650 + 34 400 = 37 715
+    // RFR = 40 000 + 200 000 = 240 000 (sous seuil CEHR 250k célib)
+    expected: { impotNet: 37715, revenuReference: 240000, tmi: 0.30 },
+  },
+  // -------------------------------------------------------------------
+  // Cas validé contre simulateur officiel impots.gouv.fr (2026-05-07)
+  // Célibataire 70k salaire + 10k AV 7,5 % → restitution 345 € sur l'AV
+  // (= abattement 4 600 × 7,5 %, car PFNL prélevé > IR définitif)
+  // -------------------------------------------------------------------
+  {
+    name: 'AV > 8 ans : célib 70k sal + 10k @ 7,5 % → remboursement net 345 €',
+    input: makeInput({ sal1: 70000, avProduits75: 10000 }),
+    // IR sur salaires : sal net = 63 000, QF = 63 000
+    //   IR brut = (29579-11600)×0,11 + (63000-29579)×0,30 = 1977,69 + 10026,30 = 12 003,99 → 12 004
+    // AV : abattement 4 600 imputé sur 7,5 % → imposable 5 400
+    //   IR AV définitif = 5 400 × 7,5 % = 405
+    //   PFNL prélevé = 10 000 × 7,5 % = 750 → remboursement net = 750 - 405 = 345 €
+    //   PS AV = 10 000 × 17,2 % = 1 720
+    // impôt net = 12 004 + 405 - 750 + 1 720 = 13 379
+    expected: { impotNet: 13379, revenuReference: 80000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -636,10 +658,11 @@ const CASES = [
     // pen net 36000. QF = 18000 (couple) → 704 par part → brut 1408
     // Pas de QF supp (parts.base=2). Décote couple seuil 3277 → 1408 < seuil
     // décote = max(0, 1483 - 1408×0.4525) = 845.88 → impôt apres dec = 562.12
-    // AV 5k × 7.5% : 5000 ≤ abat couple 9200 → IR AV = 0
+    // AV 5k × 7.5% : 5000 ≤ abat couple 9200 → IR AV définitif = 0
+    // PFNL prélevé à la source = 5000 × 7.5% = 375 (intégralement remboursé)
     // PS AV = 5000 × 17.2% = 860
-    // Total = 562.12 + 0 + 860 = 1422.12 → 1422
-    expected: { impotNet: 1422, revenuReference: 45000, tmi: 0.11 },
+    // Total = 562.12 + 0 - 375 + 860 = 1047.12 → 1047
+    expected: { impotNet: 1047, revenuReference: 45000, tmi: 0.11 },
   },
 
   // Profil 5 : Investisseur diversifié — sal + div PFU + intérêts + foncier

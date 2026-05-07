@@ -263,6 +263,13 @@ function calculerIR(input) {
   // — règle BOI-RPPM-RCM-20-10-30 favorable au contribuable.
   // L'abattement ne s'applique qu'à l'IR ; les PS sont dues sur le brut.
   // Imposition séparée du barème (n'entre pas dans le RNI ni le QF).
+  //
+  // PFNL prélevé à la source par la banque (régime par défaut depuis 2018) :
+  //   av75  → 7,5 % du BRUT (sans abattement)
+  //   av128 → 12,8 % du BRUT (sans abattement)
+  // L'abattement étant appliqué a posteriori en déclaration, le différentiel
+  // (PFNL prélevé − IR définitif) constitue un trop-perçu remboursé au
+  // contribuable. Imputé sans plafond niches.
   // ============================================================
   const av75  = input.avProduits75  || 0;
   const av128 = input.avProduits128 || 0;
@@ -273,6 +280,8 @@ function calculerIR(input) {
   det.avAbattement = abat128 + abat75;
   det.avImposable  = (av128 - abat128) + (av75 - abat75);
   det.irAV = (av128 - abat128) * 0.128 + (av75 - abat75) * 0.075;
+  // PFNL AV prélevé à la source — crédit d'impôt
+  det.pfnlAV = av75 * 0.075 + av128 * 0.128;
   const avProduits = av75 + av128;
 
   // ============================================================
@@ -410,11 +419,13 @@ function calculerIR(input) {
   // PFNL (acompte 2CK déjà versé à la source par la banque) : crédit d'impôt
   // sans plafond niches, imputé sur l'IR final. Si supérieur à l'impôt dû,
   // l'excédent est remboursé (impôt net peut devenir négatif).
+  // - input.pfnlVerse : acompte 2CK saisi par l'utilisateur (div/intérêts)
+  // - det.pfnlAV     : PFNL automatiquement prélevé sur les produits AV > 8 ans
   det.pfnlVerse = input.pfnlVerse || 0;
 
   det.impotNet = Math.max(0,
     det.impotApresDecote + det.irMobilier + det.irAV - det.reductionsAppliquees
-  ) - det.creditsAppliques - det.credSyndic + det.totalPS - det.pfnlVerse;
+  ) - det.creditsAppliques - det.credSyndic + det.totalPS - det.pfnlVerse - det.pfnlAV;
 
   // Revenu de référence = somme des revenus bruts déclarés (avant abattements) moins les charges
   // C'est ce que l'administration utilise pour calculer le taux moyen affiché
