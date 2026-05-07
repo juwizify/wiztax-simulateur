@@ -128,13 +128,33 @@ const LEVIERS_CATALOGUE = [
   },
   {
     id: 'girardinPD', label: 'Girardin Industriel — Plein Droit',
-    cat: 'niche18', mode: 'versement-direct', inputKey: 'girardinPD',
-    desc: 'Saisir la RI calculée (attestation). Quote-part 44 % dans la niche.',
+    cat: 'niche18', mode: 'taux-variable', inputKey: 'girardinPD',
+    desc: 'Investissement à fonds perdus dans une SNC ultramarine. Rétrocession 56 % à l\'opérateur, le solde finance la RI majorée. Quote-part 44 % dans le plafond niches 18 k€.',
+    params: [
+      { name: 'rendement', label: 'Rendement (RI / investissement)',
+        options: [
+          { value: '110', label: '110 % (rentabilité 10 % — conservateur)', taux: 1.10 },
+          { value: '113', label: '113 % (rentabilité 13 % — médian marché)', taux: 1.13 },
+          { value: '116', label: '116 % (rentabilité 16 % — performant)', taux: 1.16 },
+          { value: '120', label: '120 % (rentabilité 20 % — premium / fin d\'année)', taux: 1.20 },
+        ]
+      },
+    ],
   },
   {
     id: 'girardinAG', label: 'Girardin Industriel — Avec Agrément',
-    cat: 'niche18', mode: 'versement-direct', inputKey: 'girardinAG',
-    desc: 'Saisir la RI calculée (attestation). Quote-part 34 % dans la niche.',
+    cat: 'niche18', mode: 'taux-variable', inputKey: 'girardinAG',
+    desc: 'Idem Plein Droit mais avec agrément ministériel (programmes > 250 k€). Rétrocession 66 %. Quote-part 34 % dans le plafond niches 18 k€.',
+    params: [
+      { name: 'rendement', label: 'Rendement (RI / investissement)',
+        options: [
+          { value: '105', label: '105 % (rentabilité 5 % — conservateur)', taux: 1.05 },
+          { value: '108', label: '108 % (rentabilité 8 % — médian marché)', taux: 1.08 },
+          { value: '112', label: '112 % (rentabilité 12 % — performant)', taux: 1.12 },
+          { value: '115', label: '115 % (rentabilité 15 % — premium)', taux: 1.15 },
+        ]
+      },
+    ],
   },
 
   // ─── DÉDUCTION D'ASSIETTE FONCIER ──────────────────────
@@ -238,7 +258,6 @@ function avantageEstime(p, inputAvant) {
   if (lev.id === 'syndic')  return p.montant * 0.66;
   if (lev.id === 'emploiDom') return Math.min(p.montant, 12000) * 0.50;
   if (lev.id === 'gardeEnf')  return Math.min(p.montant, 3500) * 0.50;
-  if (lev.id === 'girardinPD' || lev.id === 'girardinAG') return p.montant; // RI saisie directement
   return null;
 }
 
