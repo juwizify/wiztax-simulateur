@@ -56,71 +56,71 @@ det.perCap = perCap1 + perCap2;
 
 ---
 
-## #2 — PS mobilier à 18,6 % (LFSS 2026) appliqué sur des revenus 2025
+## #2 — PS sur dividendes & intérêts exclus à tort de l'impôt à payer
 
 **Statut** : Open
 **Détecté sur** : Cas 7 (investisseur PFU)
-**Sévérité** : impacte tous les cas avec dividendes / intérêts / PV mobilières.
+**Sévérité** : élevée — touche tous les cas avec dividendes ou intérêts. Sous-estime systématiquement l'impôt à payer.
 
 ### Symptôme observé
-Décalage sur la ligne « PS dus via avis IR » entre wiztax et le simulateur officiel impots.gouv (déclaration 2026, revenus 2025).
-
-Sur le Cas 7 (PV mobilières 15 000 €) :
-- wiztax : 15 000 × 18,6 % = 2 790 €
-- impots.gouv : 15 000 × 17,2 % = 2 580 €
-- **Écart = 210 €**
-
-L'écart se retrouve aussi sur la ligne info « PS dividendes » et « PS intérêts » (annotées 18,6 % par le wiztax, contre 17,2 % côté banque/IFU pour les revenus 2025).
+Cas 7 — Décalage de **1 711 €** côté wiztax sur le total impôt à payer vs simulateur officiel impots.gouv :
+- (8 000 dividendes + 1 200 intérêts) × 18,6 % = **1 711,20 €**
+- Le wiztax ne les inclut nulle part dans `det.impotNet`.
+- Le simulateur officiel les inclut bien dans le total à payer (PV mobilière comptée à 18,6 % côté wiztax = OK, écart isolé sur dividendes + intérêts).
 
 ### Cause dans le code
-[`js/params.js:57-62`](../js/params.js#L57)
+[`js/calculator.js:300-309`](../js/calculator.js#L300) classe les PS en deux catégories :
 
 ```js
-ps: {
-  mobilier: 0.186,  // dividendes, intérêts, PV mob — CSG 10.6% + CRDS 0.5% + sol. 7.5%
-  foncier:  0.172,  // foncier, PV immo, AV — CSG 9.2% + CRDS 0.5% + sol. 7.5%
-  …
-}
+// PS prélevés à la source (info uniquement, n'entrent pas dans l'impôt dû)
+det.psDividendes = input.dividendes * P.ps.mobilier;
+det.psInterets   = (input.interets || 0) * P.ps.mobilier;
+det.psAV         = avProduits * P.ps.foncier;
+det.psSource     = det.psDividendes + det.psInterets + det.psAV;
+// PS recouvrés via avis (intégrés à l'impôt à payer)
+det.psPV = input.pv * P.ps.mobilier;
+det.psFoncier = …;
+det.psRole    = det.psPV + det.psFoncier;
 ```
 
-Le commentaire fait référence à la **CFA introduite par la LFSS 2026** (CSG sur revenus du capital portée de 9,2 % à 10,6 %). Cette mesure s'applique aux revenus perçus à compter du 1er janvier 2026, **pas aux revenus 2025**.
+Et [`calculator.js:444`](../js/calculator.js#L444) n'injecte dans `impotNet` que `psRole` (PV + foncier). Donc `psDividendes` et `psInterets` n'entrent **jamais** dans l'impôt calculé.
 
-### Incohérence de scope du simulateur
-- `CLAUDE.md` ligne 4 : « Simulateur d'impôt sur le revenu français (revenus 2025, déclaration 2026) »
-- `js/params.js` ligne 2 : « Projection sur Revenus 2026 (Déclaration 2027) »
+Le commentaire d'en-tête de l'étape 7 et le `CLAUDE.md` du projet documentent ce choix explicitement : « EXCLUS de l'avis IR ». **Le choix est faux pour les dividendes/intérêts.**
 
-Le barème progressif (11 600 / 29 579 / 84 577 / 181 917) correspond à la **LF 2026 sur revenus 2025** (cohérent avec le CLAUDE.md). Seul le taux PS mobilier est anachronique.
+### Règle fiscale réelle (revenus 2025, déclaration 2026)
+- L'**AV > 8 ans** (cas 5) : le PFNL prélevé à la source par l'assureur (IR + PS) est **automatiquement imputé** par le simulateur officiel via le mécanisme d'abattement. L'utilisateur ne saisit rien d'autre que le brut.
+- Les **dividendes (2DC) et intérêts (2TR)** : le PFNL prélevé par la banque n'est **PAS auto-imputé**. L'utilisateur doit le saisir **manuellement en case 2CK** — et **2CK ne couvre que la part IR (12,8 %)**, pas la part PS (17,2 %, ou 18,6 % LFSS 2026 selon scope). La part PS est donc bien **due** côté impôt et apparaît dans le total à payer.
 
-### Règle fiscale (rappel — revenus 2025)
-| Type de revenu | Taux PS |
-|---|---|
-| Dividendes, intérêts, PV mobilières | **17,2 %** (CSG 9,2 + CRDS 0,5 + sol. 7,5) |
-| Revenus fonciers, AV > 8 ans | **17,2 %** |
-
-Pour les revenus 2026, la LFSS 2026 portera la CSG à 10,6 % via la CFA → 18,6 % sur les revenus du capital. Le wiztax devra alors basculer.
+→ Le wiztax a appliqué la logique AV à tort sur les RCM. Le 2CK que l'utilisateur saisit dans `pfnlVerse` couvre déjà la restitution IR ; les PS doivent en plus passer dans `psRole`.
 
 ### Fix proposé
-Décision à prendre d'abord : **quel millésime simule-t-on ?**
-
-**Option A** — Aligner sur revenus 2025 (cohérent avec CLAUDE.md et la confrontation impots.gouv en cours) :
+Reclasser `psDividendes` et `psInterets` du panier `psSource` vers le panier `psRole` :
 
 ```js
-ps: {
-  mobilier: 0.172,   // revenus 2025 — pas encore de CFA
-  foncier:  0.172,
-  …
-}
+// PS prélevés à la source mais NON imputés automatiquement par le simulateur
+// officiel (≠ AV) : bien dus côté impôt à payer.
+det.psPV       = input.pv * P.ps.mobilier;
+det.psFoncier  = …;
+det.psDividendes = input.dividendes * P.ps.mobilier;
+det.psInterets   = (input.interets || 0) * P.ps.mobilier;
+det.psRole = det.psPV + det.psFoncier + det.psDividendes + det.psInterets;
+
+// AV : seul cas où les PS sont effectivement libératoires côté avis IR
+det.psAV    = avProduits * P.ps.foncier;
+det.psSource = det.psAV;     // info uniquement
 ```
 
-Et corriger l'en-tête de `params.js` (« Projection sur Revenus 2025 (Déclaration 2026) »).
+Conserver l'AV (`psAV`) en `psSource` (le wiztax était correct sur ce cas).
 
-**Option B** — Aligner sur revenus 2026 (garder 18,6 %), mettre à jour le `CLAUDE.md` et le `index.html` pour annoncer clairement le millésime, et accepter qu'on ne pourra plus comparer au simulateur officiel impots.gouv 2026 (qui calcule 2025).
+### Vérification après fix (Cas 7)
+- `psRole` = 15 000 × 18,6 % (PV) + 8 000 × 18,6 % (div) + 1 200 × 18,6 % (int) = 2 790 + 1 488 + 223,2 = **4 501,20 €**
+- Doit matcher la ligne « Prélèvements sociaux » du simulateur officiel.
 
-**Option C** — Paramétrable : ajouter un sélecteur d'année fiscale dans l'UI, avec deux jeux de paramètres. Plus lourd, à reporter.
+### À corriger en parallèle
+- Libellés UI [`js/app.js:220-225`](../js/app.js#L220) : déplacer « PS dividendes » et « PS intérêts » du sous-total source vers le sous-total avis IR.
+- `CLAUDE.md` du projet, section « Mode de recouvrement des prélèvements sociaux » : la doc actuelle dit l'inverse de la réalité fiscale, à réécrire après fix.
+- `tests/cases.js` : ajuster les valeurs attendues sur tous les cas avec dividendes/intérêts.
 
-### Fichiers à modifier
-- `js/params.js` (taux + en-tête)
-- `js/app.js:220-225` (mention « 18,6 % » dans les libellés détail PS)
-- `CLAUDE.md` (clarifier le millésime)
-- `tests/cases.js` — ajuster les valeurs attendues
+### Question latérale (à trancher séparément)
+Le wiztax applique 18,6 % aux PS mobilier (`P.ps.mobilier = 0.186`) — taux LFSS 2026. Le simulateur officiel impots.gouv utilisé pour la confrontation applique aussi 18,6 % selon l'observation utilisateur (à vérifier — les revenus 2025 devraient en théorie rester à 17,2 %, mais il est possible que le simulateur officiel applique déjà 18,6 % par anticipation). **Pour l'instant on garde 18,6 % puisque les deux moteurs s'accordent dessus.** Si on veut clarifier le scope (revenus 2025 vs 2026), c'est un sujet à part.
 
