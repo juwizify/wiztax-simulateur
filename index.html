@@ -11,7 +11,7 @@
 
 <header>
   <h1>WizTax — Simulateur d'impôt sur le revenu</h1>
-  <span>Revenus 2025 · Déclaration 2026</span>
+  <span>Projection — Revenus 2026 · Déclaration 2027</span>
 </header>
 
 <nav class="tabs-nav">
@@ -40,6 +40,7 @@
             <select id="s-situation">
               <option value="celibataire">Célibataire</option>
               <option value="marie-pacse">Marié / Pacsé</option>
+              <option value="divorce-separe">Divorcé(e) / Séparé(e)</option>
               <option value="veuf">Veuf(ve)</option>
             </select>
           </div>
@@ -102,10 +103,10 @@
 
           <div class="form-row">
             <label for="s-optionPFU">Imposition des dividendes
-              <i class="tip" data-tip="PFU (flat tax) : taux unique 30%, souvent avantageux.&#10;Barème : peut être intéressant si TMI ≤ 11%.">i</i>
+              <i class="tip" data-tip="PFU (flat tax) : taux unique 31,4 % (12,8 % IR + 18,6 % PS, LFSS 2026), souvent avantageux.&#10;Barème : peut être intéressant si TMI ≤ 11 %.">i</i>
             </label>
             <select id="s-optionPFU">
-              <option value="pfu">PFU — flat tax 30 %</option>
+              <option value="pfu">PFU — flat tax 31,4 %</option>
               <option value="bareme">Barème progressif</option>
             </select>
           </div>
@@ -240,11 +241,12 @@
           <div class="form-row">
             <label for="situation">
               Situation familiale
-              <i class="tip tip-down" data-tip="Détermine les parts de base :&#10;· Célibataire / Veuf sans enfants → 1 part&#10;· Marié / Pacsé → 2 parts&#10;· Veuf avec enfants → 2 parts de base">i</i>
+              <i class="tip tip-down" data-tip="Détermine les parts de base :&#10;· Célibataire / Divorcé / Séparé / Veuf sans enfants → 1 part&#10;· Marié / Pacsé → 2 parts&#10;· Veuf avec enfants → 2 parts de base">i</i>
             </label>
             <select id="situation">
               <option value="celibataire">Célibataire</option>
               <option value="marie-pacse">Marié / Pacsé</option>
+              <option value="divorce-separe">Divorcé(e) / Séparé(e)</option>
               <option value="veuf">Veuf(ve)</option>
             </select>
           </div>
@@ -276,6 +278,30 @@
             </select>
           </div>
 
+          <div class="form-row">
+            <label for="demiPartSupp">
+              Demi-part supplémentaire
+              <i class="tip tip-down" data-tip="+0,5 part fiscale (cases L, N, P, F, W, S, G de la 2042).&#10;Si coché, choisir le cas applicable ci-dessous : le plafond de l'avantage QF dépend du cas.">i</i>
+            </label>
+            <input type="checkbox" id="demiPartSupp" class="form-checkbox">
+          </div>
+
+          <div class="form-row" id="demiPartCasRow" style="display:none">
+            <label for="demiPartCas">
+              Cas applicable
+              <i class="tip tip-down" data-tip="Choisissez le cas correspondant à votre situation. Le plafond de l'avantage QF varie selon le cas.">i</i>
+            </label>
+            <select id="demiPartCas">
+              <option value="L">L — Vieux parent isolé : vous viviez seul·e et avez élevé un enfant ≥5 ans (plafond 1 079 €) — non cumulable avec case T</option>
+              <option value="N">N — Idem L mais sans avoir vécu seul·e (plafond 1 807 €)</option>
+              <option value="P">P — Invalidité ≥40 % ou carte invalidité/CMI (plafond 1 807 €)</option>
+              <option value="F">F — Conjoint invalide ou décédé en 2025 dans ces conditions (plafond 1 807 €)</option>
+              <option value="W">W — Carte du combattant ou pension militaire + plus de 74 ans (plafond 1 807 €)</option>
+              <option value="S">S — Marié/PACS, l'un des deux > 74 ans avec carte du combattant (plafond 1 807 €)</option>
+              <option value="G">G — Pension de veuve de guerre (déplafonné)</option>
+            </select>
+          </div>
+
           <div class="form-row computed">
             <label>→ Nombre de parts fiscales</label>
             <div class="computed-val" id="parts-affichage">1.00 parts</div>
@@ -288,6 +314,9 @@
       <div class="section-card">
         <h2>B — Revenus</h2>
         <div class="form-grid">
+
+          <div class="form-subsection"><h3>Traitements et salaires</h3></div>
+
           <div class="form-row">
             <label></label>
             <div class="col-header">Déclarant 1</div>
@@ -304,13 +333,62 @@
           </div>
 
           <div class="form-row">
+            <label for="allocChomage1">
+              Allocations chômage / préretraite
+              <i class="tip" data-tip="Cases 1AP/1BP de la déclaration.&#10;Indemnités de préretraite, allocations chômage (ARE), indemnités de cessation d'activité, etc.&#10;&#10;Soumis au barème comme les salaires : abattement 10% commun avec 1AJ/1BJ (mêmes plancher 509 € et plafond 14 555 € par déclarant).&#10;&#10;⚠ Non comptés dans le revenu d'activité pour le plafond PER.">i</i>
+            </label>
+            <input type="number" id="allocChomage1" value="0" min="0">
+            <input type="number" id="allocChomage2" value="0" min="0">
+          </div>
+
+          <div class="form-row">
+            <label for="fraisReels1">
+              Frais réels (option)
+              <i class="tip" data-tip="Cases 1AK/1BK de la déclaration.&#10;Si renseigné &gt; 0, REMPLACE l'abattement automatique 10 % pour ce déclarant.&#10;&#10;Frais professionnels effectivement supportés (kilométriques domicile-travail, repas, formation, etc.) à justifier sur demande.&#10;&#10;⚠ Option déclarant par déclarant : l'un peut choisir frais réels et l'autre garder l'abattement 10 %.">i</i>
+            </label>
+            <input type="number" id="fraisReels1" value="0" min="0">
+            <input type="number" id="fraisReels2" value="0" min="0">
+          </div>
+
+          <div class="form-row">
+            <label for="heuresSupExo1">
+              Heures sup. et RTT exonérées
+              <i class="tip" data-tip="Cases 1GH/1HH de la déclaration (art. 81 quater CGI).&#10;Heures supplémentaires, complémentaires et jours RTT monétisés exonérés.&#10;&#10;Plafond d'exonération : 7 500 € par an et par déclarant.&#10;Au-delà, le surplus est ajouté aux salaires et imposé au barème (avec abattement 10 %).&#10;&#10;⚠ La part exonérée entre dans le revenu fiscal de référence (RFR).">i</i>
+            </label>
+            <input type="number" id="heuresSupExo1" value="0" min="0">
+            <input type="number" id="heuresSupExo2" value="0" min="0">
+          </div>
+
+          <div class="form-subsection"><h3>Pensions, retraites, rentes</h3></div>
+
+          <div class="form-row">
             <label for="pen1">
               Pensions / retraites
-              <i class="tip" data-tip="Abattement 10% automatique :&#10;· minimum 454 € par pensionné&#10;· maximum 4 439 € pour l'ensemble du foyer">i</i>
+              <i class="tip" data-tip="Cases 1AS/1BS de la déclaration.&#10;Abattement 10% automatique :&#10;· minimum 454 € par pensionné&#10;· maximum 4 439 € pour l'ensemble du foyer">i</i>
             </label>
             <input type="number" id="pen1" value="0" min="0">
             <input type="number" id="pen2" value="0" min="0">
           </div>
+
+          <div class="form-row">
+            <label for="pensInvalidite1">
+              Pensions d'invalidité
+              <i class="tip" data-tip="Cases 1AZ/1BZ de la déclaration.&#10;Pensions d'invalidité servies par la Sécurité sociale, les caisses complémentaires, mutuelles, etc.&#10;&#10;Soumises au barème comme les pensions retraite : abattement 10% commun avec 1AS/1BS (mêmes plancher 454 € par pensionné et plafond 4 439 € pour le foyer).">i</i>
+            </label>
+            <input type="number" id="pensInvalidite1" value="0" min="0">
+            <input type="number" id="pensInvalidite2" value="0" min="0">
+          </div>
+
+          <div class="form-row">
+            <label for="pensAlimRecue1">
+              Pensions alimentaires perçues
+              <i class="tip" data-tip="Cases 1AO/1BO de la déclaration.&#10;Pensions reçues d'un ex-conjoint, d'un ascendant, ou par un enfant majeur déclarant en propre.&#10;&#10;Soumises au barème comme les pensions retraite : abattement 10% commun avec 1AS/1BS et 1AZ/1BZ (mêmes plancher 454 € par bénéficiaire et plafond 4 439 € pour le foyer).&#10;&#10;Symétrique des pensions versées (charges déductibles section C).">i</i>
+            </label>
+            <input type="number" id="pensAlimRecue1" value="0" min="0">
+            <input type="number" id="pensAlimRecue2" value="0" min="0">
+          </div>
+
+          <div class="form-subsection"><h3>Bénéfices non commerciaux (BNC)</h3></div>
 
           <div class="form-row">
             <label for="bncMicro1">
@@ -327,6 +405,8 @@
             <input type="number" id="bncReel2" value="0" min="0">
           </div>
 
+          <div class="form-subsection"><h3>Revenus fonciers et locatifs</h3></div>
+
           <div class="form-row">
             <label for="microFoncier">
               Revenus fonciers bruts (micro-foncier)
@@ -338,9 +418,9 @@
           <div class="form-row">
             <label for="foncierReel">
               Revenus fonciers nets (régime réel)
-              <i class="tip" data-tip="Bénéfice foncier net après déduction des charges réelles (intérêts, travaux, charges de copropriété…). Peut être négatif (déficit foncier).">i</i>
+              <i class="tip" data-tip="Cases 4BA (revenus) ou 4BC (déficit) de la déclaration.&#10;&#10;Bénéfice ou déficit foncier net après déduction des charges réelles (intérêts d'emprunt, travaux, charges de copropriété, taxe foncière, gestion…).&#10;&#10;Si NÉGATIF (déficit foncier) : imputation sur le revenu global plafonnée à 10 700 €/an. Le surplus est reportable 10 ans (non simulé ici).&#10;&#10;Pas de prélèvements sociaux dus en cas de déficit (résultat foncier négatif).&#10;&#10;⚠ Seule la part hors intérêts d'emprunt s'impute sur le RG ; les intérêts ne s'imputent que sur les revenus fonciers futurs (simplification : on ne distingue pas).">i</i>
             </label>
-            <input type="number" id="foncierReel" value="0" min="0">
+            <input type="number" id="foncierReel" value="0">
           </div>
 
           <div class="form-row">
@@ -360,35 +440,94 @@
           </div>
 
           <div class="form-row">
+            <label for="jeanbrunAmort">
+              Amortissement Jeanbrun (LF 2026)
+              <i class="tip" data-tip="Dispositif Jeanbrun / Statut du bailleur privé — créé par la LF 2026 (en vigueur 21/02/2026), applicable aux acquisitions jusqu'au 31/12/2028.&#10;&#10;Amortissement DÉDUCTIBLE des revenus fonciers (≠ réduction d'impôt comme Pinel). Taux annuel selon le type de loyer choisi (3,5 % / 4,5 % / 5,5 %), plafonné selon catégorie ci-dessous.&#10;&#10;Saisir le MONTANT D'AMORTISSEMENT (= prix d'achat × taux). La déduction s'applique automatiquement sur ton « Foncier réel » saisi plus haut, avec respect du plafond catégorie.&#10;&#10;⚠ Le foncier réel ci-dessus doit être saisi AVANT cet amortissement (sinon double déduction).">i</i>
+            </label>
+            <input type="number" id="jeanbrunAmort" value="0" min="0">
+          </div>
+
+          <div class="form-row">
+            <label for="jeanbrunCategorie">
+              ↳ Catégorie de loyer Jeanbrun
+              <i class="tip tip-down" data-tip="Détermine le plafond annuel d'amortissement déductible :&#10;· Intermédiaire (loyer plafonné selon zonage) : 8 000 €/an&#10;· Social : 10 000 €/an&#10;· Très social : 12 000 €/an">i</i>
+            </label>
+            <select id="jeanbrunCategorie">
+              <option value="intermediaire">Intermédiaire (plafond 8 000 €)</option>
+              <option value="social">Social (plafond 10 000 €)</option>
+              <option value="tres-social">Très social (plafond 12 000 €)</option>
+            </select>
+          </div>
+
+          <div class="form-subsection"><h3>Revenus de capitaux mobiliers (RCM)</h3></div>
+
+          <div class="form-row">
             <label for="dividendes">
               Dividendes bruts
-              <i class="tip" data-tip="Montant brut des dividendes perçus.&#10;· Si PFU : PS 18,6% + IR 12,8% = 30% + 1,4% CEHR éventuel&#10;· Si barème : abattement 40% puis intégration au revenu imposable&#10;Le choix se fait via l'option ci-dessous.">i</i>
+              <i class="tip" data-tip="Montant brut des dividendes perçus.&#10;· Si PFU : 12,8 % IR + 18,6 % PS = 31,4 % (LFSS 2026 : CSG portée de 9,2 % à 10,6 % via la CFA) + CEHR éventuelle&#10;· Si barème : abattement 40 % puis intégration au revenu imposable&#10;Le choix se fait via l'option ci-dessous.">i</i>
             </label>
             <input type="number" id="dividendes" value="0" min="0">
           </div>
 
           <div class="form-row">
+            <label for="interets">
+              Intérêts et placements à revenu fixe
+              <i class="tip" data-tip="Case 2TR de la déclaration.&#10;Intérêts de comptes à terme, livrets fiscalisés (CSL, livret B), obligations grand public, PEL > 12 ans, etc.&#10;&#10;· Si PFU : 12,8 % IR + 18,6 % PS = 31,4 % (LFSS 2026)&#10;· Si barème : intégration directe au revenu imposable (PAS d'abattement, contrairement aux dividendes) + PS 18,6 %&#10;&#10;Le choix se fait via l'option ci-dessous (commune avec dividendes/PV).&#10;&#10;⚠ Les produits d'assurance-vie de moins de 8 ans (versements après 27/09/2017, case 2ZZ) sont fiscalement équivalents aux intérêts : à saisir ici si PFU 12,8 %.">i</i>
+            </label>
+            <input type="number" id="interets" value="0" min="0">
+          </div>
+
+          <div class="form-row">
             <label for="pv">
               Plus-values mobilières nettes
-              <i class="tip" data-tip="Montant net des plus-values sur cessions de valeurs mobilières.&#10;· Si PFU : PS 18,6% + IR 12,8%&#10;· Si barème : intégration au revenu imposable">i</i>
+              <i class="tip" data-tip="Montant net des plus-values sur cessions de valeurs mobilières.&#10;· Si PFU : 12,8 % IR + 18,6 % PS = 31,4 % (LFSS 2026)&#10;· Si barème : intégration au revenu imposable + PS 18,6 %">i</i>
             </label>
             <input type="number" id="pv" value="0" min="0">
           </div>
 
           <div class="form-row">
-            <label for="autresRevenus">Autres revenus imposables</label>
-            <input type="number" id="autresRevenus" value="0" min="0">
+            <label for="avProduits75">
+              Produits AV &gt; 8 ans taxés à 7,5 %
+              <i class="tip" data-tip="Cases 2CH (versements avant 27/09/2017) ou 2VV (versements après 27/09/2017 dans la limite de 150 000 € de primes nettes versées par déclarant).&#10;&#10;Saisir uniquement les PRODUITS (intérêts/gains) du rachat, pas le capital initial.&#10;&#10;Abattement annuel commun avec la case 12,8 % (4 600 € single / 9 200 € couple), imputé en priorité sur le taux 12,8 % puis sur le 7,5 %.&#10;&#10;PS 17,2 % dus sur le brut (avant abattement).">i</i>
+            </label>
+            <input type="number" id="avProduits75" value="0" min="0">
+          </div>
+
+          <div class="form-row">
+            <label for="avProduits128">
+              Produits AV &gt; 8 ans taxés à 12,8 %
+              <i class="tip" data-tip="Case 2WW de la déclaration.&#10;Versements effectués après le 27/09/2017 au-delà de 150 000 € de primes nettes versées par déclarant.&#10;&#10;Saisir uniquement les PRODUITS (intérêts/gains) du rachat, pas le capital initial.&#10;&#10;Abattement annuel commun avec la case 7,5 % (4 600 € single / 9 200 € couple), imputé EN PRIORITÉ ici (taux le plus élevé) avant le solde sur le 7,5 % — règle BOI-RPPM-RCM-20-10-30 favorable au contribuable.&#10;&#10;PS 17,2 % dus sur le brut (avant abattement).">i</i>
+            </label>
+            <input type="number" id="avProduits128" value="0" min="0">
           </div>
 
           <div class="form-row">
             <label for="optionPFU">
-              Option dividendes / PV
-              <i class="tip" data-tip="PFU (flat tax) : taux unique 30% (12,8% IR + 17,2% PS). Simple et souvent avantageux.&#10;&#10;Barème progressif : dividendes et PV intégrés au revenu imposable avec abattement 40% sur dividendes. Peut être avantageux si TMI ≤ 11%.">i</i>
+              Option imposition mobilier (case 2OP)
+              <i class="tip" data-tip="Option GLOBALE qui s'applique à tous les revenus mobiliers du foyer : dividendes, intérêts (2TR) et plus-values.&#10;Cocher 2OP sur la déclaration officielle = choisir « Barème » ici.&#10;&#10;PFU (par défaut) : taux unique 31,4 % (12,8 % IR + 18,6 % PS, LFSS 2026 : CSG portée à 10,6 % via la Contribution Financière pour l'Autonomie). Simple, souvent avantageux à TMI ≥ 30 %.&#10;&#10;Barème progressif : dividendes (avec abattement 40 %), intérêts (sans abattement) et PV intégrés au revenu imposable + PS 18,6 % toujours dus. Peut être avantageux si TMI ≤ 11 % ou si vous avez beaucoup d'intérêts à faible montant.&#10;&#10;⚠ Le choix est global et irrévocable pour l'année.&#10;⚠ L'assurance-vie reste à 17,2 % de PS (exclusion explicite LFSS 2026).">i</i>
             </label>
             <select id="optionPFU">
-              <option value="pfu">PFU (flat tax 30%)</option>
-              <option value="bareme">Barème progressif</option>
+              <option value="pfu">PFU (flat tax 31,4 %)</option>
+              <option value="bareme">Barème progressif (option 2OP)</option>
             </select>
+          </div>
+
+          <div class="form-row">
+            <label for="pfnlVerse">
+              Prélèvement forfaitaire déjà versé (acompte 2CK)
+              <i class="tip" data-tip="Case 2CK de la déclaration.&#10;Acompte de 12,8 % prélevé à la source par votre banque sur dividendes et intérêts versés en France (sauf dispense pour les revenus modestes : RFR &lt; 50 000 € single / 75 000 € couple).&#10;&#10;⚠ Sans cette case, vous payez 2 fois : à la source ET sur l'IR final.&#10;&#10;Crédit d'impôt sans plafond niches : se déduit intégralement de l'impôt total. Si l'acompte versé dépasse l'impôt dû, le surplus est remboursé.&#10;&#10;Le montant est indiqué sur l'IFU envoyé par votre banque (case « PFNL »).">i</i>
+            </label>
+            <input type="number" id="pfnlVerse" value="0" min="0">
+          </div>
+
+          <div class="form-subsection"><h3>Autres</h3></div>
+
+          <div class="form-row">
+            <label for="autresRevenus">
+              Autres revenus imposables
+              <i class="tip" data-tip="Tout revenu imposable ne rentrant pas dans les catégories ci-dessus.&#10;Ajouté directement au revenu brut global, sans abattement.">i</i>
+            </label>
+            <input type="number" id="autresRevenus" value="0" min="0">
           </div>
         </div>
       </div>
@@ -401,10 +540,18 @@
           <div class="form-row">
             <label for="per">
               Versements PER (part déductible)
-              <i class="tip" data-tip="Plan d'Épargne Retraite — versements volontaires.&#10;&#10;⚙ Plafond calculé automatiquement :&#10;max(4 710 €, min(10% × revenus pro, 37 680 €))&#10;&#10;Le simulateur utilise les revenus N comme proxy des revenus N-1.&#10;Non déductibles pour les plus de 70 ans (LF 2026).">i</i>
+              <i class="tip" data-tip="Cases 6NS / 6NT de la déclaration.&#10;Plan d'Épargne Retraite — versements volontaires.&#10;Inclut aussi les anciens contrats PERP, PREFON, COREM, CGOS (mêmes règles fiscales, cases 6RS/6RT).&#10;&#10;⚙ Plafond calculé automatiquement :&#10;max(4 710 €, min(10 % × revenus pro, 37 680 €))&#10;&#10;Le simulateur utilise les revenus N comme proxy des revenus N-1.&#10;Non déductibles pour les plus de 70 ans (LF 2026).&#10;&#10;⚠ Le plafond auto ne tient pas compte du REPORT des plafonds non utilisés sur 3 ans. Si tu connais ton vrai plafond (sur ton avis d'imposition), saisis-le ci-dessous pour écraser le calcul automatique.">i</i>
             </label>
             <input type="number" id="per" value="0" min="0">
             <div class="per-cap-note">Plafond déductible : <strong id="per-cap-live">—</strong></div>
+          </div>
+
+          <div class="form-row">
+            <label for="perPlafondManuel">
+              ↳ Plafond PER manuel (option, cases 6PS/6PT)
+              <i class="tip tip-down" data-tip="Si tu connais ton plafond exact (lu sur ton avis d'imposition, section « Plafond épargne retraite »), saisis-le ici pour ÉCRASER le calcul automatique.&#10;&#10;Utile notamment quand tu as accumulé des plafonds non utilisés des 3 dernières années (reportables) — ton plafond réel est souvent supérieur au calcul auto.&#10;&#10;Laisser à 0 pour utiliser le calcul automatique.&#10;&#10;Le plafond saisi ici est appliqué au foyer entier (somme des cases 6PS + 6PT).">i</i>
+            </label>
+            <input type="number" id="perPlafondManuel" value="0" min="0">
           </div>
 
           <div class="form-row">
@@ -445,14 +592,26 @@
         <div class="form-grid">
 
           <div class="form-row">
+            <label for="dons7UD">
+              Dons « Coluche » (7UD, 75 %)
+              <i class="tip" data-tip="Case 7UD de la déclaration.&#10;Dons aux organismes d'aide aux personnes en difficulté (Restos du Cœur, Croix-Rouge, Secours Populaire, Banque alimentaire, etc.) ou aux victimes de violences domestiques.&#10;&#10;Réduction de 75 % sur les premiers 2 000 € (LF 2026).&#10;Au-delà de 2 000 €, l'excédent bascule automatiquement sur le régime 7UF (66 %).&#10;&#10;Hors plafond des niches fiscales.">i</i>
+            </label>
+            <input type="number" id="dons7UD" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+              <span class="niche-plaf">75 % ≤ 2 000 € · surplus → 7UF</span>
+            </div>
+          </div>
+
+          <div class="form-row">
             <label for="dons">
-              Dons aux œuvres
-              <i class="tip" data-tip="Réduction d'impôt (pas de remboursement).&#10;&#10;75% sur les 2 000 premiers € versés, puis 66% au-delà.&#10;&#10;Hors plafond des niches fiscales.">i</i>
+              Dons d'intérêt général (7UF, 66 %)
+              <i class="tip" data-tip="Case 7UF de la déclaration.&#10;Dons à organismes d'intérêt général : associations sportives, culturelles, environnementales, écoles, fondations reconnues d'utilité publique, etc.&#10;&#10;Réduction de 66 %, dans la limite de 20 % du revenu net imposable (le surplus est reportable 5 ans, non simulé).&#10;&#10;Hors plafond des niches fiscales.">i</i>
             </label>
             <input type="number" id="dons" value="0" min="0">
             <div class="niche-cell">
               <span class="niche-marker niche-hors">hors plafond niches</span>
-              <span class="niche-plaf">75 % ≤ 2 000 € · puis 66 %</span>
+              <span class="niche-plaf">66 % · plafond 20 % du RNI</span>
             </div>
           </div>
 
@@ -478,6 +637,74 @@
               <span class="niche-marker niche-10k">niche 10 000 €</span>
               <span class="niche-plaf">crédit 50 % · plaf. dép. 3 500 €/enfant</span>
             </div>
+          </div>
+
+          <div class="form-row">
+            <label for="cotSyndicales">
+              Cotisations syndicales (7AC/7AE/7AG)
+              <i class="tip" data-tip="Cases 7AC / 7AE / 7AG de la déclaration (art. 199 quater C CGI).&#10;Cotisations versées à un syndicat (CGT, CFDT, FO, CFTC, Sud, etc.) par les salariés, retraités et demandeurs d'emploi.&#10;&#10;Crédit d'impôt 66 % — REMBOURSABLE si supérieur à l'impôt dû.&#10;&#10;Plafond automatique : 1 % des salaires + allocations chômage + pensions retraite et invalidité.&#10;&#10;⚠ HORS plafond des niches fiscales — n'entre pas dans le 10 000 €.">i</i>
+            </label>
+            <input type="number" id="cotSyndicales" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+              <span class="niche-plaf">crédit 66 % · plafond 1 % des revenus</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="fraisScolCollege">
+              Enfants au collège (7EA, 61 €/enfant)
+              <i class="tip" data-tip="Case 7EA de la déclaration (art. 199 quater F CGI).&#10;Nombre d'enfants à charge scolarisés au collège (de la 6ᵉ à la 3ᵉ).&#10;&#10;Réduction forfaitaire de 61 € par enfant. Pas de plafond de revenus, pas de justificatif à fournir.&#10;&#10;⚠ HORS plafond des niches fiscales.">i</i>
+            </label>
+            <input type="number" id="fraisScolCollege" value="0" min="0" step="1">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+              <span class="niche-plaf">61 € forfait/enfant</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="fraisScolLycee">
+              Enfants au lycée (7EC, 153 €/enfant)
+              <i class="tip" data-tip="Case 7EC de la déclaration.&#10;Nombre d'enfants à charge scolarisés au lycée (général, technologique ou professionnel, y compris CAP).&#10;&#10;Réduction forfaitaire de 153 € par enfant. Pas de plafond de revenus.&#10;&#10;⚠ HORS plafond des niches fiscales.">i</i>
+            </label>
+            <input type="number" id="fraisScolLycee" value="0" min="0" step="1">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+              <span class="niche-plaf">153 € forfait/enfant</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="fraisScolSup">
+              Enfants en études supérieures (7EF, 183 €/enfant)
+              <i class="tip" data-tip="Case 7EF de la déclaration.&#10;Nombre d'enfants à charge poursuivant des études supérieures (université, BTS, IUT, écoles, classes préparatoires, etc.).&#10;&#10;Réduction forfaitaire de 183 € par enfant. L'enfant doit rester rattaché au foyer fiscal des parents.&#10;&#10;⚠ HORS plafond des niches fiscales.">i</i>
+            </label>
+            <input type="number" id="fraisScolSup" value="0" min="0" step="1">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+              <span class="niche-plaf">183 € forfait/enfant</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="ehpadFrais">
+              Frais EHPAD ascendants (7CD)
+              <i class="tip" data-tip="Cases 7CD / 7CE / 7CF de la déclaration (art. 199 quindecies CGI).&#10;Frais d'hébergement et de dépendance facturés par un EHPAD ou un établissement assimilé pour un ou plusieurs ascendants (parents, grands-parents) que vous prenez en charge.&#10;&#10;Réduction d'impôt de 25 % des dépenses, plafonnées à 10 000 € PAR personne hébergée.&#10;&#10;Si plusieurs ascendants en EHPAD : indiquer le nombre de personnes hébergées ci-dessous (multiplie le plafond).&#10;&#10;⚠ HORS plafond des niches fiscales.&#10;⚠ Non cumulable avec la déduction des pensions alimentaires versées au même ascendant.">i</i>
+            </label>
+            <input type="number" id="ehpadFrais" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+              <span class="niche-plaf">25 % · plaf. 10 000 €/personne</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="ehpadNbPers">
+              ↳ dont nombre d'ascendants hébergés
+              <i class="tip tip-down" data-tip="Nombre d'ascendants hébergés en EHPAD (1 par défaut).&#10;Le plafond de 10 000 € est multiplié par ce nombre.&#10;Ex : 2 parents en EHPAD → plafond 20 000 € de dépenses retenues.">i</i>
+            </label>
+            <input type="number" id="ehpadNbPers" value="1" min="1" step="1">
           </div>
 
           <div class="form-row">
@@ -517,12 +744,80 @@
 
           <div class="form-row">
             <label for="fcpi">
-              Souscription FCPI / FIP
-              <i class="tip" data-tip="Réduction d'impôt (fonds PME innovantes ou régionales).&#10;&#10;Saisir le montant de la réduction obtenue (pas le montant souscrit).&#10;Plafond global niches : 10 000 €.">i</i>
+              FCPI / FIP classique (extinction)
+              <i class="tip" data-tip="Cases 7GQ / 7FQ de la déclaration.&#10;Fonds Communs de Placement dans l'Innovation (FCPI) ou Fonds d'Investissement de Proximité (FIP) métropolitain.&#10;&#10;⚠ DISPOSITIF QUASI ÉTEINT pour les souscriptions 2026 :&#10;· FIP classique métropolitain : supprimé au 01/01/2026 (LF 2025)&#10;· FCPI classique : supprimé au 21/02/2026 (LF 2026)&#10;&#10;Ce champ reste utile pour :&#10;· Souscription FCPI classique faite entre le 01/01/2026 et le 20/02/2026 (taux 25 % boost transitoire)&#10;· Reports d'années antérieures non encore consommés&#10;&#10;Pour les nouvelles souscriptions 2026, utiliser plutôt :&#10;· FCPI JEI (30 %)&#10;· FIP Corse / Outre-mer (30 %)&#10;· IR-PME / Madelin (25 %)&#10;&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue (pas le montant souscrit).&#10;Plafond global niches : 10 000 €.">i</i>
             </label>
             <input type="number" id="fcpi" value="0" min="0">
             <div class="niche-cell">
               <span class="niche-marker niche-10k">niche 10 000 €</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="fcpiJei">
+              FCPI JEI — Jeunes Entreprises Innovantes (30 %)
+              <i class="tip" data-tip="Dispositif créé par la LF 2026 pour remplacer le FCPI classique supprimé.&#10;Les FCPI investissant dans des Jeunes Entreprises Innovantes (JEI) bénéficient d'un taux MAJORÉ à 30 %.&#10;&#10;Applicable aux souscriptions à partir du 21/02/2026 (donc concerne tes versements 2026 à projeter ici).&#10;&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue (= souscription × 30 % dans la limite de 12 000 € single / 24 000 € couple).&#10;Plafond global niches : 10 000 €.">i</i>
+            </label>
+            <input type="number" id="fcpiJei" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-10k">niche 10 000 €</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="fipCorse">
+              FIP Corse / Outre-mer (30 %)
+              <i class="tip" data-tip="Cases 7XS / 7TX de la déclaration.&#10;Fonds d'Investissement de Proximité dédiés à la Corse ou à l'Outre-mer.&#10;Taux MAJORÉ à 30 % (vs 18 % pour le FIP classique).&#10;&#10;Plafond souscription : 12 000 € (single) / 24 000 € (couple).&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.&#10;Plafond global niches : 10 000 €.">i</i>
+            </label>
+            <input type="number" id="fipCorse" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-10k">niche 10 000 €</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="gfi">
+              GFI — Groupement Forestier d'Investissement
+              <i class="tip" data-tip="Cases 7UN / 7UP de la déclaration.&#10;Souscription au capital de Groupements Forestiers d'Investissement (GFI), permettant de financer la gestion durable des forêts françaises.&#10;Réduction de 18 % à 25 % selon zone.&#10;&#10;Plafond souscription : 50 000 € (single) / 100 000 € (couple).&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.&#10;Plafond global niches : 10 000 €.">i</i>
+            </label>
+            <input type="number" id="gfi" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-10k">niche 10 000 €</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="irPme">
+              IR-PME (Madelin) — souscription capital PME (25 %)
+              <i class="tip" data-tip="Cases 7CF / 7CL / 7CM de la déclaration (art. 199 terdecies-0 A CGI).&#10;Souscription DIRECTE au capital de PME non cotées (≠ via fonds FCPI/FIP).&#10;&#10;Taux 25 % (boost 2024-2025) sur versements plafonnés à 50 000 € (single) / 100 000 € (couple).&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.&#10;Plafond global niches : 10 000 €.">i</i>
+            </label>
+            <input type="number" id="irPme" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-10k">niche 10 000 €</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="malraux">
+              Loi Malraux — restauration en SPR
+              <i class="tip" data-tip="Cases 7NX / 7NY de la déclaration (art. 199 tervicies CGI).&#10;Réduction d'impôt pour travaux de restauration sur immeubles situés en :&#10;· Site Patrimonial Remarquable (SPR) avec PSMV approuvé : taux 30 %&#10;· SPR avec PSMV non approuvé / QAD : taux 22 %&#10;&#10;Base : montant des travaux, plafonné à 400 000 € étalé sur 4 ans (100 000 € moyenne/an).&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.&#10;&#10;⚠ HORS plafond des niches fiscales — un atout majeur de ce dispositif.">i</i>
+            </label>
+            <input type="number" id="malraux" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+              <span class="niche-plaf">22 % ou 30 % · base ≤ 400 k€ / 4 ans</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="locAvantages">
+              Loc'Avantages — location à loyer modéré
+              <i class="tip" data-tip="Cases 7QO / 7QP / 7QR de la déclaration (art. 199 tricies CGI).&#10;Ex-dispositif Cosse « Louer abordable », réformé en 2022.&#10;Réduction d'impôt pour location d'un logement à un loyer décoté par rapport au marché :&#10;&#10;· Loc 1 (décote 15 %) : taux 15 %&#10;· Loc 2 (décote 30 %) : taux 35 %&#10;· Loc 3 (intermédiation locative IML, décote 45 %) : taux 65 %&#10;&#10;Plafond annuel de dépenses retenues : 10 000 €.&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.&#10;Plafond global niches : 10 000 €.">i</i>
+            </label>
+            <input type="number" id="locAvantages" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-10k">niche 10 000 €</span>
+              <span class="niche-plaf">15 / 35 / 65 % selon décote loyer</span>
             </div>
           </div>
 
@@ -602,16 +897,17 @@
   <div class="calc-section">
     <h2>Étape 1 — Revenu brut global</h2>
     <table class="calc-table">
-      <tr><td class="td-label"><span class="td-label-inner">Salaires après abattement 10 % <i class="tip" data-tip="Formule par déclarant :&#10;si salaire > 0 : salaire − max(509, min(salaire × 10%, 14 555))&#10;si salaire = 0 : 0&#10;&#10;Les deux déclarants sont additionnés.">i</i></span></td><td class="td-val" id="cd-sal-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">Pensions après abattement 10 % <i class="tip" data-tip="Formule foyer :&#10;(pen1 + pen2) − min(4 439, max(454 si pen1>0, pen1×10%) + max(454 si pen2>0, pen2×10%))&#10;&#10;Plafond de 4 439 € s'applique au foyer entier.">i</i></span></td><td class="td-val" id="cd-pen-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Salaires + alloc. chômage + heures sup imposables, après abat. 10 % ou frais réels <i class="tip" data-tip="Pool des cases 1AJ/1BJ (salaires) + 1AP/1BP (chômage/préretraite) + 1GH/1HH partie au-delà du plafond 7 500 € (heures sup imposables).&#10;&#10;Par déclarant :&#10;· Si frais réels (1AK/1BK) > 0 : pool − frais réels&#10;· Sinon : pool − max(509, min(pool × 10%, 14 555))">i</i></span></td><td class="td-val" id="cd-sal-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Pensions + invalidité + alim. perçues, après abattement 10 % <i class="tip" data-tip="Pool des cases 1AS/1BS (retraite) + 1AZ/1BZ (invalidité) + 1AO/1BO (pensions alim. perçues).&#10;&#10;Plafond foyer 4 439 €, plancher 454 €/bénéficiaire.">i</i></span></td><td class="td-val" id="cd-pen-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">BNC micro après abattement 34 % <i class="tip" data-tip="Formule par déclarant :&#10;si CA > 0 : CA − max(305, CA × 34%)&#10;si CA = 0 : 0">i</i></span></td><td class="td-val" id="cd-bnc-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">BNC réel</span></td><td class="td-val" id="cd-bncr-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Micro-foncier après abat. 30 % <i class="tip" data-tip="Formule : loyers bruts × (1 − 30%)&#10;&#10;Applicable si loyers bruts ≤ 15 000 €/an.">i</i></span></td><td class="td-val" id="cd-mfon-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">Foncier réel</span></td><td class="td-val" id="cd-fon-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Foncier réel (après amort. Jeanbrun et plafond déficit) <i class="tip" data-tip="= input foncier réel − amortissement Jeanbrun retenu (selon catégorie)&#10;&#10;Si négatif (déficit) : plafonné à -10 700 € (art. 156-I-3° CGI).&#10;Surplus reportable 10 ans (non simulé).">i</i></span></td><td class="td-val" id="cd-fon-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Meublé classé après abat. 50 % <i class="tip" data-tip="Formule : CA × (1 − 50%)&#10;Plafond micro-BIC classé : 77 700 €/an.">i</i></span></td><td class="td-val" id="cd-mbc-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Meublé non classé après abat. 30 % <i class="tip" data-tip="Formule : CA × (1 − 30%)&#10;Plafond micro-BIC non classé : 15 000 €/an.">i</i></span></td><td class="td-val" id="cd-mbnc-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">Dividendes intégrés au barème <i class="tip" data-tip="Si option barème : dividendes × (1 − 40%)&#10;Si option PFU : 0 (traités séparément en étape 6)">i</i></span></td><td class="td-val" id="cd-div-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">Plus-values intégrées au barème <i class="tip" data-tip="Si option barème : PV intégrées sans abattement&#10;Si option PFU : 0 (traitées séparément en étape 6)">i</i></span></td><td class="td-val" id="cd-pv-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Dividendes intégrés au barème <i class="tip" data-tip="Si option barème (2OP) : dividendes × (1 − 40%)&#10;Si option PFU : 0 (traités séparément en étape 6)">i</i></span></td><td class="td-val" id="cd-div-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Intérêts (2TR) intégrés au barème <i class="tip" data-tip="Si option barème (2OP) : intérêts intégrés SANS abattement (≠ dividendes)&#10;Si option PFU : 0 (traités séparément en étape 6)">i</i></span></td><td class="td-val" id="cd-int-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Plus-values intégrées au barème <i class="tip" data-tip="Si option barème (2OP) : PV intégrées sans abattement&#10;Si option PFU : 0 (traitées séparément en étape 6)">i</i></span></td><td class="td-val" id="cd-pv-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Autres revenus</span></td><td class="td-val" id="cd-autrev-val">—</td></tr>
       <tr class="total-row"><td class="td-label"><span class="td-label-inner">▶ REVENU BRUT GLOBAL</span></td><td class="td-val" id="cd-rbg-val">—</td></tr>
     </table>
@@ -659,9 +955,19 @@
   </div>
 
   <div class="calc-section">
-    <h2>Étape 6 — IR sur dividendes et plus-values (PFU)</h2>
+    <h2>Étape 6 — IR sur revenus mobiliers (PFU)</h2>
     <table class="calc-table">
-      <tr><td class="td-label"><span class="td-label-inner">IR sur dividendes / PV <i class="tip" data-tip="Si option PFU :&#10;(dividendes + PV) × 12,8%&#10;&#10;Si option barème : 0 — déjà intégré dans le revenu brut global (étape 1).&#10;&#10;Les prélèvements sociaux (18,6%) sont calculés séparément en étape 7.">i</i></span></td><td class="td-val" id="cd-irmob-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">IR mobilier (12,8 %) — dividendes + intérêts + PV <i class="tip" data-tip="Si option PFU :&#10;(dividendes + intérêts 2TR + PV) × 12,8%&#10;&#10;Si option barème (2OP) : 0 — déjà intégré dans le RBG (étape 1).&#10;&#10;Les prélèvements sociaux (18,6 %) sont calculés séparément en étape 7.">i</i></span></td><td class="td-val" id="cd-irmob-val">—</td></tr>
+    </table>
+  </div>
+
+  <div class="calc-section">
+    <h2>Étape 6bis — IR sur produits d'assurance-vie &gt; 8 ans</h2>
+    <table class="calc-table">
+      <tr><td class="td-label"><span class="td-label-inner">Produits AV bruts (somme 7,5 % + 12,8 %) <i class="tip" data-tip="Total des cases 2VV/2CH (taxables 7,5 %) et 2WW (taxables 12,8 %).">i</i></span></td><td class="td-val" id="cd-avbrut-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">− Abattement annuel utilisé <i class="tip" data-tip="Plafond : 4 600 € (single) / 9 200 € (couple).&#10;Imputé en priorité sur le 12,8 % puis sur le 7,5 % (BOI-RPPM-RCM-20-10-30).">i</i></span></td><td class="td-val" id="cd-avabat-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">= Produits imposables</span></td><td class="td-val" id="cd-avimpos-val">—</td></tr>
+      <tr class="total-row"><td class="td-label"><span class="td-label-inner">▶ IR sur produits AV (7,5 % et 12,8 %)</span></td><td class="td-val" id="cd-irav-val">—</td></tr>
     </table>
   </div>
 
@@ -669,7 +975,8 @@
     <h2>Étape 7 — Prélèvements sociaux</h2>
     <table class="calc-table">
       <tr><td class="td-label"><span class="td-label-inner">PS mobilier — dividendes + PV (18,6 %) <i class="tip" data-tip="Formule : (dividendes + PV) × 18,6%&#10;&#10;Composition : CSG 10,6% + CRDS 0,5% + prélèvement solidarité 7,5%&#10;&#10;S'applique que l'option soit PFU ou barème.">i</i></span></td><td class="td-val" id="cd-psmob-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">PS foncier — revenus fonciers nets (17,2 %) <i class="tip" data-tip="Formule : revenus fonciers nets × 17,2%&#10;&#10;Revenus fonciers nets = micro-foncier×70% + foncier réel + meublé classé×50% + meublé non classé×70%&#10;&#10;Composition : CSG 9,2% + CRDS 0,5% + prélèvement solidarité 7,5%">i</i></span></td><td class="td-val" id="cd-psfon-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS foncier — revenus fonciers nets (17,2 %) <i class="tip" data-tip="Formule : max(0, revenus fonciers nets) × 17,2 %&#10;&#10;Revenus fonciers nets = micro-foncier×70% + foncier réel + meublé classé×50% + meublé non classé×70%&#10;&#10;Pas de PS sur résultat foncier négatif (déficit).">i</i></span></td><td class="td-val" id="cd-psfon-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS sur produits AV (17,2 %) <i class="tip" data-tip="Formule : (produits AV 7,5 % + 12,8 %) × 17,2 %&#10;&#10;Calculés sur le BRUT, sans abattement annuel (l'abattement ne porte que sur l'IR).&#10;Taux 17,2 % maintenu pour l'AV (exclusion explicite LFSS 2026).">i</i></span></td><td class="td-val" id="cd-psav-val">—</td></tr>
       <tr class="total-row"><td class="td-label"><span class="td-label-inner">▶ TOTAL PRÉLÈVEMENTS SOCIAUX</span></td><td class="td-val" id="cd-tps-val">—</td></tr>
     </table>
   </div>
@@ -677,11 +984,19 @@
   <div class="calc-section">
     <h2>Étape 8 — Réductions d'impôt</h2>
     <table class="calc-table">
-      <tr class="hors-niche"><td class="td-label"><span class="td-label-inner">Dons (75 % / 66 %) — HORS NICHE <i class="tip" data-tip="Formule : min(dons, 2 000) × 75% + max(0, dons − 2 000) × 66%&#10;&#10;Hors plafond des niches fiscales : s'impute sans limite de ce côté.">i</i></span></td><td class="td-val" id="cd-rdons-val">—</td></tr>
+      <tr class="hors-niche"><td class="td-label"><span class="td-label-inner">Dons 7UD/7UF (75 % puis 66 %) — HORS NICHE <i class="tip" data-tip="7UD : 75 % jusqu'à 2 000 €. Surplus bascule sur 7UF.&#10;7UF : 66 % (hors surplus 7UD).&#10;Total plafonné à 20 % du RNI, priorité au 75 %.">i</i></span></td><td class="td-val" id="cd-rdons-val">—</td></tr>
+      <tr class="hors-niche"><td class="td-label"><span class="td-label-inner">Frais de scolarité 7EA/7EC/7EF — HORS NICHE <i class="tip" data-tip="61 € collège + 153 € lycée + 183 € sup, par enfant à charge.">i</i></span></td><td class="td-val" id="cd-rscol-val">—</td></tr>
+      <tr class="hors-niche"><td class="td-label"><span class="td-label-inner">EHPAD ascendants 7CD (25 %) — HORS NICHE <i class="tip" data-tip="25 % des frais, plafond 10 000 € de dépenses par personne hébergée.">i</i></span></td><td class="td-val" id="cd-rehpad-val">—</td></tr>
+      <tr class="hors-niche"><td class="td-label"><span class="td-label-inner">Loi Malraux 7NX/7NY (22/30 %) — HORS NICHE</span></td><td class="td-val" id="cd-rmalraux-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Pinel / Denormandie — NICHE 10k</span></td><td class="td-val" id="cd-rpinel-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">Girardin plein droit — NICHE 18k (44 %) <i class="tip" data-tip="Montant saisi directement (attestation fiscale).&#10;&#10;Pour le calcul du plafonnement des niches :&#10;seuls 44% de ce montant sont comptabilisés&#10;(rétrocession 56% à l'entreprise locale).">i</i></span></td><td class="td-val" id="cd-rgpd-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">Girardin avec agrément — NICHE 18k (34 %) <i class="tip" data-tip="Montant saisi directement (attestation fiscale).&#10;&#10;Pour le calcul du plafonnement des niches :&#10;seuls 34% de ce montant sont comptabilisés&#10;(rétrocession 66% à l'entreprise locale).">i</i></span></td><td class="td-val" id="cd-rgag-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">FCPI / FIP — NICHE 10k</span></td><td class="td-val" id="cd-rfcpi-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Girardin plein droit — NICHE 18k (44 %) <i class="tip" data-tip="Seuls 44 % du montant sont comptabilisés dans le plafond niches (rétrocession 56 % à l'entreprise locale).">i</i></span></td><td class="td-val" id="cd-rgpd-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Girardin avec agrément — NICHE 18k (34 %) <i class="tip" data-tip="Seuls 34 % du montant sont comptabilisés dans le plafond niches (rétrocession 66 %).">i</i></span></td><td class="td-val" id="cd-rgag-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">FCPI / FIP classique — NICHE 10k</span></td><td class="td-val" id="cd-rfcpi-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">FCPI JEI (LF 2026, 30 %) — NICHE 10k</span></td><td class="td-val" id="cd-rfcpijei-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">FIP Corse / Outre-mer (30 %) — NICHE 10k</span></td><td class="td-val" id="cd-rfipcorse-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">GFI (Groupements forestiers) — NICHE 10k</span></td><td class="td-val" id="cd-rgfi-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">IR-PME / Madelin (25 %) — NICHE 10k</span></td><td class="td-val" id="cd-rirpme-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Loc'Avantages — NICHE 10k</span></td><td class="td-val" id="cd-rlocav-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Sofica — NICHE 18k</span></td><td class="td-val" id="cd-rsof-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Autres réductions — NICHE 10k</span></td><td class="td-val" id="cd-raut-val">—</td></tr>
       <tr class="total-row"><td class="td-label"><span class="td-label-inner">▶ TOTAL RÉDUCTIONS <i class="tip" data-tip="Somme de toutes les réductions.&#10;L'application effective est plafonnée à l'impôt (étape 11) et aux niches (étape 10).">i</i></span></td><td class="td-val" id="cd-tred-val">—</td></tr>
@@ -691,10 +1006,11 @@
   <div class="calc-section">
     <h2>Étape 9 — Crédits d'impôt</h2>
     <table class="calc-table">
-      <tr><td class="td-label"><span class="td-label-inner">Crédit emploi à domicile (50 %) — NICHE 10k <i class="tip" data-tip="Formule : min(dépenses, 12 000) × 50%&#10;&#10;Crédit remboursable : si supérieur à l'impôt, le surplus est remboursé.">i</i></span></td><td class="td-val" id="cd-cdom-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">Crédit garde enfants (50 %) — NICHE 10k <i class="tip" data-tip="Formule : min(dépenses, 3 500) × 50%&#10;Plafond de 3 500 € par enfant de moins de 6 ans.&#10;&#10;Crédit remboursable.">i</i></span></td><td class="td-val" id="cd-cgrd-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Crédit emploi à domicile (50 %) — NICHE 10k <i class="tip" data-tip="min(dépenses, 12 000) × 50%. Crédit remboursable.">i</i></span></td><td class="td-val" id="cd-cdom-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Crédit garde enfants (50 %) — NICHE 10k <i class="tip" data-tip="min(dépenses, 3 500/enfant) × 50%. Crédit remboursable.">i</i></span></td><td class="td-val" id="cd-cgrd-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Autres crédits — NICHE 10k</span></td><td class="td-val" id="cd-caut-val">—</td></tr>
-      <tr class="total-row"><td class="td-label"><span class="td-label-inner">▶ TOTAL CRÉDITS</span></td><td class="td-val" id="cd-tcrd-val">—</td></tr>
+      <tr class="hors-niche"><td class="td-label"><span class="td-label-inner">Cotisations syndicales 7AC (66 %) — HORS NICHE <i class="tip" data-tip="Crédit 66 % plafonné à 1 % des revenus d'activité (sal + chômage + pensions). Remboursable.">i</i></span></td><td class="td-val" id="cd-csynd-val">—</td></tr>
+      <tr class="total-row"><td class="td-label"><span class="td-label-inner">▶ TOTAL CRÉDITS (hors plafond niches inclus)</span></td><td class="td-val" id="cd-tcrd-val">—</td></tr>
     </table>
   </div>
 
@@ -711,12 +1027,15 @@
     <h2>Étape 11 — Impôt net final</h2>
     <table class="calc-table">
       <tr><td class="td-label"><span class="td-label-inner">Impôt après décote</span></td><td class="td-val" id="cd-apd-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">+ IR mobilier (PFU)</span></td><td class="td-val" id="cd-irm2-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">− Réductions appliquées <i class="tip" data-tip="Les réductions sont plafonnées :&#10;1. À l'impôt (pas de remboursement pour les réductions)&#10;2. Aux niches : si dépassement, les réductions dans les niches sont réduites proportionnellement&#10;&#10;Les dons (hors niches) sont préservés en priorité.">i</i></span></td><td class="td-val" id="cd-rapp-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">− Crédits appliqués <i class="tip" data-tip="Les crédits sont aussi soumis au plafonnement des niches.&#10;Contrairement aux réductions, les crédits peuvent être remboursés s'ils dépassent l'impôt.">i</i></span></td><td class="td-val" id="cd-capp-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">+ IR mobilier (PFU sur dividendes/intérêts/PV)</span></td><td class="td-val" id="cd-irm2-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">+ IR sur AV &gt; 8 ans (7,5 % et 12,8 %)</span></td><td class="td-val" id="cd-irav2-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">− Réductions appliquées <i class="tip" data-tip="Plafonnées à l'impôt (pas de remboursement) et aux niches (réduction proportionnelle si dépassement).&#10;Les réductions HORS NICHE (dons, scolarité, EHPAD, Malraux) sont préservées en priorité.">i</i></span></td><td class="td-val" id="cd-rapp-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">− Crédits appliqués (niches) <i class="tip" data-tip="Crédits dans les niches (emploi domicile, garde enfants, autres). Remboursables si supérieurs à l'impôt.">i</i></span></td><td class="td-val" id="cd-capp-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">− Crédit cotisations syndicales (hors niches)</span></td><td class="td-val" id="cd-csynd2-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">+ Prélèvements sociaux</span></td><td class="td-val" id="cd-ps2-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">− PFNL déjà versé (acompte 2CK) <i class="tip" data-tip="Acompte 12,8 % prélevé à la source par la banque sur dividendes/intérêts. Crédit hors plafond niches, remboursable.">i</i></span></td><td class="td-val" id="cd-pfnl2-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">+ CEHR <i class="tip" data-tip="Contribution exceptionnelle sur les hauts revenus (art. 223 sexies CGI).&#10;Assiette : revenu fiscal de référence.&#10;Célibataire : 3% de 250k à 500k€ · 4% au-delà&#10;Couple : 3% de 500k à 1M€ · 4% au-delà">i</i></span></td><td class="td-val" id="cd-cehr2-val">—</td></tr>
-      <tr class="grand-total"><td class="td-label"><span class="td-label-inner">▶ IMPÔT NET FINAL <i class="tip" data-tip="Formule :&#10;max(0, impôt après décote + IR PFU − réductions appliquées) − crédits appliqués + prélèvements sociaux + CEHR&#10;&#10;Peut être négatif si les crédits dépassent l'impôt (remboursement).">i</i></span></td><td class="td-val" id="cd-inet-val">—</td></tr>
+      <tr class="grand-total"><td class="td-label"><span class="td-label-inner">▶ IMPÔT NET FINAL <i class="tip" data-tip="Formule complète :&#10;max(0, impôt après décote + IR PFU + IR AV − réductions appliquées) − crédits niches − crédit syndic + PS − PFNL versé + CEHR&#10;&#10;Peut être négatif si les crédits + PFNL dépassent l'impôt (remboursement).">i</i></span></td><td class="td-val" id="cd-inet-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Taux moyen d'imposition</span></td><td class="td-val" id="cd-tm-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Taux marginal (TMI)</span></td><td class="td-val" id="cd-tmi-val">—</td></tr>
     </table>
@@ -744,11 +1063,13 @@
   <div class="param-card">
     <h2>Quotient familial</h2>
     <table class="param-table">
-      <tr><td class="pt-label">Plafond par demi-part supplémentaire</td><td class="pt-val">1 807 €</td></tr>
+      <tr><td class="pt-label">Plafond par demi-part supplémentaire (standard)</td><td class="pt-val">1 807 €</td></tr>
+      <tr><td class="pt-label">Plafond demi-part case L (vieux parent isolé)</td><td class="pt-val">1 079 €</td></tr>
+      <tr><td class="pt-label">Plafond demi-part case G (veuve de guerre)</td><td class="pt-val">déplafonné</td></tr>
       <tr><td class="pt-label">Parent isolé — 1er enfant</td><td class="pt-val">4 262 €</td></tr>
       <tr><td class="pt-label">Parent isolé — demi-part 1er enfant</td><td class="pt-val">2 131 €</td></tr>
       <tr><td class="pt-label">Veuf avec enfants — part supp.</td><td class="pt-val">2 011 €</td></tr>
-      <tr><td colspan="2" class="pt-source">Source : BOI-IR-LIQ-20-20-20 du 07/04/2026</td></tr>
+      <tr><td colspan="2" class="pt-source">Source : BOI-IR-LIQ-20-20-20 du 07/04/2026 — art. 197 I 2 al. 2 CGI (case L)</td></tr>
     </table>
   </div>
 
@@ -765,15 +1086,17 @@
   </div>
 
   <div class="param-card">
-    <h2>Abattements</h2>
+    <h2>Abattements et exonérations</h2>
     <table class="param-table">
-      <tr><td class="pt-label">Salaires — taux / min / max</td><td class="pt-val">10 % · 509 € · 14 555 €</td></tr>
-      <tr><td class="pt-label">Pensions — taux / min / max foyer</td><td class="pt-val">10 % · 454 € · 4 439 €</td></tr>
+      <tr><td class="pt-label">Salaires + alloc. chômage — taux / min / max par déclarant</td><td class="pt-val">10 % · 509 € · 14 555 €</td></tr>
+      <tr><td class="pt-label">Pensions retraite + invalidité + alim. perçues — taux / min / max foyer</td><td class="pt-val">10 % · 454 € · 4 439 €</td></tr>
+      <tr><td class="pt-label">Heures sup. et RTT exonérées — plafond annuel/déclarant</td><td class="pt-val">7 500 €</td></tr>
       <tr><td class="pt-label">Micro-BNC — taux / min</td><td class="pt-val">34 % · 305 €</td></tr>
       <tr><td class="pt-label">Micro-foncier</td><td class="pt-val">30 %</td></tr>
       <tr><td class="pt-label">Meublé classé micro-BIC</td><td class="pt-val">50 %</td></tr>
       <tr><td class="pt-label">Meublé non classé micro-BIC</td><td class="pt-val">30 %</td></tr>
-      <tr><td class="pt-label">Dividendes (si option barème)</td><td class="pt-val">40 %</td></tr>
+      <tr><td class="pt-label">Dividendes (si option barème 2OP)</td><td class="pt-val">40 %</td></tr>
+      <tr><td class="pt-label">AV &gt; 8 ans — abattement annuel single / couple</td><td class="pt-val">4 600 € / 9 200 €</td></tr>
     </table>
   </div>
 
@@ -811,14 +1134,28 @@
   </div>
 
   <div class="param-card">
-    <h2>Réductions et crédits spécifiques</h2>
+    <h2>Réductions et crédits — paramètres</h2>
     <table class="param-table">
-      <tr><td class="pt-label">Dons — taux 1er palier (≤ 2 000 €)</td><td class="pt-val">75 %</td></tr>
-      <tr><td class="pt-label">Dons — taux normal</td><td class="pt-val">66 %</td></tr>
+      <tr><td class="pt-label">Dons 7UD (Coluche) — taux 1ᵉʳ palier (≤ 2 000 €)</td><td class="pt-val">75 %</td></tr>
+      <tr><td class="pt-label">Dons 7UF (intérêt général) — taux</td><td class="pt-val">66 %</td></tr>
       <tr><td class="pt-label">Dons — plafond de la base</td><td class="pt-val">20 % du RNI</td></tr>
+      <tr><td class="pt-label">Cotisations syndicales 7AC — taux / plafond</td><td class="pt-val">66 % · 1 % des revenus</td></tr>
+      <tr><td class="pt-label">Frais scolarité — collège / lycée / supérieur (par enfant)</td><td class="pt-val">61 € / 153 € / 183 €</td></tr>
+      <tr><td class="pt-label">Frais EHPAD ascendants 7CD — taux / plafond par personne</td><td class="pt-val">25 % · 10 000 €</td></tr>
       <tr><td class="pt-label">Emploi à domicile — taux / plafond dépenses</td><td class="pt-val">50 % · 12 000 €</td></tr>
-      <tr><td class="pt-label">Garde enfants — taux / plafond par enfant</td><td class="pt-val">50 % · 3 500 €</td></tr>
-      <tr><td colspan="2" class="pt-source">Source : Art. 200 CGI (dons) — Art. 199 sexdecies CGI (domicile) — LF 2026, art. 28</td></tr>
+      <tr><td class="pt-label">Garde enfants &lt; 6 ans — taux / plafond par enfant</td><td class="pt-val">50 % · 3 500 €</td></tr>
+      <tr><td colspan="2" class="pt-source">Sources : art. 200 CGI (dons) — art. 199 quater C/F CGI (syndicales/scolarité) — art. 199 quindecies CGI (EHPAD) — art. 199 sexdecies CGI (domicile) — LF 2026, art. 28</td></tr>
+    </table>
+  </div>
+
+  <div class="param-card">
+    <h2>Foncier — déficit et amortissement Jeanbrun</h2>
+    <table class="param-table">
+      <tr><td class="pt-label">Déficit foncier — plafond imputable sur revenu global</td><td class="pt-val">10 700 €/an</td></tr>
+      <tr><td class="pt-label">Jeanbrun — loyer intermédiaire (taux / plafond)</td><td class="pt-val">3,5 % · 8 000 €/an</td></tr>
+      <tr><td class="pt-label">Jeanbrun — loyer social (taux / plafond)</td><td class="pt-val">4,5 % · 10 000 €/an</td></tr>
+      <tr><td class="pt-label">Jeanbrun — loyer très social (taux / plafond)</td><td class="pt-val">5,5 % · 12 000 €/an</td></tr>
+      <tr><td colspan="2" class="pt-source">Sources : art. 156-I-3° CGI (déficit foncier) — LF 2026 art. créant le statut bailleur privé (Jeanbrun, en vigueur 21/02/2026)</td></tr>
     </table>
   </div>
 
@@ -836,8 +1173,9 @@
 
   <div class="param-card param-card--scope">
     <h2>Cadre temporel de ce simulateur</h2>
-    <p>Ce simulateur couvre les <strong>revenus 2025</strong> à déclarer en mai-juin 2026, avec les paramètres de la <strong>Loi de Finances 2026</strong> (barème publié le 07/04/2026, PS 18,6 % LFSS 2026).</p>
-    <p style="margin-top:0.6rem">Pour les investissements défiscalisant réalisés en 2026 (Girardin, Pinel…), leur impact s'appliquera sur la <strong>déclaration 2027</strong> (revenus 2026). Le barème 2026 ne sera connu qu'à la publication de la LF 2027 (~décembre 2026) — ce simulateur ne peut pas encore le couvrir.</p>
+    <p>Mode <strong>projection</strong> : ce simulateur estime l'impôt sur les <strong>revenus 2026</strong> qui seront déclarés en mai-juin 2027.</p>
+    <p style="margin-top:0.6rem">Les paramètres utilisés sont ceux de la <strong>Loi de Finances 2026</strong> (barème publié le 07/04/2026, PS 18,6 % LFSS 2026). Le barème pour les revenus 2026 sera officiellement fixé par la LF 2027 (~décembre 2026), avec probablement une réindexation inflation de l'ordre de 1-2 % sur les tranches et plafonds. <strong>L'écart avec le calcul réel de la déclaration 2027 sera marginal</strong>.</p>
+    <p style="margin-top:0.6rem">⚠ Évolutions LF 2026 déjà prises en compte : suppression FIP classique métropolitain (01/01/2026) et FCPI classique (21/02/2026), création FCPI JEI (30 %), maintien FIP Corse/Outre-mer (30 %), maintien IR-PME (25 %), hausse PS revenus mobiliers à 18,6 %.</p>
   </div>
 
 </div>
@@ -1070,20 +1408,58 @@
     </div>
     <div class="levier-body"><div class="levier-body-inner">
       <div class="levier-meta">
-        <div class="levier-meta-item"><div class="levier-meta-label">Taux FIP classique</div><div class="levier-meta-value">18 %</div></div>
-        <div class="levier-meta-item"><div class="levier-meta-label">Taux FIP Corse / Outre-mer</div><div class="levier-meta-value">30 %</div></div>
-        <div class="levier-meta-item"><div class="levier-meta-label">Plafond versements (célibataire)</div><div class="levier-meta-value">12 000 €</div></div>
-        <div class="levier-meta-item"><div class="levier-meta-label">Plafond versements (couple)</div><div class="levier-meta-value">24 000 €</div></div>
-        <div class="levier-meta-item"><div class="levier-meta-label">RI max célibataire / classique</div><div class="levier-meta-value">2 160 € (3 600 € Corse/OM)</div></div>
+        <div class="levier-meta-item"><div class="levier-meta-label">FIP classique métropolitain</div><div class="levier-meta-value lmv-warn">Supprimé au 01/01/2026</div></div>
+        <div class="levier-meta-item"><div class="levier-meta-label">FCPI classique</div><div class="levier-meta-value lmv-warn">Supprimé au 21/02/2026</div></div>
+        <div class="levier-meta-item"><div class="levier-meta-label">FCPI JEI (LF 2026, nouveau)</div><div class="levier-meta-value lmv-good">30 %</div></div>
+        <div class="levier-meta-item"><div class="levier-meta-label">FIP Corse / Outre-mer (maintenu)</div><div class="levier-meta-value lmv-good">30 %</div></div>
+        <div class="levier-meta-item"><div class="levier-meta-label">Plafond versements (célib / couple)</div><div class="levier-meta-value">12 000 € / 24 000 €</div></div>
+        <div class="levier-meta-item"><div class="levier-meta-label">RI max célib FCPI JEI ou FIP Corse</div><div class="levier-meta-value">3 600 €</div></div>
         <div class="levier-meta-item"><div class="levier-meta-label">Dans le plafond niches ?</div><div class="levier-meta-value lmv-good">Oui — 10 000 €</div></div>
       </div>
       <div class="levier-desc">
         <div class="levier-desc-label">Ce que c'est</div>
-        <div class="levier-desc-text">Les FIP (Fonds d'Investissement de Proximité) et FCPI (Fonds Communs de Placement dans l'Innovation) permettent d'investir dans un portefeuille de PME non cotées via un fonds collectif. Les fonds Corse et Outre-mer bénéficient d'un taux majoré. Durée de blocage : généralement 7 à 10 ans. Risque de perte en capital.</div>
+        <div class="levier-desc-text">Les FIP (Fonds d'Investissement de Proximité) et FCPI (Fonds Communs de Placement dans l'Innovation) permettent d'investir dans un portefeuille de PME non cotées via un fonds collectif. Durée de blocage : généralement 7 à 10 ans. Risque de perte en capital.</div>
+      </div>
+      <div class="levier-desc">
+        <div class="levier-desc-label">⚠ Évolutions LF 2025/2026</div>
+        <div class="levier-desc-text">La LF 2025 a supprimé le FIP classique métropolitain au 01/01/2026, et la LF 2026 a supprimé le FCPI classique au 21/02/2026. <strong>Ne restent éligibles pour les souscriptions 2026 :</strong> le FCPI JEI (Jeunes Entreprises Innovantes, taux 30 %, créé LF 2026 pour remplacer le FCPI classique) et les FIP Corse / Outre-mer (taux 30 % maintenu). Pour souscrire en direct, voir aussi IR-PME (Madelin).</div>
       </div>
       <div class="levier-desc">
         <div class="levier-desc-label">Calcul</div>
-        <div class="levier-desc-text">RI = versement × taux, plafonné au plafond de versements. FIP Classique célibataire : 12 000 € × 18 % = 2 160 €. FIP Corse : 12 000 € × 30 % = 3 600 €. <em>Art. 199 terdecies-0 A et 199 terdecies-0 B CGI</em></div>
+        <div class="levier-desc-text">RI = versement × taux, plafonné au plafond de versements. Exemple FCPI JEI ou FIP Corse célibataire : 12 000 € × 30 % = 3 600 €. <em>Art. 199 terdecies-0 A et 199 terdecies-0 B CGI</em></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="levier-card" style="border-top-color:#15803d">
+    <div class="levier-header" onclick="toggleLevier(this)">
+      <div class="levier-header-left">
+        <div class="levier-tag-type">Réduction d'impôt</div>
+        <div class="levier-title">GFI — Groupement Forestier d'Investissement</div>
+      </div>
+      <div class="levier-badges"><span class="lbadge lbadge-10k">Niche 10 000 €</span></div>
+      <span class="levier-arrow">▾</span>
+    </div>
+    <div class="levier-body"><div class="levier-body-inner">
+      <div class="levier-meta">
+        <div class="levier-meta-item"><div class="levier-meta-label">Taux de réduction</div><div class="levier-meta-value">18 % (jusqu'à 25 % selon zone)</div></div>
+        <div class="levier-meta-item"><div class="levier-meta-label">Plafond versements (célibataire)</div><div class="levier-meta-value">50 000 €</div></div>
+        <div class="levier-meta-item"><div class="levier-meta-label">Plafond versements (couple)</div><div class="levier-meta-value">100 000 €</div></div>
+        <div class="levier-meta-item"><div class="levier-meta-label">RI max célibataire</div><div class="levier-meta-value">9 000 € (12 500 € en zone majorée)</div></div>
+        <div class="levier-meta-item"><div class="levier-meta-label">Durée de détention</div><div class="levier-meta-value">5 ans 1/2 minimum</div></div>
+        <div class="levier-meta-item"><div class="levier-meta-label">Dans le plafond niches ?</div><div class="levier-meta-value lmv-good">Oui — 10 000 €</div></div>
+      </div>
+      <div class="levier-desc">
+        <div class="levier-desc-label">Ce que c'est</div>
+        <div class="levier-desc-text">Souscription au capital de Groupements Forestiers d'Investissement (GFI), véhicules collectifs qui financent l'achat et la gestion durable de forêts françaises. Diversification patrimoniale + soutien à la filière bois + avantage fiscal. Liquidité limitée : marché secondaire restreint, sortie organisée par le gérant en général sur 8-12 ans.</div>
+      </div>
+      <div class="levier-desc">
+        <div class="levier-desc-label">Calcul</div>
+        <div class="levier-desc-text">RI = montant souscrit × 18 % (ou 25 % en zone éligible majorée), dans la limite du plafond de versements. Exemple : 30 000 € souscrits par un couple à 18 % → 5 400 € de RI. <em>Art. 199 decies H CGI — BOI-IR-RICI-130</em></div>
+      </div>
+      <div class="levier-desc">
+        <div class="levier-desc-label">Avantages annexes</div>
+        <div class="levier-desc-text">Au-delà de la RI : exonération partielle d'IFI (75 % de la valeur des bois et forêts) et abattement de 75 % sur les droits de mutation à titre gratuit (succession/donation), sous conditions d'engagement de gestion durable.</div>
       </div>
     </div></div>
   </div>

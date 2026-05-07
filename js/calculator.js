@@ -1,5 +1,7 @@
 /**
- * MOTEUR DE CALCUL IR — Revenus 2025 (Déclaration 2026)
+ * MOTEUR DE CALCUL IR — Projection sur Revenus 2026 (Déclaration 2027)
+ * Mécanique invariante d'une année sur l'autre. Seuls les paramètres dans
+ * params.js sont susceptibles d'évoluer avec la LF 2027 (réindexation inflation).
  */
 
 /**
@@ -22,7 +24,7 @@ function calcBaremePart(qf) {
 /**
  * Calcule le nombre de parts fiscales.
  */
-function calcParts(situation, nbEnfants, gardeAlternee, parentIsole) {
+function calcParts(situation, nbEnfants, gardeAlternee, parentIsole, demiPartSupp) {
   // Parts de base
   let partsBase = (situation === 'marie-pacse') ? 2 : 1;
   // Veuf avec enfants = 2 parts de base
@@ -47,8 +49,13 @@ function calcParts(situation, nbEnfants, gardeAlternee, parentIsole) {
   // Parent isolé
   const partsPI = parentIsole ? 0.5 : 0;
 
+  // Demi-part supplémentaire (cases L, N, P, F, W, S, G de la 2042)
+  // Plafond standard 1 807 € appliqué via la logique QF en aval (étape 4).
+  // Cas particuliers L (plafond réduit) et G (déplafonné) non simulés.
+  const partsDemi = demiPartSupp ? 0.5 : 0;
+
   return {
-    total: partsBase + partsEnfants + partsAlternee + partsPI,
+    total: partsBase + partsEnfants + partsAlternee + partsPI + partsDemi,
     base: partsBase,
   };
 }
@@ -66,24 +73,41 @@ function calculerIR(input) {
   // ÉTAPE 1 : REVENU BRUT GLOBAL
   // ============================================================
 
-  // Salaires (avec protection si = 0)
-  const abatSal1 = input.sal1 > 0
-    ? Math.max(P.abat.sal.min, Math.min(input.sal1 * P.abat.sal.taux, P.abat.sal.max))
-    : 0;
-  const abatSal2 = input.sal2 > 0
-    ? Math.max(P.abat.sal.min, Math.min(input.sal2 * P.abat.sal.taux, P.abat.sal.max))
-    : 0;
-  det.salaireNet = (input.sal1 - abatSal1) + (input.sal2 - abatSal2);
+  // Salaires (1AJ/1BJ) + allocations chômage/préretraite (1AP/1BP)
+  // + surplus d'heures sup au-dessus du plafond d'exonération (1GH/1HH > 7 500 €).
+  // Abattement 10% commun par déclarant (mêmes plancher 509 € et plafond 14 555 €).
+  // Si frais réels (1AK/1BK) > 0 pour un déclarant : ils remplacent son abattement 10%.
+  const hsExoPlafond = P.plafonds.heuresSupExoPlafond;
+  const hsImpos1 = Math.max(0, (input.heuresSupExo1 || 0) - hsExoPlafond);
+  const hsImpos2 = Math.max(0, (input.heuresSupExo2 || 0) - hsExoPlafond);
+  const totalSal1 = input.sal1 + (input.allocChomage1 || 0) + hsImpos1;
+  const totalSal2 = input.sal2 + (input.allocChomage2 || 0) + hsImpos2;
+  const abatSal1 = (input.fraisReels1 || 0) > 0
+    ? input.fraisReels1
+    : (totalSal1 > 0
+        ? Math.max(P.abat.sal.min, Math.min(totalSal1 * P.abat.sal.taux, P.abat.sal.max))
+        : 0);
+  const abatSal2 = (input.fraisReels2 || 0) > 0
+    ? input.fraisReels2
+    : (totalSal2 > 0
+        ? Math.max(P.abat.sal.min, Math.min(totalSal2 * P.abat.sal.taux, P.abat.sal.max))
+        : 0);
+  det.salaireNet = (totalSal1 - abatSal1) + (totalSal2 - abatSal2);
 
-  // Pensions
-  const abatPen1 = input.pen1 > 0
-    ? Math.max(P.abat.pen.min, input.pen1 * P.abat.pen.taux)
+  // Pensions retraite (1AS/1BS) + pensions d'invalidité (1AZ/1BZ)
+  // + pensions alimentaires perçues (1AO/1BO).
+  // Même traitement : abattement 10 % commun par bénéficiaire (plancher 454 €),
+  // plafond foyer 4 439 €.
+  const totalPen1 = input.pen1 + (input.pensInvalidite1 || 0) + (input.pensAlimRecue1 || 0);
+  const totalPen2 = input.pen2 + (input.pensInvalidite2 || 0) + (input.pensAlimRecue2 || 0);
+  const abatPen1 = totalPen1 > 0
+    ? Math.max(P.abat.pen.min, totalPen1 * P.abat.pen.taux)
     : 0;
-  const abatPen2 = input.pen2 > 0
-    ? Math.max(P.abat.pen.min, input.pen2 * P.abat.pen.taux)
+  const abatPen2 = totalPen2 > 0
+    ? Math.max(P.abat.pen.min, totalPen2 * P.abat.pen.taux)
     : 0;
   const abatPenTotal = Math.min(P.abat.pen.maxFoyer, abatPen1 + abatPen2);
-  det.pensionNet = (input.pen1 + input.pen2) - abatPenTotal;
+  det.pensionNet = (totalPen1 + totalPen2) - abatPenTotal;
 
   // BNC micro
   const abatBNC1 = input.bncMicro1 > 0
@@ -99,7 +123,23 @@ function calculerIR(input) {
 
   // Foncier
   det.microFoncierNet = input.microFoncier * (1 - P.abat.microFoncier.taux);
-  det.foncierReel = input.foncierReel;
+
+  // Dispositif Jeanbrun (LF 2026) — amortissement déductible des revenus fonciers
+  // selon catégorie de loyer. Le plafond annuel borne le montant retenu.
+  // L'utilisateur saisit le foncier réel AVANT cet amortissement.
+  const jeanbrunCat = input.jeanbrunCategorie || 'intermediaire';
+  const jeanbrunPlaf = jeanbrunCat === 'tres-social' ? P.plafonds.jeanbrunPlafondTresSoc
+                     : jeanbrunCat === 'social'      ? P.plafonds.jeanbrunPlafondSocial
+                     :                                  P.plafonds.jeanbrunPlafondInter;
+  det.jeanbrunAmort = Math.min(input.jeanbrunAmort || 0, jeanbrunPlaf);
+
+  // Foncier réel après amortissement Jeanbrun, puis plafonnement du déficit (4BC) :
+  // imputation sur revenu global plafonnée à 10 700 €/an.
+  // Le surplus serait reportable 10 ans (non simulé). Si bénéfice (>= 0), pas de plafonnement.
+  const foncierApresJeanbrun = input.foncierReel - det.jeanbrunAmort;
+  det.foncierReel = foncierApresJeanbrun >= 0
+    ? foncierApresJeanbrun
+    : Math.max(foncierApresJeanbrun, -P.plafonds.deficitFoncierMax);
 
   // Meublé
   det.meubleClasseNet = input.meubleClasse * (1 - P.abat.meubleClasse.taux);
@@ -108,6 +148,8 @@ function calculerIR(input) {
   // Mobilier selon option
   const isPFU = input.optionPFU === 'pfu';
   det.dividendesBareme = isPFU ? 0 : input.dividendes * (1 - P.abat.dividendes);
+  // Intérêts (2TR) : pas d'abattement au barème, contrairement aux dividendes
+  det.interetsBareme = isPFU ? 0 : (input.interets || 0);
   det.pvBareme = isPFU ? 0 : input.pv;
 
   // Autres
@@ -116,7 +158,7 @@ function calculerIR(input) {
   det.revenuBrutGlobal = det.salaireNet + det.pensionNet + det.bncMicroNet + det.bncReel
     + det.microFoncierNet + det.foncierReel
     + det.meubleClasseNet + det.meubleNonClasseNet
-    + det.dividendesBareme + det.pvBareme
+    + det.dividendesBareme + det.interetsBareme + det.pvBareme
     + det.autresRevenus;
 
   // ============================================================
@@ -128,9 +170,15 @@ function calculerIR(input) {
   const revenuPro = input.sal1 + input.sal2
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1  + input.bncReel2;
-  det.perCap = revenuPro > 0
-    ? Math.max(P.plafonds.perPlancher, Math.min(revenuPro * P.plafonds.perTaux, P.plafonds.perMaxSalarie))
-    : P.plafonds.perPlancher;
+  // Plafond manuel (cases 6PS/6PT) : si l'utilisateur saisit > 0, on l'utilise
+  // au lieu du calcul auto (utile quand il a des reports de plafonds non utilisés
+  // des 3 dernières années, non modélisés ici).
+  const perCapManuel = input.perPlafondManuel || 0;
+  det.perCap = perCapManuel > 0
+    ? perCapManuel
+    : (revenuPro > 0
+        ? Math.max(P.plafonds.perPlancher, Math.min(revenuPro * P.plafonds.perTaux, P.plafonds.perMaxSalarie))
+        : P.plafonds.perPlancher);
   det.per = Math.min(input.per, det.perCap);
 
   // Pensions alimentaires — plafond (art. 156-II CGI)
@@ -152,7 +200,7 @@ function calculerIR(input) {
   // ============================================================
   // ÉTAPE 3 : QUOTIENT FAMILIAL ET BARÈME
   // ============================================================
-  const parts = calcParts(input.situation, input.nbEnfants, input.gardeAlternee, input.parentIsole);
+  const parts = calcParts(input.situation, input.nbEnfants, input.gardeAlternee, input.parentIsole, input.demiPartSupp);
   det.parts = parts.total;
   det.partsBase = parts.base;
 
@@ -170,10 +218,21 @@ function calculerIR(input) {
   det.avantageQF = det.impotBrutBase - det.impotBrut;
   det.demiPartsSupp = (parts.total - parts.base) * 2;
 
+  // Demi-part supplémentaire (cases L/N/P/F/W/S/G de la 2042) : plafond spécifique
+  // selon le cas. L = 1 079 €, G = déplafonné, autres = standard 1 807 €.
+  // On l'isole du décompte des autres demi-parts pour appliquer son plafond propre.
+  let plafondDemiPartSupp = 0;
+  if (input.demiPartSupp) {
+    if (input.demiPartCas === 'L')      plafondDemiPartSupp = P.qf.plafondDemiPartL;
+    else if (input.demiPartCas === 'G') plafondDemiPartSupp = Infinity;
+    else                                plafondDemiPartSupp = P.qf.plafondDemiPart;
+  }
+  const demiPartsStandard = det.demiPartsSupp - (input.demiPartSupp ? 1 : 0);
+
   if (input.parentIsole && input.nbEnfants > 0) {
-    det.plafondQF = P.qf.parentIsole1er + Math.max(0, det.demiPartsSupp - 2) * P.qf.plafondDemiPart;
+    det.plafondQF = P.qf.parentIsole1er + Math.max(0, demiPartsStandard - 2) * P.qf.plafondDemiPart + plafondDemiPartSupp;
   } else {
-    det.plafondQF = det.demiPartsSupp * P.qf.plafondDemiPart;
+    det.plafondQF = demiPartsStandard * P.qf.plafondDemiPart + plafondDemiPartSupp;
   }
 
   det.supplementQF = Math.max(0, det.avantageQF - det.plafondQF);
@@ -195,35 +254,95 @@ function calculerIR(input) {
   // ============================================================
   // ÉTAPE 6 : IR MOBILIER (PFU)
   // ============================================================
-  det.irMobilier = isPFU ? (input.dividendes + input.pv) * P.ps.pfuIr : 0;
+  det.irMobilier = isPFU ? (input.dividendes + (input.interets || 0) + input.pv) * P.ps.pfuIr : 0;
+
+  // ============================================================
+  // ÉTAPE 6bis : IR sur produits assurance-vie > 8 ans (2CH/2VV/2WW)
+  // Abattement annuel commun aux deux taux (7,5 % et 12,8 %), imputé
+  // EN PRIORITÉ sur le taux le plus élevé (12,8 %) puis sur le 7,5 %
+  // — règle BOI-RPPM-RCM-20-10-30 favorable au contribuable.
+  // L'abattement ne s'applique qu'à l'IR ; les PS sont dues sur le brut.
+  // Imposition séparée du barème (n'entre pas dans le RNI ni le QF).
+  // ============================================================
+  const av75  = input.avProduits75  || 0;
+  const av128 = input.avProduits128 || 0;
+  const avAbat = isCouple ? P.abat.avCouple : P.abat.avSingle;
+  // Imputation prioritaire sur 12,8 % puis solde sur 7,5 %
+  const abat128 = Math.min(av128, avAbat);
+  const abat75  = Math.min(av75,  avAbat - abat128);
+  det.avAbattement = abat128 + abat75;
+  det.avImposable  = (av128 - abat128) + (av75 - abat75);
+  det.irAV = (av128 - abat128) * 0.128 + (av75 - abat75) * 0.075;
+  const avProduits = av75 + av128;
 
   // ============================================================
   // ÉTAPE 7 : PRÉLÈVEMENTS SOCIAUX
   // ============================================================
-  det.psMobilier = (input.dividendes + input.pv) * P.ps.mobilier;
+  det.psMobilier = (input.dividendes + (input.interets || 0) + input.pv) * P.ps.mobilier;
+  // PS foncier dus uniquement sur résultat foncier net positif (pas de PS sur déficit).
   const revenusFonciersNets = det.microFoncierNet + det.foncierReel + det.meubleClasseNet + det.meubleNonClasseNet;
-  det.psFoncier = revenusFonciersNets * P.ps.foncier;
-  det.totalPS = det.psMobilier + det.psFoncier;
+  det.psFoncier = Math.max(0, revenusFonciersNets) * P.ps.foncier;
+  // PS sur produits AV (taux foncier 17,2 %, sur le brut avant abattement)
+  det.psAV = avProduits * P.ps.foncier;
+  det.totalPS = det.psMobilier + det.psFoncier + det.psAV;
 
   // ============================================================
   // ÉTAPE 8 : RÉDUCTIONS D'IMPÔT
   // ============================================================
-  // Dons (HORS niche) — base plafonnée à 20% du RNI (art. 200 CGI)
-  // L'excédent est reportable 5 ans mais n'est pas simulé ici.
-  det.donsBase = Math.min(input.dons, det.revenuNetImposable * P.plafonds.donsPlafondRNI);
-  det.redDons = Math.min(det.donsBase, P.plafonds.dons75Plafond) * 0.75
-    + Math.max(0, det.donsBase - P.plafonds.dons75Plafond) * 0.66;
+  // Dons — HORS niche, base plafonnée à 20 % du RNI (art. 200 CGI)
+  // L'excédent au-delà de 20 % RNI est reportable 5 ans (non simulé).
+  //
+  // Mécanisme officiel (BOI-IR-RICI-250-30-10) :
+  // - 7UD (organismes d'aide) : 75 % jusqu'à 2 000 € (LF 2026)
+  // - L'excédent 7UD au-delà de 2 000 € BASCULE sur le régime 7UF (66 %)
+  // - 7UF (intérêt général) : 66 %
+  // - Le total des deux est plafonné à 20 % RNI (priorité au 75 % puis 66 %)
+  const dons7UD = input.dons7UD || 0;
+  const dons7UF = input.dons || 0;
+  const plafondRNI = det.revenuNetImposable * P.plafonds.donsPlafondRNI;
+
+  // Étape 1 : assiette 7UD à 75 % (max 2 000 €), surplus reporté sur 7UF
+  const base7UD75   = Math.min(dons7UD, P.plafonds.dons75Plafond);
+  const surplus7UD  = Math.max(0, dons7UD - P.plafonds.dons75Plafond);
+
+  // Étape 2 : application du plafond 20 % RNI, en priorité sur le 75 %
+  const base7UD75Cap = Math.min(base7UD75, plafondRNI);
+  const base66Cap    = Math.min(surplus7UD + dons7UF, Math.max(0, plafondRNI - base7UD75Cap));
+
+  det.donsBase = base7UD75Cap + base66Cap;
+  det.redDons  = base7UD75Cap * 0.75 + base66Cap * 0.66;
+
+  // Frais de scolarité enfants (7EA/7EC/7EF) — réduction forfaitaire HORS niches
+  det.fraisScol = (input.fraisScolCollege || 0) * P.plafonds.fraisScolCollege
+                + (input.fraisScolLycee   || 0) * P.plafonds.fraisScolLycee
+                + (input.fraisScolSup     || 0) * P.plafonds.fraisScolSup;
+
+  // Frais d'hébergement EHPAD ascendants (7CD/7CE/7CF) — HORS niches
+  // Réduction 25 % sur dépenses plafonnées à 10 000 €/personne hébergée.
+  const ehpadNbPers = Math.max(1, input.ehpadNbPers || 1);
+  const ehpadBase = Math.min(input.ehpadFrais || 0, P.plafonds.ehpadPlafondParPers * ehpadNbPers);
+  det.redEhpad = ehpadBase * P.plafonds.ehpadTaux;
+
+  // Loi Malraux (7NX/7NY) — HORS plafond niches (art. 199 tervicies CGI)
+  // L'utilisateur saisit le montant de la réduction (taux 22 % ou 30 % selon zone, déjà calculé).
+  det.redMalraux = input.malraux || 0;
 
   // Réductions dans le plafond niches
   det.redPinel       = input.pinel;
   det.redGirardinPD  = input.girardinPD;
   det.redGirardinAG  = input.girardinAG;
   det.redFCPI        = input.fcpi;
+  det.redFcpiJei     = input.fcpiJei || 0;
+  det.redFipCorse    = input.fipCorse || 0;
+  det.redGfi         = input.gfi || 0;
+  det.redIrPme       = input.irPme || 0;
+  det.redLocAvantages = input.locAvantages || 0;
   det.redSofica      = input.sofica;
   det.redAutres      = input.autresReductions;
 
   det.totalReductions = det.redDons + det.redPinel + det.redGirardinPD + det.redGirardinAG
-    + det.redFCPI + det.redSofica + det.redAutres;
+    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
+    + det.redSofica + det.redAutres;
 
   // ============================================================
   // ÉTAPE 9 : CRÉDITS D'IMPÔT
@@ -237,13 +356,25 @@ function calculerIR(input) {
 
   det.totalCredits = det.credDomicile + det.credGarde + det.credAutres;
 
+  // Cotisations syndicales (7AC/7AE/7AG) — HORS plafond niches
+  // Crédit 66 % plafonné à 1 % des revenus d'activité (sal + chômage + pensions).
+  const baseSyndicMax = (
+    input.sal1 + input.sal2
+    + (input.allocChomage1 || 0) + (input.allocChomage2 || 0)
+    + input.pen1 + input.pen2
+    + (input.pensInvalidite1 || 0) + (input.pensInvalidite2 || 0)
+  ) * P.plafonds.cotSyndicalesPlafondPct;
+  det.cotSyndicalesBase = Math.min(input.cotSyndicales || 0, baseSyndicMax);
+  det.credSyndic = det.cotSyndicalesBase * P.plafonds.cotSyndicalesTaux;
+
   // ============================================================
   // ÉTAPE 10 : PLAFONNEMENT DES NICHES FISCALES
   // ============================================================
   det.nichesUtilisees = det.redPinel
     + det.redGirardinPD * P.niches.girardinPdQuotePart
     + det.redGirardinAG * P.niches.girardinAgQuotePart
-    + det.redFCPI + det.redSofica + det.redAutres
+    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
+    + det.redSofica + det.redAutres
     + det.credDomicile + det.credGarde + det.credAutres;
 
   const hasPlafondMajore = det.redGirardinPD > 0 || det.redGirardinAG > 0 || det.redSofica > 0;
@@ -264,7 +395,7 @@ function calculerIR(input) {
   }
   det.reductionsAppliquees = Math.min(
     det.impotApresDecote + det.irMobilier,
-    det.redDons + reductionsDansNichesEffectives
+    det.redDons + det.fraisScol + det.redEhpad + det.redMalraux + reductionsDansNichesEffectives
   );
 
   // Application des crédits avec plafonnement niches
@@ -276,21 +407,33 @@ function calculerIR(input) {
   }
   det.creditsAppliques = creditsEffectifs;
 
+  // PFNL (acompte 2CK déjà versé à la source par la banque) : crédit d'impôt
+  // sans plafond niches, imputé sur l'IR final. Si supérieur à l'impôt dû,
+  // l'excédent est remboursé (impôt net peut devenir négatif).
+  det.pfnlVerse = input.pfnlVerse || 0;
+
   det.impotNet = Math.max(0,
-    det.impotApresDecote + det.irMobilier - det.reductionsAppliquees
-  ) - det.creditsAppliques + det.totalPS;
+    det.impotApresDecote + det.irMobilier + det.irAV - det.reductionsAppliquees
+  ) - det.creditsAppliques - det.credSyndic + det.totalPS - det.pfnlVerse;
 
   // Revenu de référence = somme des revenus bruts déclarés (avant abattements) moins les charges
   // C'est ce que l'administration utilise pour calculer le taux moyen affiché
   // ⚠ Doit être calculé AVANT la CEHR (étape 12) qui l'utilise comme assiette
+  // Heures sup exonérées entrent intégralement dans le RFR (part exonérée comprise),
+  // alors que seul le surplus > 7 500 € est compté dans le revenu imposable.
   det.revenuReference = Math.max(0,
     input.sal1 + input.sal2
+    + (input.allocChomage1 || 0) + (input.allocChomage2 || 0)
+    + (input.heuresSupExo1 || 0) + (input.heuresSupExo2 || 0)
     + input.pen1 + input.pen2
+    + (input.pensInvalidite1 || 0) + (input.pensInvalidite2 || 0)
+    + (input.pensAlimRecue1 || 0) + (input.pensAlimRecue2 || 0)
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1 + input.bncReel2
-    + input.microFoncier + input.foncierReel
+    + input.microFoncier + det.foncierReel
     + input.meubleClasse + input.meubleNonClasse
-    + input.dividendes + input.pv
+    + input.dividendes + (input.interets || 0) + input.pv
+    + (input.avProduits75 || 0) + (input.avProduits128 || 0)
     + input.autresRevenus
     - input.per - input.pensionsAlim - input.csgDeductible - input.autresCharges
   );

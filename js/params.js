@@ -1,6 +1,10 @@
 /**
- * PARAMÈTRES FISCAUX — Revenus 2025 (Déclaration 2026)
- * Sources : BOFiP, brochure IR 2026, service-public.gouv.fr
+ * PARAMÈTRES FISCAUX — Projection sur Revenus 2026 (Déclaration 2027)
+ * Basés sur la Loi de Finances 2026 (paramètres officiels les plus récents).
+ * Le barème pour les revenus 2026 sera fixé par la LF 2027 (publiée fin 2026)
+ * — sans doute légèrement réindexé inflation (~1-2 %), ce qui n'invalide pas
+ * la projection à court terme.
+ * Sources : BOFiP, brochure IR 2026, service-public.gouv.fr, LFSS 2026.
  */
 
 const PARAMS = {
@@ -19,6 +23,10 @@ const PARAMS = {
     parentIsole1er:     4262,
     parentIsoleDemi:    2131,
     veufPartSupp:       2011,
+    // Plafond spécifique de la demi-part "vieux parent isolé" (case L) — art. 197 I 2 al. 2 CGI
+    // Cas le plus restrictif des demi-parts supplémentaires ; appliqué par défaut quand
+    // la case "demi-part supplémentaire" est cochée (cohérent avec le simulateur officiel).
+    plafondDemiPartL:   1079,
   },
 
   // --- DÉCOTE (BOI-IR-LIQ-20-20-30 du 07/04/2026) ---
@@ -39,6 +47,10 @@ const PARAMS = {
     meubleClasse:    { taux: 0.50, plafond: 77700 },
     meubleNonClasse: { taux: 0.30, plafond: 15000 },
     dividendes: 0.40,
+    // Assurance-vie > 8 ans (cases 2CH/2VV/2WW) — art. 125-0 A CGI
+    // Abattement annuel sur les produits, applicable à l'IR uniquement (PS dues sur le brut).
+    avSingle: 4600,
+    avCouple: 9200,
   },
 
   // --- PRÉLÈVEMENTS SOCIAUX ---
@@ -74,6 +86,41 @@ const PARAMS = {
     // car dépend du type de bénéficiaire (enfant adulte : 6 674 €/enfant ;
     // ex-conjoint : montant judiciaire ; ascendants : besoins réels)
     pensionAlimEnfantMax: 6674,    // plafond par enfant majeur (2025)
+
+    // Déficit foncier imputable sur le revenu global — art. 156-I-3° CGI
+    // Plafond annuel pour la part hors intérêts d'emprunt. Surplus reportable 10 ans (non simulé).
+    deficitFoncierMax:    10700,
+
+    // Dispositif Jeanbrun / Statut du bailleur privé (LF 2026, en vigueur 21/02/2026)
+    // Amortissement déductible des revenus fonciers selon catégorie de loyer.
+    // Applicable aux acquisitions jusqu'au 31/12/2028.
+    jeanbrunPlafondInter:    8000,   // loyer intermédiaire (taux amort. 3,5 %)
+    jeanbrunPlafondSocial:  10000,   // loyer social (4,5 %)
+    jeanbrunPlafondTresSoc: 12000,   // loyer très social (5,5 %)
+
+    // Heures supplémentaires exonérées (1GH/1HH) — art. 81 quater CGI
+    // Plafond annuel par déclarant ; au-delà, le surplus est imposable.
+    // La part exonérée entre dans le RFR mais pas dans le revenu imposable.
+    heuresSupExoPlafond:  7500,
+
+    // Frais d'hébergement EHPAD ascendants (7CD/7CE/7CF) — art. 199 quindecies CGI
+    // Réduction 25 % plafonnée à 10 000 € de dépenses PAR personne hébergée.
+    // HORS plafond niches.
+    ehpadTaux:           0.25,
+    ehpadPlafondParPers: 10000,
+
+    // Frais de scolarité enfants (7EA/7EC/7EF) — art. 199 quater F CGI
+    // Réduction forfaitaire par enfant à charge selon niveau scolaire.
+    // HORS plafond niches.
+    fraisScolCollege:     61,
+    fraisScolLycee:      153,
+    fraisScolSup:        183,
+
+    // Cotisations syndicales (7AC/7AE/7AG) — art. 199 quater C CGI
+    // Crédit d'impôt 66 % plafonné à 1 % des salaires + alloc chômage + pensions.
+    // HORS plafond niches.
+    cotSyndicalesTaux:    0.66,
+    cotSyndicalesPlafondPct: 0.01,
 
     // Emploi à domicile & garde enfants
     emploiDomTaux:        0.50,
