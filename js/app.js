@@ -136,6 +136,7 @@ function updateResults(d) {
 
   set('res-rbg',         fmt(d.revenuBrutGlobal));
   set('res-rni',         fmt(d.revenuNetImposable));
+  set('res-rfr',         fmt(d.revenuReference));
   set('res-parts',       fmtParts(d.parts));
   set('res-qf',          fmt(d.quotientFamilial));
   set('res-impot-brut',  fmt(d.impotBrut));
