@@ -288,25 +288,27 @@ function calculerIR(input) {
   // ÉTAPE 7 : PRÉLÈVEMENTS SOCIAUX
   //
   // Mode de recouvrement (source : service-public.gouv.fr / BOFiP) :
-  //   - Prélevés À LA SOURCE par le débiteur (banque/assureur), donc déjà
-  //     acquittés au moment du paiement du revenu, EXCLUS de l'impôt à payer :
-  //       • dividendes (PFU et barème)
-  //       • intérêts
+  //   - Prélevés à la source par l'assureur ET imputés automatiquement
+  //     par le simulateur officiel via l'abattement (cas spécifique
+  //     AV > 8 ans), donc EXCLUS de l'impôt à payer :
   //       • produits assurance-vie > 8 ans (av75, av128)
   //   - Recouvrés PAR VOIE DE RÔLE (avis IR), à payer en sus de l'IR :
+  //       • dividendes (le PFNL bancaire IR est imputé via 2CK, mais la
+  //         part PS, elle, reste due côté avis IR)
+  //       • intérêts (idem dividendes)
   //       • plus-values mobilières
   //       • revenus fonciers (nu, LMNP, micro-foncier)
   // ============================================================
-  // PS prélevés à la source (info uniquement, n'entrent pas dans l'impôt dû)
+  // PS recouvrés via avis (intégrés à l'impôt à payer)
   det.psDividendes = input.dividendes * P.ps.mobilier;
   det.psInterets   = (input.interets || 0) * P.ps.mobilier;
-  det.psAV         = avProduits * P.ps.foncier;
-  det.psSource     = det.psDividendes + det.psInterets + det.psAV;
-  // PS recouvrés via avis (intégrés à l'impôt à payer)
-  det.psPV = input.pv * P.ps.mobilier;
+  det.psPV         = input.pv * P.ps.mobilier;
   const revenusFonciersNets = det.microFoncierNet + det.foncierReel + det.meubleClasseNet + det.meubleNonClasseNet;
-  det.psFoncier = Math.max(0, revenusFonciersNets) * P.ps.foncier;
-  det.psRole    = det.psPV + det.psFoncier;
+  det.psFoncier    = Math.max(0, revenusFonciersNets) * P.ps.foncier;
+  det.psRole       = det.psDividendes + det.psInterets + det.psPV + det.psFoncier;
+  // PS prélevés à la source ET libératoires (info uniquement, exclus impôt dû)
+  det.psAV     = avProduits * P.ps.foncier;
+  det.psSource = det.psAV;
   // Conservé pour rétro-compat / affichage de la charge fiscale totale
   det.psMobilier = det.psDividendes + det.psInterets + det.psPV;
   det.totalPS    = det.psSource + det.psRole;

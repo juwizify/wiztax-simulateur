@@ -58,7 +58,7 @@ det.perCap = perCap1 + perCap2;
 
 ## #2 — PS sur dividendes & intérêts exclus à tort de l'impôt à payer
 
-**Statut** : Open
+**Statut** : Corrigé (commit suivant) — à valider en navigateur sur le Cas 7
 **Détecté sur** : Cas 7 (investisseur PFU)
 **Sévérité** : élevée — touche tous les cas avec dividendes ou intérêts. Sous-estime systématiquement l'impôt à payer.
 

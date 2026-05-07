@@ -33,17 +33,23 @@ Destinée à être intégrée dans un vrai logiciel par un développeur.
 - Girardin avec agrément : 34 % dans le plafond (rétrocession 66%) — art. 200-0 A, 4° CGI
 
 ## Mode de recouvrement des prélèvements sociaux
-Source : service-public.gouv.fr/F2329, BOI-RPPM.
+Source : service-public.gouv.fr/F2329, BOI-RPPM, comparaison simulateur officiel impots.gouv.fr.
 
 Deux flux distincts dans le calculator (`calculator.js` étape 7) :
 
-**PS prélevés à la source** (par la banque/assureur, déjà acquittés, EXCLUS de l'avis IR) :
-- Dividendes (PFU et barème) — `det.psDividendes`
-- Intérêts — `det.psInterets`
+**PS prélevés à la source ET libératoires** (déjà acquittés, EXCLUS de l'avis IR) :
 - Produits AV > 8 ans — `det.psAV`
-→ Somme exposée dans `det.psSource` à titre informatif.
+  → Le PFNL bancaire (IR + PS) est imputé automatiquement par le simulateur
+    officiel via le mécanisme d'abattement. L'utilisateur ne saisit que le brut.
+→ Exposé dans `det.psSource` à titre informatif.
 
 **PS recouvrés via avis IR** (à payer en sus avec l'IR) :
+- Dividendes — `det.psDividendes`
+- Intérêts — `det.psInterets`
+  → Pour les RCM, la banque prélève bien IR + PS à la source, mais le
+    simulateur officiel n'auto-impute rien : l'utilisateur doit saisir
+    l'acompte IR manuellement en case **2CK** — et 2CK ne couvre **que la
+    part IR** (12,8 %). La part PS reste donc due via l'avis IR.
 - Plus-values mobilières — `det.psPV`
 - Revenus fonciers (nu, meublé, micro-foncier) — `det.psFoncier`
 → Somme dans `det.psRole` ; **seul `psRole` entre dans `det.impotNet`**.

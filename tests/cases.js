@@ -250,10 +250,10 @@ const CASES = [
     input: makeInput({ sal1: 40000, interets: 1000, optionPFU: 'pfu' }),
     // baseline 40k → 3 904
     // + IR mob = 1 000 × 12,8 % = 128
-    // + PS = 1 000 × 18,6 % = 186
+    // + PS = 1 000 × 18,6 % = 186 (dus via avis IR : 2CK ne couvre que l'IR)
     // total = 3 904 + 128 + 186 = 4 218
     // RFR = 40 000 + 1 000 = 41 000
-    expected: { impotNet: 4032, revenuReference: 41000, tmi: 0.30 },
+    expected: { impotNet: 4218, revenuReference: 41000, tmi: 0.30 },
   },
   {
     name: '2TR barème : 40 000 € sal + 1 000 € intérêts au barème',
@@ -263,7 +263,7 @@ const CASES = [
     // impôt brut = 4 203.99 → 4 204
     // + PS 186 (toujours dus même au barème)
     // total = 4 204 + 186 = 4 390
-    expected: { impotNet: 4204, revenuReference: 41000, tmi: 0.30 },
+    expected: { impotNet: 4390, revenuReference: 41000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -275,10 +275,10 @@ const CASES = [
     input: makeInput({ sal1: 40000, dividendes: 1000, interets: 1000, pv: 1000, optionPFU: 'pfu' }),
     // baseline 40k → 3 904
     // IR mob = 3 000 × 12,8 % = 384
-    // PS = 3 000 × 18,6 % = 558
+    // PS = 3 000 × 18,6 % = 558 (PV + div + int tous dus côté avis IR)
     // total = 3 904 + 384 + 558 = 4 846
     // RFR = 40 000 + 3 000 = 43 000
-    expected: { impotNet: 4474, revenuReference: 43000, tmi: 0.30 },
+    expected: { impotNet: 4846, revenuReference: 43000, tmi: 0.30 },
   },
   {
     name: '2OP coché (barème) : 40k sal + 1k div + 1k intérêts + 1k PV',
@@ -291,7 +291,7 @@ const CASES = [
     // + PS 558 (toujours dus)
     // total = 4 684 + 558 = 5 242
     // PFU plus avantageux ici de 396 € à TMI 30 %
-    expected: { impotNet: 4870, revenuReference: 43000, tmi: 0.30 },
+    expected: { impotNet: 5242, revenuReference: 43000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -367,19 +367,19 @@ const CASES = [
     name: '2CK : 40k sal + 1k div PFU avec PFNL 128 € déjà prélevé',
     input: makeInput({ sal1: 40000, dividendes: 1000, optionPFU: 'pfu', pfnlVerse: 128 }),
     // sans PFNL : 4 218 € (baseline 3 904 + 128 IR mob + 186 PS)
-    // - PFNL 128 € déjà versé = 4 090 €
-    expected: { impotNet: 3904, revenuReference: 41000, tmi: 0.30 },
+    // - PFNL 128 € déjà versé (couvre l'IR uniquement, pas les PS) = 4 090 €
+    expected: { impotNet: 4090, revenuReference: 41000, tmi: 0.30 },
   },
   {
     name: '2CK : PFNL > impôt dû → impôt net négatif (remboursement)',
     input: makeInput({ sal1: 0, interets: 100, optionPFU: 'pfu', pfnlVerse: 50 }),
     // pas de salaire → impôt barème = 0 (et < décote, mais base 0)
     // IR mobilier = 100 × 12,8 % = 12,8
-    // PS mobilier = 100 × 18,6 % = 18,6
+    // PS mobilier = 100 × 18,6 % = 18,6 (dus via avis IR)
     // total = 0 + 12,8 + 18,6 = 31,4 €
     // - PFNL 50 € déjà versé = -18,6 € → arrondi -19 €
     // (excédent remboursé par l'administration)
-    expected: { impotNet: -37, revenuReference: 100, tmi: 0 },
+    expected: { impotNet: -19, revenuReference: 100, tmi: 0 },
   },
 
   // -------------------------------------------------------------------
@@ -673,11 +673,11 @@ const CASES = [
     // sal net 72k + foncier 4k = RBG 76k
     // QF = 76k → 1977.69 + (76-29.579)×0.30 = 15903.99 → 15904
     // IR mob PFU = (3000+1500)×12.8% = 576
-    // PS mob = 4500 × 18.6% = 837
+    // PS mob = 4500 × 18.6% = 837 (div + int dus via avis IR)
     // PS foncier = 4000 × 17.2% = 688
     // Total PS = 1525
     // Total = 15904 + 576 + 1525 = 18005
-    expected: { impotNet: 17168, revenuReference: 88500, tmi: 0.30 },
+    expected: { impotNet: 18005, revenuReference: 88500, tmi: 0.30 },
   },
 
   // Profil 6 : Cadre supérieur diversifié — PER + Pinel + dons mixtes
@@ -734,10 +734,10 @@ const CASES = [
     //   0+1977.69+16499.40+97340×0.41+(285445-181917)×0.45 = 1977.69+16499.40+39909.40+46587.60 = 104973.62 (round)
     //   en fait : Math.round(impotParPart*1) = round(104973.62) = 104974
     // IR mob PFU = 5000 × 12.8% = 640
-    // PS mob = 5000 × 18.6% = 930
+    // PS mob = 5000 × 18.6% = 930 (div dus via avis IR)
     // RFR = 305000 → CEHR : (305000-250000)×3% = 1650
     // Total = 104974 + 640 + 930 + 1650 = 108194
-    expected: { impotNet: 107264, revenuReference: 305000, tmi: 0.45 },
+    expected: { impotNet: 108194, revenuReference: 305000, tmi: 0.45 },
   },
 
   // Profil 10 : Cas remboursement — faible revenu + crédit garde enfants
