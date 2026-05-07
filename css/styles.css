@@ -798,7 +798,7 @@ header span {
   border-collapse: collapse;
   background: var(--surface-lowest);
   border-radius: var(--radius-input);
-  overflow: hidden;
+  /* PAS d'overflow:hidden — couperait les tooltips qui sortent du tableau */
   box-shadow: var(--shadow-card);
 }
 .preco-table th {
@@ -812,6 +812,12 @@ header span {
   border-bottom: 1px solid rgba(117, 117, 136, 0.15);
   background: rgba(51, 64, 250, 0.04);
 }
+/* Border-radius compensé sur les cellules header de coin (pour préserver le visuel
+   des coins arrondis du tableau, malgré le retrait de overflow:hidden) */
+.preco-table thead tr th:first-child { border-top-left-radius: var(--radius-input); }
+.preco-table thead tr th:last-child  { border-top-right-radius: var(--radius-input); }
+.preco-table tbody tr:last-child td:first-child { border-bottom-left-radius: var(--radius-input); }
+.preco-table tbody tr:last-child td:last-child  { border-bottom-right-radius: var(--radius-input); }
 .preco-table td {
   padding: 10px 14px;
   border-bottom: 1px solid rgba(117, 117, 136, 0.08);

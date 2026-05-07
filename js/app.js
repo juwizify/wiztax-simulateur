@@ -460,7 +460,7 @@ function renderPreconisations() {
     const levSelected = P.LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
     if (levSelected && levSelected.info) {
       const tip = document.createElement('i');
-      tip.className = 'tip preco-lever-tip';
+      tip.className = 'tip tip-down preco-lever-tip';   // tip-down : ouvre vers le bas (sécurise pour la 1ʳᵉ ligne)
       tip.textContent = 'i';
       let tipText = levSelected.info;
       if (levSelected.budget === 'exclu') {
