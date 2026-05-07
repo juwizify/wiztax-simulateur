@@ -956,6 +956,22 @@ header span {
   color: var(--on-surface);
   font-weight: 600;
 }
+.preco-jauge-bonus {
+  grid-template-columns: 220px 1fr;
+  margin-top: -4px;
+  margin-bottom: 8px;
+}
+.preco-jauge-bonus-label {
+  color: #15803d;
+  font-weight: 700;
+  font-size: .82rem;
+}
+.preco-jauge-bonus-detail {
+  font-size: .82rem;
+  color: rgba(0,0,0,0.65);
+  font-style: italic;
+}
+
 .preco-jauge-economie {
   margin-top: 12px;
   padding-top: 16px;

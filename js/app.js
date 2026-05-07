@@ -579,6 +579,21 @@ function refreshPreconisationsCalculs() {
   }, 0);
   setJauge('Budget', totalAlloue, state.budgetDispo);
   setJauge('Niches', detApres.nichesUtilisees, detApres.plafondNiches);
+
+  // Affichage conditionnel du bonus 8 k€ OM/SOFICA
+  const bonusRow = document.getElementById('jaugeBonusRow');
+  const bonusDetail = document.getElementById('jaugeBonusDetail');
+  const hasMajore = (inputApres.girardinPD || 0) > 0 || (inputApres.girardinAG || 0) > 0 || (inputApres.sofica || 0) > 0;
+  if (bonusRow) {
+    bonusRow.style.display = hasMajore ? '' : 'none';
+    if (hasMajore && bonusDetail) {
+      const causes = [];
+      if ((inputApres.girardinPD || 0) > 0) causes.push('Girardin Plein Droit');
+      if ((inputApres.girardinAG || 0) > 0) causes.push('Girardin Agrément');
+      if ((inputApres.sofica || 0) > 0) causes.push('SOFICA');
+      bonusDetail.textContent = `Plafond porté à 18 000 € grâce à : ${causes.join(', ')}.`;
+    }
+  }
   const perTotal = inputApres.per || 0;
   setJauge('Per', perTotal, detApres.perCap);
   const donsTotal = (inputApres.dons7UD || 0) + (inputApres.dons || 0);
