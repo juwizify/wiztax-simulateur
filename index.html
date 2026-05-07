@@ -18,6 +18,7 @@
   <button class="tab-btn active" data-tab="simplifie">Simulateur simplifié</button>
   <button class="tab-btn" data-tab="simulateur">Simulateur complet</button>
   <button class="tab-btn" data-tab="calcul">Calcul détaillé</button>
+  <button class="tab-btn" data-tab="preconisations">Préconisations</button>
   <button class="tab-btn" data-tab="parametres">Paramètres fiscaux</button>
   <button class="tab-btn" data-tab="leviers">Leviers fiscaux</button>
 </nav>
@@ -1044,6 +1045,94 @@
 </div>
 
 <!-- ══════════════════════════════════════════════
+     ONGLET PRÉCONISATIONS (allocation budget conseiller)
+═══════════════════════════════════════════════ -->
+<div id="preconisations" class="tab-pane">
+
+  <div class="preco-intro">
+    <h2>Préconisations d'optimisation fiscale</h2>
+    <p>À partir d'un budget d'épargne disponible, allouer des montants sur plusieurs leviers fiscaux. Les préconisations <strong>s'ajoutent aux montants déjà saisis</strong> dans l'onglet Simulateur. Le calcul à droite affiche la situation actuelle vs projetée.</p>
+  </div>
+
+  <div class="preco-budget">
+    <label for="precoBudget">Budget total disponible / an</label>
+    <input type="number" id="precoBudget" value="0" min="0" placeholder="ex : 20 000">
+    <span class="preco-budget-suffix">€</span>
+  </div>
+
+  <div class="preco-table-wrap">
+    <table class="preco-table">
+      <thead>
+        <tr>
+          <th>Levier</th>
+          <th>Montant à investir / verser</th>
+          <th>Paramètre</th>
+          <th>Avantage estimé</th>
+          <th>Plafond</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="precoRows">
+        <!-- lignes injectées dynamiquement -->
+      </tbody>
+    </table>
+    <button type="button" id="precoAddBtn" class="preco-add-btn">+ Ajouter un levier</button>
+  </div>
+
+  <div class="preco-jauges">
+    <h3>Indicateurs</h3>
+    <div class="preco-jauge-row">
+      <div class="preco-jauge-label">Budget alloué</div>
+      <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugeBudgetFill"></div></div>
+      <div class="preco-jauge-val" id="jaugeBudgetVal">— / —</div>
+    </div>
+    <div class="preco-jauge-row">
+      <div class="preco-jauge-label">Plafond niches global</div>
+      <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugeNichesFill"></div></div>
+      <div class="preco-jauge-val" id="jaugeNichesVal">— / —</div>
+    </div>
+    <div class="preco-jauge-row">
+      <div class="preco-jauge-label">Plafond PER</div>
+      <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugePerFill"></div></div>
+      <div class="preco-jauge-val" id="jaugePerVal">— / —</div>
+    </div>
+    <div class="preco-jauge-row">
+      <div class="preco-jauge-label">Plafond dons (20 % RNI)</div>
+      <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugeDonsFill"></div></div>
+      <div class="preco-jauge-val" id="jaugeDonsVal">— / —</div>
+    </div>
+    <div class="preco-jauge-row preco-jauge-economie">
+      <div class="preco-jauge-label">Économie d'impôt totale</div>
+      <div class="preco-jauge-economie-val" id="jaugeEconomieVal">—</div>
+    </div>
+  </div>
+
+  <div class="preco-comparison">
+    <h3>Comparaison Actuelle / Projetée</h3>
+    <table class="preco-compare-table">
+      <thead>
+        <tr><th></th><th>Actuelle</th><th>Projetée</th><th>Écart</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Revenu net imposable</td><td id="cmp-rni-act">—</td><td id="cmp-rni-pro">—</td><td id="cmp-rni-ecart">—</td></tr>
+        <tr><td>Impôt brut (barème)</td><td id="cmp-ibr-act">—</td><td id="cmp-ibr-pro">—</td><td id="cmp-ibr-ecart">—</td></tr>
+        <tr><td>− Réductions appliquées</td><td id="cmp-red-act">—</td><td id="cmp-red-pro">—</td><td id="cmp-red-ecart">—</td></tr>
+        <tr><td>− Crédits appliqués (niches)</td><td id="cmp-cr-act">—</td><td id="cmp-cr-pro">—</td><td id="cmp-cr-ecart">—</td></tr>
+        <tr><td>− Crédit syndicales</td><td id="cmp-csy-act">—</td><td id="cmp-csy-pro">—</td><td id="cmp-csy-ecart">—</td></tr>
+        <tr><td>+ IR mobilier (PFU)</td><td id="cmp-irmob-act">—</td><td id="cmp-irmob-pro">—</td><td id="cmp-irmob-ecart">—</td></tr>
+        <tr><td>+ IR sur AV &gt; 8 ans</td><td id="cmp-irav-act">—</td><td id="cmp-irav-pro">—</td><td id="cmp-irav-ecart">—</td></tr>
+        <tr><td>+ Prélèvements sociaux</td><td id="cmp-ps-act">—</td><td id="cmp-ps-pro">—</td><td id="cmp-ps-ecart">—</td></tr>
+        <tr><td>+ CEHR</td><td id="cmp-cehr-act">—</td><td id="cmp-cehr-pro">—</td><td id="cmp-cehr-ecart">—</td></tr>
+        <tr class="cmp-total"><td>▶ IMPÔT NET FINAL</td><td id="cmp-net-act">—</td><td id="cmp-net-pro">—</td><td id="cmp-net-ecart">—</td></tr>
+        <tr><td>Taux moyen</td><td id="cmp-tm-act">—</td><td id="cmp-tm-pro">—</td><td></td></tr>
+        <tr><td>TMI</td><td id="cmp-tmi-act">—</td><td id="cmp-tmi-pro">—</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
      ONGLET 3 : PARAMÈTRES (un seul endroit)
 ═══════════════════════════════════════════════ -->
 <div id="parametres" class="tab-pane">
@@ -1590,6 +1679,7 @@
 
 <script src="js/params.js"></script>
 <script src="js/calculator.js"></script>
+<script src="js/preconisations.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

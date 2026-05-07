@@ -734,5 +734,283 @@ header span {
   .form-row { grid-template-columns: 1fr 110px; }
 }
 @media (max-width: 600px) {
-  header, .tabs-nav, .sim-layout, #calcul, #parametres { padding-left: 16px; padding-right: 16px; }
+  header, .tabs-nav, .sim-layout, #calcul, #parametres, #preconisations { padding-left: 16px; padding-right: 16px; }
+}
+
+/* ─────────────────────────────────────────────
+   ONGLET PRÉCONISATIONS
+   ───────────────────────────────────────────── */
+#preconisations {
+  padding: 24px 32px 64px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.preco-intro {
+  margin-bottom: 24px;
+}
+.preco-intro h2 {
+  font-family: var(--font-headline);
+  font-size: 1.4rem;
+  margin: 0 0 8px;
+  color: var(--on-surface);
+}
+.preco-intro p {
+  font-size: .9rem;
+  color: rgba(0,0,0,0.7);
+  margin: 0;
+  max-width: 800px;
+}
+.preco-budget {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  background: rgba(51, 64, 250, 0.06);
+  border-radius: var(--radius-input);
+  border-left: 3px solid var(--accent);
+}
+.preco-budget label {
+  font-weight: 700;
+  font-size: .92rem;
+  color: var(--on-surface);
+}
+.preco-budget input {
+  width: 140px;
+  padding: 8px 12px;
+  border: 1px solid rgba(117, 117, 136, 0.25);
+  border-radius: var(--radius-input);
+  background: white;
+  font-size: .92rem;
+  font-weight: 600;
+  text-align: right;
+}
+.preco-budget-suffix {
+  color: rgba(0,0,0,0.5);
+  font-weight: 600;
+}
+
+.preco-table-wrap {
+  margin-bottom: 24px;
+}
+.preco-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface-lowest);
+  border-radius: var(--radius-input);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+.preco-table th {
+  text-align: left;
+  font-size: .76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(0,0,0,0.55);
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(117, 117, 136, 0.15);
+  background: rgba(51, 64, 250, 0.04);
+}
+.preco-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(117, 117, 136, 0.08);
+  font-size: .88rem;
+  vertical-align: middle;
+}
+.preco-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.preco-lever-select, .preco-param-select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid rgba(117, 117, 136, 0.25);
+  border-radius: var(--radius-input);
+  background: white;
+  font-size: .85rem;
+  font-family: inherit;
+}
+.preco-montant-input {
+  width: 110px;
+  padding: 6px 8px;
+  border: 1px solid rgba(117, 117, 136, 0.25);
+  border-radius: var(--radius-input);
+  background: white;
+  text-align: right;
+  font-weight: 600;
+  font-size: .85rem;
+}
+.preco-param-na {
+  color: rgba(0,0,0,0.3);
+}
+.preco-avantage {
+  font-weight: 700;
+  color: #15803d;
+  text-align: right;
+  white-space: nowrap;
+}
+.preco-plafond {
+  font-weight: 600;
+  font-size: .85rem;
+}
+.preco-ok {
+  color: #15803d;
+}
+.preco-warn {
+  color: #ea580c;
+  font-weight: 700;
+}
+.preco-del-btn {
+  background: transparent;
+  border: 1px solid rgba(117, 117, 136, 0.2);
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: rgba(0,0,0,0.5);
+  line-height: 1;
+  padding: 0;
+  transition: all .15s;
+}
+.preco-del-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #dc2626;
+}
+.preco-add-btn {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-input);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.preco-add-btn:hover {
+  filter: brightness(1.1);
+}
+
+.preco-jauges {
+  background: var(--surface-lowest);
+  border-radius: var(--radius-input);
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-card);
+}
+.preco-jauges h3 {
+  font-family: var(--font-headline);
+  font-size: .82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin: 0 0 14px;
+}
+.preco-jauge-row {
+  display: grid;
+  grid-template-columns: 220px 1fr 200px;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  font-size: .88rem;
+}
+.preco-jauge-label {
+  font-weight: 600;
+  color: rgba(0,0,0,0.7);
+}
+.preco-jauge-bar {
+  height: 12px;
+  background: rgba(117, 117, 136, 0.15);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.preco-jauge-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 6px;
+  transition: width .25s, background .25s;
+  width: 0%;
+}
+.preco-jauge-val {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--on-surface);
+  font-weight: 600;
+}
+.preco-jauge-economie {
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 2px solid rgba(51, 64, 250, 0.15);
+  grid-template-columns: 220px 1fr;
+}
+.preco-jauge-economie-val {
+  font-family: var(--font-headline);
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: right;
+  color: var(--on-surface);
+}
+.preco-jauge-economie-val.preco-economie-pos {
+  color: #15803d;
+}
+
+.preco-comparison {
+  background: var(--surface-lowest);
+  border-radius: var(--radius-input);
+  padding: 18px 22px;
+  box-shadow: var(--shadow-card);
+}
+.preco-comparison h3 {
+  font-family: var(--font-headline);
+  font-size: .82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin: 0 0 14px;
+}
+.preco-compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .9rem;
+}
+.preco-compare-table th {
+  text-align: right;
+  font-size: .76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(0,0,0,0.55);
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(117, 117, 136, 0.15);
+}
+.preco-compare-table th:first-child {
+  text-align: left;
+}
+.preco-compare-table td {
+  padding: 7px 14px;
+  border-bottom: 1px solid rgba(117, 117, 136, 0.08);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.preco-compare-table td:first-child {
+  text-align: left;
+  color: rgba(0,0,0,0.7);
+}
+.preco-compare-table tr.cmp-total td {
+  font-weight: 700;
+  font-size: 1rem;
+  background: rgba(51, 64, 250, 0.06);
+  border-top: 2px solid rgba(51, 64, 250, 0.20);
+  color: var(--on-surface);
+}
+.cmp-ecart-pos {
+  color: #15803d;
+  font-weight: 700;
+}
+.cmp-ecart-neg {
+  color: #dc2626;
+  font-weight: 700;
 }

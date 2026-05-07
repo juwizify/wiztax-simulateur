@@ -368,6 +368,8 @@ function recalculer() {
   const det = calculerIR(input);
   updateResults(det);
   updateCalcDetaille(det);
+  // Met à jour aussi l'onglet préconisations (recalcul comparatif)
+  if (typeof renderPreconisations === 'function') renderPreconisations();
 }
 
 function recalculerSimple() {
@@ -397,7 +399,213 @@ document.addEventListener('DOMContentLoaded', () => {
   demiPartCb.addEventListener('change', toggleDemiPartCas);
   toggleDemiPartCas();
 
+  // Préconisations : init + listeners
+  initPreconisations();
+
   // Premiers calculs
   recalculer();
   recalculerSimple();
 });
+
+// ─────────────────────────────────────────────
+// PRÉCONISATIONS — bridge UI/moteur
+// ─────────────────────────────────────────────
+function initPreconisations() {
+  if (typeof window.PRECONISATIONS === 'undefined') return;
+  const budgetInput = document.getElementById('precoBudget');
+  if (budgetInput) {
+    budgetInput.addEventListener('input', () => {
+      window.PRECONISATIONS.setBudget(budgetInput.value);
+      renderPreconisations();
+    });
+  }
+  const addBtn = document.getElementById('precoAddBtn');
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      window.PRECONISATIONS.addLever();
+      renderPreconisations();
+    });
+  }
+}
+
+function renderPreconisations() {
+  if (typeof window.PRECONISATIONS === 'undefined') return;
+  const P = window.PRECONISATIONS;
+  const tbody = document.getElementById('precoRows');
+  if (!tbody) return;
+
+  const inputAvant = getInputs();
+  const detAvant = calculerIR(inputAvant);
+  const state = P.getState();
+
+  // ---- Render des lignes
+  tbody.innerHTML = '';
+  state.preconisations.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.dataset.rowId = p.id;
+
+    // Levier select
+    const tdLev = document.createElement('td');
+    const sel = document.createElement('select');
+    sel.className = 'preco-lever-select';
+    sel.innerHTML = '<option value="">— Choisir un levier —</option>'
+      + groupedLeviersOptions(P.LEVIERS_CATALOGUE);
+    sel.value = p.leverId;
+    sel.addEventListener('change', () => {
+      P.updateLever(p.id, 'leverId', sel.value);
+      renderPreconisations();
+    });
+    tdLev.appendChild(sel);
+    tr.appendChild(tdLev);
+
+    // Montant
+    const tdMt = document.createElement('td');
+    const inMt = document.createElement('input');
+    inMt.type = 'number';
+    inMt.min = 0;
+    inMt.value = p.montant || 0;
+    inMt.className = 'preco-montant-input';
+    inMt.addEventListener('input', () => {
+      P.updateLever(p.id, 'montant', inMt.value);
+      renderPreconisations();
+    });
+    tdMt.appendChild(inMt);
+    tr.appendChild(tdMt);
+
+    // Param additionnel (taux-variable / jeanbrun)
+    const tdParam = document.createElement('td');
+    const lev = P.LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
+    if (lev && lev.params) {
+      const psel = document.createElement('select');
+      psel.className = 'preco-param-select';
+      psel.innerHTML = lev.params[0].options
+        .map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+      psel.value = p.paramValue || lev.params[0].options[0].value;
+      psel.addEventListener('change', () => {
+        P.updateLever(p.id, 'paramValue', psel.value);
+        renderPreconisations();
+      });
+      tdParam.appendChild(psel);
+    } else {
+      tdParam.innerHTML = '<span class="preco-param-na">—</span>';
+    }
+    tr.appendChild(tdParam);
+
+    // Avantage estimé
+    const tdAv = document.createElement('td');
+    const av = P.avantageEstime(p, inputAvant);
+    tdAv.className = 'preco-avantage';
+    if (av === null) tdAv.textContent = '—';
+    else tdAv.textContent = av > 0 ? '−' + fmt(av) : fmt(0);
+    tr.appendChild(tdAv);
+
+    // Plafond
+    const tdPl = document.createElement('td');
+    const ck = P.checkPlafond(p, inputAvant);
+    tdPl.className = 'preco-plafond ' + (ck.ok ? 'preco-ok' : 'preco-warn');
+    tdPl.textContent = ck.ok ? '✓' : '⚠ ' + ck.msg;
+    tr.appendChild(tdPl);
+
+    // Bouton suppression
+    const tdDel = document.createElement('td');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'preco-del-btn';
+    btn.textContent = '×';
+    btn.addEventListener('click', () => {
+      P.removeLever(p.id);
+      renderPreconisations();
+    });
+    tdDel.appendChild(btn);
+    tr.appendChild(tdDel);
+
+    tbody.appendChild(tr);
+  });
+
+  // ---- Recalcul projeté
+  const inputApres = P.appliquerPreconisations(inputAvant, state.preconisations);
+  const detApres = calculerIR(inputApres);
+
+  // ---- Jauges
+  const totalAlloue = state.preconisations.reduce((s, p) => s + (p.montant || 0), 0);
+  setJauge('Budget', totalAlloue, state.budgetDispo);
+  setJauge('Niches', detApres.nichesUtilisees, detApres.plafondNiches);
+  // PER : input.per total (existant + préconisé)
+  const perTotal = inputApres.per || 0;
+  setJauge('Per', perTotal, detApres.perCap);
+  // Dons : 7UD + 7UF totaux dans inputApres
+  const donsTotal = (inputApres.dons7UD || 0) + (inputApres.dons || 0);
+  const donsCap = detApres.revenuNetImposable * 0.20;
+  setJauge('Dons', donsTotal, donsCap);
+
+  // Économie totale
+  const economie = detAvant.impotNet - detApres.impotNet;
+  const ecoEl = document.getElementById('jaugeEconomieVal');
+  if (ecoEl) {
+    ecoEl.textContent = economie > 0 ? '−' + fmt(economie) : fmt(economie);
+    ecoEl.className = 'preco-jauge-economie-val ' + (economie > 0 ? 'preco-economie-pos' : '');
+  }
+
+  // ---- Tableau comparatif
+  setCmp('rni',   detAvant.revenuNetImposable, detApres.revenuNetImposable);
+  setCmp('ibr',   detAvant.impotBrut,          detApres.impotBrut);
+  setCmp('red',   detAvant.reductionsAppliquees, detApres.reductionsAppliquees, true);
+  setCmp('cr',    detAvant.creditsAppliques,   detApres.creditsAppliques, true);
+  setCmp('csy',   detAvant.credSyndic,         detApres.credSyndic, true);
+  setCmp('irmob', detAvant.irMobilier,         detApres.irMobilier);
+  setCmp('irav',  detAvant.irAV,               detApres.irAV);
+  setCmp('ps',    detAvant.totalPS,            detApres.totalPS);
+  setCmp('cehr',  detAvant.cehr,               detApres.cehr);
+  setCmp('net',   detAvant.impotNet,           detApres.impotNet);
+
+  document.getElementById('cmp-tm-act').textContent = fmtPct(detAvant.tauxMoyen);
+  document.getElementById('cmp-tm-pro').textContent = fmtPct(detApres.tauxMoyen);
+  document.getElementById('cmp-tmi-act').textContent = fmtPct(detAvant.tmi);
+  document.getElementById('cmp-tmi-pro').textContent = fmtPct(detApres.tmi);
+}
+
+function setCmp(key, valAct, valPro, isNeg) {
+  const elA = document.getElementById('cmp-' + key + '-act');
+  const elP = document.getElementById('cmp-' + key + '-pro');
+  const elE = document.getElementById('cmp-' + key + '-ecart');
+  if (elA) elA.textContent = isNeg && valAct > 0 ? '−' + fmt(valAct) : fmt(valAct);
+  if (elP) elP.textContent = isNeg && valPro > 0 ? '−' + fmt(valPro) : fmt(valPro);
+  if (elE) {
+    const ecart = valPro - valAct;
+    elE.textContent = ecart === 0 ? '—' : (ecart > 0 ? '+' + fmt(ecart) : fmt(ecart));
+    // Pour les lignes "isNeg" (réductions, crédits) : ecart > 0 = gain utilisateur (plus de réductions)
+    // Pour les autres : ecart < 0 = gain utilisateur (moins d'impôt)
+    const gain = isNeg ? (ecart > 0) : (ecart < 0);
+    elE.className = ecart === 0 ? '' : (gain ? 'cmp-ecart-pos' : 'cmp-ecart-neg');
+  }
+}
+
+function setJauge(name, used, cap) {
+  const fill = document.getElementById('jauge' + name + 'Fill');
+  const val = document.getElementById('jauge' + name + 'Val');
+  if (!fill || !val) return;
+  const pct = cap > 0 ? Math.min(100, (used / cap) * 100) : 0;
+  fill.style.width = pct + '%';
+  let color = 'var(--accent)';
+  if (cap > 0 && used > cap) color = '#dc2626';
+  else if (cap > 0 && used > cap * 0.80) color = '#ea580c';
+  else color = '#15803d';
+  fill.style.background = color;
+  val.textContent = fmt(used) + ' / ' + (cap > 0 ? fmt(cap) : '—');
+}
+
+function groupedLeviersOptions(leviers) {
+  const groups = {
+    hors:    { label: 'Hors plafond niches',          opts: [] },
+    niche10: { label: 'Niche 10 000 €',                opts: [] },
+    niche18: { label: 'Niche 18 000 € (majorée)',      opts: [] },
+    foncier: { label: 'Déduction d\'assiette foncière',opts: [] },
+  };
+  leviers.forEach(l => {
+    if (groups[l.cat]) groups[l.cat].opts.push(`<option value="${l.id}">${l.label}</option>`);
+  });
+  return Object.values(groups)
+    .filter(g => g.opts.length)
+    .map(g => `<optgroup label="${g.label}">${g.opts.join('')}</optgroup>`)
+    .join('');
+}
