@@ -353,11 +353,13 @@ function oracleCalc(input) {
   ) - credEff - credSynd + psRole - pfnl - pfnlAV;
 
   // --- RFR / CEHR ---
+  // Salaires / pensions retenus NETS d'abattement 10 %. Heures sup exonérées
+  // (≤ 7 500 €) réintégrées explicitement.
+  const hsExoRFR1 = Math.min(i.heuresSupExo1 || 0, 7500);
+  const hsExoRFR2 = Math.min(i.heuresSupExo2 || 0, 7500);
   const rfr = Math.max(0,
-    i.sal1 + i.sal2 + (i.allocChomage1 || 0) + (i.allocChomage2 || 0)
-    + (i.heuresSupExo1 || 0) + (i.heuresSupExo2 || 0)
-    + i.pen1 + i.pen2 + (i.pensInvalidite1 || 0) + (i.pensInvalidite2 || 0)
-    + (i.pensAlimRecue1 || 0) + (i.pensAlimRecue2 || 0)
+    salNet + hsExoRFR1 + hsExoRFR2
+    + penNet
     + i.bncMicro1 + i.bncMicro2 + i.bncReel1 + i.bncReel2
     + i.microFoncier + foncierReelNet
     + i.meubleClasse + i.meubleNonClasse + (i.autresMeubles || 0)

@@ -173,3 +173,34 @@ Sur Cas 9 (18 000 classé + 9 500 non classé) :
 ### Si confirmé, fix
 Calculer `psFoncier` sur les recettes brutes plutôt que sur les nets. Conserver le micro-foncier nu sur le net (où abattement 30 % et PS sur revenu net me paraît être la règle — à revérifier avec une source officielle).
 
+---
+
+## #5 — RFR : abattement 10 % salaires/pensions non appliqué
+
+**Statut** : Corrigé (commit suivant) — à valider sur Cas 10
+**Détecté sur** : Cas 10 (très haut revenu CEHR)
+**Sévérité** : impacte tous les cas avec salaires ou pensions, et donc tous les calculs CEHR + taux moyen.
+
+### Symptôme observé
+Sur le simulateur officiel impots.gouv le RFR retient les salaires **nets après abattement 10 %** (plancher 509 €, plafond 14 555 €) ou frais réels. Le wiztax sommait les salaires **bruts**.
+
+Sur le Cas 10 (sal1 = 350 000 €, abattement plafonné à 14 555 €) :
+- RFR wiztax (avant fix) : 589 200 €
+- RFR officiel : 574 645 €
+- Écart : 14 555 € → CEHR sur-estimée de ~437 €
+
+### Cause dans le code
+[`js/calculator.js:454-469`](../js/calculator.js#L454) — le commentaire d'origine assumait explicitement « somme des revenus bruts (avant abattements) », ce qui est faux. La règle BOI-IR-DECLA-20-10 (RFR) prend les salaires/pensions **après** abattement 10 %.
+
+### Fix appliqué
+- Salaires : remplacé `sal1 + sal2 + chômage + heuresSupImposables` par `det.salaireNet` (déjà calculé avec abat 10 % ou frais réels).
+- Pensions : remplacé `pen1 + pen2 + invalidité + alim reçues` par `det.pensionNet` (abat 10 % avec plafond foyer 4 439 € appliqué).
+- Heures sup exonérées (≤ 7 500 €) réintégrées explicitement (le RFR comprend la part exonérée).
+- Mêmes corrections sur `tests/run100.js` (oracle aligné).
+- 51 expected `revenuReference` mis à jour automatiquement dans `tests/cases.js` ; pour le Profil 9 (CEHR active), `expected.impotNet` aussi (108 194 → 107 757).
+
+### Note
+L'utilisateur a pointé que l'abattement 10 % ne s'applique qu'aux salaires. Vrai dans son spec ; mais les pensions ont aussi leur propre abattement 10 % (avec plafond foyer 4 439 €) et le RFR officiel l'applique également → c'est ce qu'on a fait.
+
+Les autres composantes du RFR (BNC, foncier, mobilier, AV) restent comme avant ; à valider sur d'autres cas.
+

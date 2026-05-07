@@ -446,18 +446,22 @@ function calculerIR(input) {
     det.impotApresDecote + det.irMobilier + det.irAV - det.reductionsAppliquees
   ) - det.creditsAppliques - det.credSyndic + det.psRole - det.pfnlVerse - det.pfnlAV;
 
-  // Revenu de référence = somme des revenus bruts déclarés (avant abattements) moins les charges
-  // C'est ce que l'administration utilise pour calculer le taux moyen affiché
-  // ⚠ Doit être calculé AVANT la CEHR (étape 12) qui l'utilise comme assiette
-  // Heures sup exonérées entrent intégralement dans le RFR (part exonérée comprise),
-  // alors que seul le surplus > 7 500 € est compté dans le revenu imposable.
+  // Revenu de référence — sert d'assiette à la CEHR (art. 223 sexies CGI) et
+  // au calcul du taux moyen affiché.
+  // Règles BOI-IR-DECLA-20-10 :
+  //   - Salaires et pensions retenus NETS d'abattement 10 % (ou frais réels).
+  //   - BNC / BIC / fonciers : montants nets effectivement imposables.
+  //   - Revenus mobiliers / AV : retenus en brut (les abattements ne s'imputent
+  //     que sur l'IR, pas sur le RFR).
+  //   - Heures sup exonérées entrent intégralement dans le RFR (part exonérée
+  //     comprise), alors que seul le surplus > 7 500 € est dans le revenu
+  //     imposable — donc la part exonérée doit être réajoutée ici.
+  // ⚠ Doit être calculé AVANT la CEHR (étape 12) qui l'utilise comme assiette.
+  const hsExoRFR1 = Math.min(input.heuresSupExo1 || 0, P.plafonds.heuresSupExoPlafond);
+  const hsExoRFR2 = Math.min(input.heuresSupExo2 || 0, P.plafonds.heuresSupExoPlafond);
   det.revenuReference = Math.max(0,
-    input.sal1 + input.sal2
-    + (input.allocChomage1 || 0) + (input.allocChomage2 || 0)
-    + (input.heuresSupExo1 || 0) + (input.heuresSupExo2 || 0)
-    + input.pen1 + input.pen2
-    + (input.pensInvalidite1 || 0) + (input.pensInvalidite2 || 0)
-    + (input.pensAlimRecue1 || 0) + (input.pensAlimRecue2 || 0)
+    det.salaireNet + hsExoRFR1 + hsExoRFR2
+    + det.pensionNet
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1 + input.bncReel2
     + input.microFoncier + det.foncierReel
