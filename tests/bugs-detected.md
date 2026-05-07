@@ -124,3 +124,29 @@ Conserver l'AV (`psAV`) en `psSource` (le wiztax était correct sur ce cas).
 ### Question latérale (à trancher séparément)
 Le wiztax applique 18,6 % aux PS mobilier (`P.ps.mobilier = 0.186`) — taux LFSS 2026. Le simulateur officiel impots.gouv utilisé pour la confrontation applique aussi 18,6 % selon l'observation utilisateur (à vérifier — les revenus 2025 devraient en théorie rester à 17,2 %, mais il est possible que le simulateur officiel applique déjà 18,6 % par anticipation). **Pour l'instant on garde 18,6 % puisque les deux moteurs s'accordent dessus.** Si on veut clarifier le scope (revenus 2025 vs 2026), c'est un sujet à part.
 
+---
+
+## #3 — PS foncier / LMNP à 17,2 % au lieu de 18,6 %
+
+**Statut** : Corrigé (commit `e39d7f1`) — à valider en navigateur sur le Cas 9
+**Détecté sur** : Cas 9 (LMNP)
+**Sévérité** : tous les cas avec foncier nu, micro-foncier, LMNP.
+
+### Symptôme observé
+PS foncier / LMNP affichées à 17,2 % côté wiztax alors que le simulateur officiel impots.gouv applique 18,6 % (cohérent avec le taux mobilier post-CFA LFSS 2026).
+
+### Cause
+[`js/params.js:57-62`](../js/params.js#L57) : `P.ps.foncier = 0.172` était utilisé à la fois pour les revenus fonciers/LMNP **et** pour les produits AV. Or :
+- AV > 8 ans : non concernée par la CFA — **17,2 %** correct.
+- Foncier / LMNP : la CFA s'applique — **18,6 %**.
+
+### Fix appliqué
+- Nouveau paramètre `P.ps.av = 0.172`.
+- `P.ps.foncier` passe à **0.186**.
+- `calculator.js` : `det.psAV = avProduits * P.ps.av`.
+- UI app.js : libellé `PS foncier (18,6 %)`.
+- 4 expected ajustés dans `tests/cases.js`. 51/51 + 100/100 + 21/21 verts.
+
+### Note de mapping (Cas 9, à part)
+Sur le simulateur officiel on saisit **une seule fois** chaque recette LMNP (5NG / 5NH / 5NI). Les cases « base PS » 5NJ/5NK/5NL n'apparaissent que sur la déclaration finale 2042 C PRO et ne doivent pas être saisies dans le simulateur (sinon doublement d'assiette).
+
