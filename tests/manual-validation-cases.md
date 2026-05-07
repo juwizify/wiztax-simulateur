@@ -235,8 +235,8 @@ Pour comparer **uniquement le moteur fiscal**, l'option **4BC directe** est suff
 | Donnée | Valeur | Case impôts.gouv | Champ wiztax |
 |---|---|---|---|
 | Salaire | 52 000 € | **1AJ** | `sal1` |
-| Loyers bruts meublé tourisme classé (gîte) | 18 000 € | **5NG** | `meubleClasse` |
-| Loyers bruts meublé non classé (Airbnb urbain) | 9 500 € | **5ND** | `meubleNonClasse` |
+| Loyers bruts meublé tourisme classé (gîte) | 18 000 € | **5NG** + **5NJ** *(base PS, même montant)* | `meubleClasse` |
+| Loyers bruts meublé tourisme non classé (Airbnb urbain) | 9 500 € | **5NH** + **5NK** *(base PS, même montant)* | `meubleNonClasse` |
 
 **Résultats à comparer**
 
@@ -245,7 +245,11 @@ Pour comparer **uniquement le moteur fiscal**, l'option **4BC directe** est suff
 | wiztax | … | … | … | |
 | impots.gouv | … | … | … | |
 
-→ **À vérifier** : revenu net après abattement = 18 000 × 50 % + 9 500 × 70 % = 9 000 + 6 650 = 15 650 € ajoutés au RBG (à confirmer côté wiztax via la ligne « Revenu net imposable »).
+→ **À vérifier** : revenu net après abattement = (18 000 − 50 % ×18 000) + (9 500 − 30 % ×9 500) = 9 000 + 6 650 = **15 650 €** ajoutés au RBG.
+
+→ **Important** : sur impots.gouv il faut **bien remplir les deux blocs** (5NG + 5NJ d'une part, 5NH + 5NK d'autre part). Le 1er bloc sert au calcul IR (avec abattement), le 2ème sert au calcul des PS (sur le brut). Si on oublie 5NJ/5NK, les PS foncier ne sont pas calculées et l'écart wiztax/impots.gouv sera trompeur.
+
+→ **Note** : si tu veux tester un *vrai* LMNP année (locataire principal), c'est la série **5NI / 5NL** (abat 50 %, plafond 77 700 €). Le wiztax ne dispose pas de champ pour ce cas — il faudrait soit le saisir dans `meubleClasse` (mêmes paramètres) en sachant que le mapping côté impots.gouv change, soit ajouter un 3ᵉ champ au simulateur. Hors scope cas 9.
 
 ---
 
