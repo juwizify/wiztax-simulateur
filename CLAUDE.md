@@ -32,10 +32,39 @@ Destinée à être intégrée dans un vrai logiciel par un développeur.
 - Girardin plein droit : 44 % dans le plafond (rétrocession 56%) — art. 200-0 A, 4° CGI
 - Girardin avec agrément : 34 % dans le plafond (rétrocession 66%) — art. 200-0 A, 4° CGI
 
+## Mode de recouvrement des prélèvements sociaux
+Source : service-public.gouv.fr/F2329, BOI-RPPM.
+
+Deux flux distincts dans le calculator (`calculator.js` étape 7) :
+
+**PS prélevés à la source** (par la banque/assureur, déjà acquittés, EXCLUS de l'avis IR) :
+- Dividendes (PFU et barème) — `det.psDividendes`
+- Intérêts — `det.psInterets`
+- Produits AV > 8 ans — `det.psAV`
+→ Somme exposée dans `det.psSource` à titre informatif.
+
+**PS recouvrés via avis IR** (à payer en sus avec l'IR) :
+- Plus-values mobilières — `det.psPV`
+- Revenus fonciers (nu, meublé, micro-foncier) — `det.psFoncier`
+→ Somme dans `det.psRole` ; **seul `psRole` entre dans `det.impotNet`**.
+
+`det.totalPS = psSource + psRole` est conservé pour afficher la charge fiscale globale,
+mais ne doit jamais être additionné à l'IR (sinon double comptage).
+
+## Crédits d'impôt automatiques (acomptes prélevés à la source)
+- **PFNL AV** (`det.pfnlAV` = `av75 × 7,5 % + av128 × 12,8 %`) : auto-imputé.
+  Le différentiel `pfnlAV − irAV` est restitué (ex : 4 600 × 7,5 % = 345 € pour single).
+- **PFNL mobilier 2CK** (acompte 12,8 % sur dividendes/intérêts prélevé par la banque) :
+  **PAS auto-imputé aujourd'hui** — l'utilisateur doit le saisir manuellement via `input.pfnlVerse`.
+  Limitation connue : usage normal ⇒ surestimation de l'IR si l'utilisateur saisit
+  les dividendes/intérêts sans saisir aussi le 2CK correspondant.
+  Symétrie possible avec `pfnlAV` : auto-calculer `(div + int) × 0,128` et l'imputer.
+
 ## Règles importantes
 - Ne jamais modifier un paramètre fiscal sans vérifier sur BOFiP ou brochure IR officielle
 - Les abattements salaires/BNC/pensions ont des gardes si le revenu = 0 (évite les négatifs)
 - Le Google Sheet (SimulateurIR_v2.gs) et cette page doivent rester cohérents
+- Tests : `node tests/run.js` (cas dirigés) + `tests/run100.js` (oracle vs calc) + `tests/run_leviers.js` (catalogue préconisations)
 
 ## Workflow Git
 - Branche : main
