@@ -307,7 +307,7 @@ function calculerIR(input) {
   det.psFoncier    = Math.max(0, revenusFonciersNets) * P.ps.foncier;
   det.psRole       = det.psDividendes + det.psInterets + det.psPV + det.psFoncier;
   // PS prélevés à la source ET libératoires (info uniquement, exclus impôt dû)
-  det.psAV     = avProduits * P.ps.foncier;
+  det.psAV     = avProduits * P.ps.av;
   det.psSource = det.psAV;
   // Conservé pour rétro-compat / affichage de la charge fiscale totale
   det.psMobilier = det.psDividendes + det.psInterets + det.psPV;

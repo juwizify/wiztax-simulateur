@@ -413,9 +413,9 @@ const CASES = [
     input: makeInput({ sal1: 40000, foncierReel: 5000 }),
     // sal net 36 000 + foncier 5 000 → RBG 41 000
     // QF=41 000 → 1 977.69 + (41 000-29 579)×0.30 = 5 403.99 → 5 404
-    // PS foncier = 5 000 × 17,2 % = 860
-    // total = 5 404 + 860 = 6 264
-    expected: { impotNet: 6264, revenuReference: 45000, tmi: 0.30 },
+    // PS foncier = 5 000 × 18,6 % = 930 (CFA LFSS 2026)
+    // total = 5 404 + 930 = 6 334
+    expected: { impotNet: 6334, revenuReference: 45000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -584,10 +584,9 @@ const CASES = [
     // foncier final = 12 000 - 7 000 = 5 000
     // sal net 36k + 5k = RBG 41 000
     // QF=41k → 1 977.69 + (41-29.579)×0.30 = 5 403.99 → 5 404
-    // PS foncier = 5 000 × 17,2 % = 860
-    // total = 5 404 + 860 = 6 264
-    // (vs sans Jeanbrun : 9 568 → économie 3 304 € ≈ 7k×(30%+17,2%))
-    expected: { impotNet: 6264, revenuReference: 45000, tmi: 0.30 },
+    // PS foncier = 5 000 × 18,6 % = 930 (CFA LFSS 2026)
+    // total = 5 404 + 930 = 6 334
+    expected: { impotNet: 6334, revenuReference: 45000, tmi: 0.30 },
   },
   {
     name: 'Jeanbrun inter cap : 40k sal + 12k foncier - 10k amort. (cap 8k)',
@@ -596,9 +595,9 @@ const CASES = [
     // foncier final = 12 000 - 8 000 = 4 000
     // sal net 36k + 4k = RBG 40 000
     // QF=40k → 1 977.69 + (40-29.579)×0.30 = 5 103.99 → 5 104
-    // PS foncier = 4 000 × 17,2 % = 688
-    // total = 5 104 + 688 = 5 792
-    expected: { impotNet: 5792, revenuReference: 44000, tmi: 0.30 },
+    // PS foncier = 4 000 × 18,6 % = 744 (CFA LFSS 2026)
+    // total = 5 104 + 744 = 5 848
+    expected: { impotNet: 5848, revenuReference: 44000, tmi: 0.30 },
   },
   {
     name: 'Jeanbrun très-social transforme revenu en déficit : 40k sal + 5k foncier - 8k amort.',
@@ -674,10 +673,10 @@ const CASES = [
     // QF = 76k → 1977.69 + (76-29.579)×0.30 = 15903.99 → 15904
     // IR mob PFU = (3000+1500)×12.8% = 576
     // PS mob = 4500 × 18.6% = 837 (div + int dus via avis IR)
-    // PS foncier = 4000 × 17.2% = 688
-    // Total PS = 1525
-    // Total = 15904 + 576 + 1525 = 18005
-    expected: { impotNet: 18005, revenuReference: 88500, tmi: 0.30 },
+    // PS foncier = 4000 × 18.6% = 744 (CFA LFSS 2026)
+    // Total PS = 1581
+    // Total = 15904 + 576 + 1581 = 18061
+    expected: { impotNet: 18061, revenuReference: 88500, tmi: 0.30 },
   },
 
   // Profil 6 : Cadre supérieur diversifié — PER + Pinel + dons mixtes

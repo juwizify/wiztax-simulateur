@@ -56,7 +56,8 @@ const PARAMS = {
   // --- PRÉLÈVEMENTS SOCIAUX ---
   ps: {
     mobilier: 0.186,  // dividendes, intérêts, PV mob — CSG 10.6% + CRDS 0.5% + sol. 7.5%
-    foncier:  0.172,  // foncier, PV immo, AV — CSG 9.2% + CRDS 0.5% + sol. 7.5%
+    foncier:  0.186,  // foncier nu, LMNP, micro-foncier — CFA LFSS 2026 inclus
+    av:       0.172,  // AV > 8 ans — non concernée par la CFA, reste à 17,2 %
     pfuIr:    0.128,  // PFU — part IR
     csgDeductible: 0.068,
   },

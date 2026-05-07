@@ -220,7 +220,7 @@ function updateCalcDetaille(d) {
     ['cd-psdiv',   'PS dividendes (18,6 %) — voie de rôle',      d.psDividendes,      'Le PFNL bancaire (2CK) ne couvre que l\'IR, pas les PS'],
     ['cd-psint',   'PS intérêts (18,6 %) — voie de rôle',        d.psInterets,        'Le PFNL bancaire (2CK) ne couvre que l\'IR, pas les PS'],
     ['cd-pspv',    'PS plus-values mobilières (18,6 %) — voie de rôle', d.psPV,       'À payer via avis IR'],
-    ['cd-psfon',   'PS foncier (17,2 %) — voie de rôle',         d.psFoncier,         'À payer via avis IR'],
+    ['cd-psfon',   'PS foncier (18,6 %) — voie de rôle',         d.psFoncier,         'À payer via avis IR'],
     ['cd-psrol',   '▶ Sous-total PS dus via avis IR',            d.psRole,            'total'],
     ['cd-psav',    'PS sur produits AV (17,2 %) — prélevés source', d.psAV,           'Libératoires : auto-imputés par le simulateur officiel'],
     ['cd-pssrc',   '▶ Sous-total PS prélevés à la source',       d.psSource,          'INFO — n\'entre pas dans l\'impôt à payer'],

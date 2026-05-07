@@ -235,8 +235,8 @@ Pour comparer **uniquement le moteur fiscal**, l'option **4BC directe** est suff
 | Donnée | Valeur | Case impôts.gouv | Champ wiztax |
 |---|---|---|---|
 | Salaire | 52 000 € | **1AJ** | `sal1` |
-| Loyers bruts meublé tourisme classé (gîte) | 18 000 € | **5NG** + **5NJ** *(base PS, même montant)* | `meubleClasse` |
-| Loyers bruts meublé tourisme non classé (Airbnb urbain) | 9 500 € | **5NH** + **5NK** *(base PS, même montant)* | `meubleNonClasse` |
+| Loyers bruts meublé tourisme classé (gîte) | 18 000 € | **5NG** | `meubleClasse` |
+| Loyers bruts meublé tourisme non classé (Airbnb urbain) | 9 500 € | **5NH** | `meubleNonClasse` |
 
 **Résultats à comparer**
 
@@ -247,9 +247,9 @@ Pour comparer **uniquement le moteur fiscal**, l'option **4BC directe** est suff
 
 → **À vérifier** : revenu net après abattement = (18 000 − 50 % ×18 000) + (9 500 − 30 % ×9 500) = 9 000 + 6 650 = **15 650 €** ajoutés au RBG.
 
-→ **Important** : sur impots.gouv il faut **bien remplir les deux blocs** (5NG + 5NJ d'une part, 5NH + 5NK d'autre part). Le 1er bloc sert au calcul IR (avec abattement), le 2ème sert au calcul des PS (sur le brut). Si on oublie 5NJ/5NK, les PS foncier ne sont pas calculées et l'écart wiztax/impots.gouv sera trompeur.
+→ **Sur le simulateur impots.gouv** : ne saisir qu'**une seule fois** chaque recette (5NG ou 5NH). Les cases « base PS » 5NJ/5NK/5NL n'existent que sur la déclaration finale 2042 C PRO ; le simulateur applique automatiquement les PS si tu indiques bien que tu es LMNP non-pro non affilié SSI.
 
-→ **Note** : si tu veux tester un *vrai* LMNP année (locataire principal), c'est la série **5NI / 5NL** (abat 50 %, plafond 77 700 €). Le wiztax ne dispose pas de champ pour ce cas — il faudrait soit le saisir dans `meubleClasse` (mêmes paramètres) en sachant que le mapping côté impots.gouv change, soit ajouter un 3ᵉ champ au simulateur. Hors scope cas 9.
+→ **Note** : si tu veux tester un *vrai* LMNP année (locataire principal, abat 50 %, plafond 77 700 €), la case officielle est **5NI**. Le wiztax ne dispose pas de champ dédié — on peut le saisir dans `meubleClasse` (mêmes paramètres) en sachant que le mapping côté impots.gouv change. Hors scope cas 9.
 
 ---
 

@@ -264,9 +264,10 @@ function oracleCalc(input) {
   const psInterets   = (i.interets || 0) * 0.186;
   const psPV         = i.pv * 0.186;
   const fonciersNets = microFoncierNet + foncierReelNet + meuClNet + meuNcNet;
-  const psFoncier    = Math.max(0, fonciersNets) * 0.172;
+  const psFoncier    = Math.max(0, fonciersNets) * 0.186;
   const psRole       = psDividendes + psInterets + psPV + psFoncier;
   // PS prélevés à la source ET libératoires (info, exclus de l'impôt à payer)
+  // AV reste à 17,2 % — non concernée par la CFA LFSS 2026.
   const psAV         = avProduits * 0.172;
   const psSource     = psAV;
   const totalPS      = psSource + psRole;
