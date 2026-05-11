@@ -1229,28 +1229,16 @@
     <button type="button" class="preco-add-btn" data-add-levier="3">+ Ajouter un crédit d'impôt</button>
   </div>
 
-  <div class="preco-jauges">
-    <h3>Indicateurs</h3>
+  <!-- Indicateurs résiduels : Budget + Plafond PER + Plafond dons.
+       Les anciennes jauges "Plafond niches global", "Bonus OM/SOFICA" et
+       "Économie totale" ont été retirées (redondantes avec les jauges
+       poches L2 et le récap sticky). Compact 3 colonnes pour ne plus
+       occuper toute la largeur. -->
+  <div class="preco-jauges preco-jauges-grid">
     <div class="preco-jauge-row">
       <div class="preco-jauge-label">Budget alloué</div>
       <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugeBudgetFill"></div></div>
       <div class="preco-jauge-val" id="jaugeBudgetVal">— / —</div>
-    </div>
-    <div class="preco-jauge-row">
-      <div class="preco-jauge-label">
-        Plafond niches global
-        <i class="tip tip-down" data-tip="Plafond global des niches fiscales (art. 200-0 A CGI) :&#10;&#10;· DROIT COMMUN : 10 000 €/an pour TOUS les dispositifs (Pinel, FCPI, IR-PME, GFI, emploi domicile, garde enfants, etc.)&#10;&#10;· PLAFOND MAJORÉ : +8 000 € supplémentaires (= 18 000 €) si le foyer a au moins un dispositif Outre-mer (Girardin) ou SOFICA. La tranche 10–18 k€ est en théorie réservée à ces dispositifs majorés.&#10;&#10;⚠ Limitation du simulateur : dès qu'un dispositif Girardin/SOFICA est présent, TOUTES les niches bénéficient du plafond 18 k€ (simplification). En théorie strict, un Pinel/FCPI > 10 k€ ne devrait pas profiter du bonus 8 k€ réservé OM/SOFICA. Sur-estimation rare en pratique.">i</i>
-      </div>
-      <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugeNichesFill"></div></div>
-      <div class="preco-jauge-val" id="jaugeNichesVal">— / —</div>
-    </div>
-    <div class="preco-jauge-row preco-jauge-bonus" id="jaugeBonusRow" style="display:none">
-      <div class="preco-jauge-label preco-jauge-bonus-label">
-        🎁 Bonus +8 000 € OM/SOFICA actif
-      </div>
-      <div class="preco-jauge-bonus-detail" id="jaugeBonusDetail">
-        Plafond porté à 18 000 € grâce à la présence d'un dispositif Girardin ou SOFICA.
-      </div>
     </div>
     <div class="preco-jauge-row">
       <div class="preco-jauge-label">Plafond PER</div>
@@ -1258,13 +1246,9 @@
       <div class="preco-jauge-val" id="jaugePerVal">— / —</div>
     </div>
     <div class="preco-jauge-row">
-      <div class="preco-jauge-label">Plafond dons (20 % RNI)</div>
+      <div class="preco-jauge-label">Dons (20 % RNI)</div>
       <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugeDonsFill"></div></div>
       <div class="preco-jauge-val" id="jaugeDonsVal">— / —</div>
-    </div>
-    <div class="preco-jauge-row preco-jauge-economie">
-      <div class="preco-jauge-label">Économie d'impôt totale</div>
-      <div class="preco-jauge-economie-val" id="jaugeEconomieVal">—</div>
     </div>
   </div>
 

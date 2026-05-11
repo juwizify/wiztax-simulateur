@@ -1363,3 +1363,45 @@ header span {
   color: #64748b;
   font-size: 0.9em;
 }
+
+/* ─── Jauges résiduelles en grille 3 colonnes (Budget, PER, Dons) ─── */
+.preco-jauges-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.preco-jauges-grid .preco-jauge-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+}
+.preco-jauges-grid .preco-jauge-label {
+  font-size: 0.82em;
+  color: #64748b;
+  font-weight: 500;
+}
+.preco-jauges-grid .preco-jauge-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.preco-jauges-grid .preco-jauge-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s ease, background 0.2s ease;
+}
+.preco-jauges-grid .preco-jauge-val {
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+  color: #475569;
+}
+@media (max-width: 720px) {
+  .preco-jauges-grid { grid-template-columns: 1fr; }
+}

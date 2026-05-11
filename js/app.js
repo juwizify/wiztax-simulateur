@@ -732,35 +732,9 @@ function refreshPreconisationsCalculs() {
     return s + (p.montant || 0);
   }, 0);
   setJauge('Budget', totalAlloue, state.budgetDispo);
-  setJauge('Niches', detApres.nichesUtilisees, detApres.plafondNiches);
-
-  // Affichage conditionnel du bonus 8 k€ OM/SOFICA
-  const bonusRow = document.getElementById('jaugeBonusRow');
-  const bonusDetail = document.getElementById('jaugeBonusDetail');
-  const hasMajore = (inputApres.girardinPD || 0) > 0 || (inputApres.girardinAG || 0) > 0 || (inputApres.sofica || 0) > 0;
-  if (bonusRow) {
-    bonusRow.style.display = hasMajore ? '' : 'none';
-    if (hasMajore && bonusDetail) {
-      const causes = [];
-      if ((inputApres.girardinPD || 0) > 0) causes.push('Girardin Plein Droit');
-      if ((inputApres.girardinAG || 0) > 0) causes.push('Girardin Agrément');
-      if ((inputApres.sofica || 0) > 0) causes.push('SOFICA');
-      bonusDetail.textContent = `Plafond porté à 18 000 € grâce à : ${causes.join(', ')}.`;
-    }
-  }
-  const perTotal = inputApres.per || 0;
-  setJauge('Per', perTotal, detApres.perCap);
+  setJauge('Per', inputApres.per || 0, detApres.perCap);
   const donsTotal = (inputApres.dons7UD || 0) + (inputApres.dons || 0);
-  const donsCap = detApres.revenuNetImposable * 0.20;
-  setJauge('Dons', donsTotal, donsCap);
-
-  // Économie totale
-  const economie = detAvant.impotNet - detApres.impotNet;
-  const ecoEl = document.getElementById('jaugeEconomieVal');
-  if (ecoEl) {
-    ecoEl.textContent = economie > 0 ? '−' + fmt(economie) : fmt(economie);
-    ecoEl.className = 'preco-jauge-economie-val ' + (economie > 0 ? 'preco-economie-pos' : '');
-  }
+  setJauge('Dons', donsTotal, detApres.revenuNetImposable * 0.20);
 
   // Tableau comparatif
   setCmp('rni',   detAvant.revenuNetImposable, detApres.revenuNetImposable);
