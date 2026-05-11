@@ -442,36 +442,46 @@ function initPreconisations() {
       refreshPreconisationsCalculs();
     });
   }
-  const addBtn = document.getElementById('precoAddBtn');
-  if (addBtn) {
-    addBtn.addEventListener('click', () => {
-      window.PRECONISATIONS.addLever();
+  // 3 boutons "+ Ajouter" — un par levier (data-add-levier)
+  document.querySelectorAll('[data-add-levier]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lvl = parseInt(btn.dataset.addLevier, 10);
+      window.PRECONISATIONS.addLever({ assignedLevier: lvl });
       renderPreconisations();
     });
-  }
+  });
 }
 
-// Render structurel : recrée toutes les lignes du tableau.
+// Render structurel : recrée toutes les lignes des 3 sections.
 // Appelé seulement à add/remove/changement de levier (sinon perte du focus input).
 function renderPreconisations() {
   if (typeof window.PRECONISATIONS === 'undefined') return;
   const P = window.PRECONISATIONS;
-  const tbody = document.getElementById('precoRows');
-  if (!tbody) return;
+  // 3 tbody, un par levier
+  const tbodies = {
+    1: document.getElementById('precoRowsL1'),
+    2: document.getElementById('precoRowsL2'),
+    3: document.getElementById('precoRowsL3'),
+  };
+  if (!tbodies[1] || !tbodies[2] || !tbodies[3]) return;
+  Object.values(tbodies).forEach(t => { t.innerHTML = ''; });
 
   const state = P.getState();
-  tbody.innerHTML = '';
   state.preconisations.forEach(p => {
+    const sectionLevier = p.assignedLevier || 2;  // fallback L2 par défaut
+    const tbody = tbodies[sectionLevier];
+    if (!tbody) return;
     const tr = document.createElement('tr');
     tr.dataset.rowId = p.id;
 
-    // Levier select + tooltip info contextuel
+    // Levier select + tooltip info contextuel — FILTRÉ par section
     const tdLev = document.createElement('td');
     tdLev.className = 'preco-lever-cell';
     const sel = document.createElement('select');
     sel.className = 'preco-lever-select';
-    sel.innerHTML = '<option value="">— Choisir un levier —</option>'
-      + groupedLeviersOptions(P.LEVIERS_CATALOGUE);
+    const leviersFiltres = P.LEVIERS_CATALOGUE.filter(l => l.levier === sectionLevier);
+    sel.innerHTML = '<option value="">— Choisir un dispositif —</option>'
+      + leviersFiltres.map(l => `<option value="${l.id}">${l.label}</option>`).join('');
     sel.value = p.leverId;
     sel.addEventListener('change', () => {
       P.updateLever(p.id, 'leverId', sel.value);
@@ -563,15 +573,54 @@ function renderPreconisations() {
 function refreshPreconisationsCalculs() {
   if (typeof window.PRECONISATIONS === 'undefined') return;
   const P = window.PRECONISATIONS;
-  const tbody = document.getElementById('precoRows');
-  if (!tbody) return;
+  // 3 tbody (un par levier)
+  const tbodies = {
+    1: document.getElementById('precoRowsL1'),
+    2: document.getElementById('precoRowsL2'),
+    3: document.getElementById('precoRowsL3'),
+  };
+  if (!tbodies[1] || !tbodies[2] || !tbodies[3]) return;
 
   const inputAvant = getInputs();
   const detAvant = calculerIR(inputAvant);
   const state = P.getState();
 
-  // Update des cellules computed dans chaque ligne
+  // Helper : levier (1/2/3) d'une preco via son leverId
+  const levOf = (p) => {
+    const lev = P.LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
+    return lev ? lev.levier : (p.assignedLevier || null);
+  };
+
+  // 4 calculs progressifs pour la barre synthèse :
+  //   detAvant : sans préconisations
+  //   detL1    : avec préco L1 uniquement (déductions revenu)
+  //   detL12   : avec préco L1 + L2 (réductions)
+  //   detApres : avec tout (incluant L3 crédits)
+  const precosL1   = state.preconisations.filter(p => levOf(p) === 1);
+  const precosL12  = state.preconisations.filter(p => levOf(p) <= 2);
+  const detL1    = calculerIR(P.appliquerPreconisations(inputAvant, precosL1));
+  const detL12   = calculerIR(P.appliquerPreconisations(inputAvant, precosL12));
+  const inputApres = P.appliquerPreconisations(inputAvant, state.preconisations);
+  const detApres = calculerIR(inputApres);
+
+  // Barre synthèse (en haut)
+  const setText = (id, txt) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = txt;
+  };
+  setText('precoStepInit',  fmt(detAvant.impotNet));
+  setText('precoStepL1',    fmt(detL1.impotNet));
+  setText('precoStepL2',    fmt(detL12.impotNet));
+  setText('precoStepFinal', fmt(detApres.impotNet));
+
+  // Jauges 2 poches niches dans la section L2
+  setJauge('Poche1', detApres.poche1Utilisee || 0, 10000);
+  setJauge('Poche2', detApres.poche2Utilisee || 0, 8000);
+
+  // Update des cellules computed dans chaque ligne (toutes sections confondues)
   state.preconisations.forEach(p => {
+    const tbody = tbodies[p.assignedLevier || 2];
+    if (!tbody) return;
     const tr = tbody.querySelector(`tr[data-row-id="${p.id}"]`);
     if (!tr) return;
     const tdAv = tr.querySelector('td[data-col="avantage"]');
@@ -587,9 +636,21 @@ function refreshPreconisationsCalculs() {
     }
   });
 
-  // Recalcul projeté
-  const inputApres = P.appliquerPreconisations(inputAvant, state.preconisations);
-  const detApres = calculerIR(inputApres);
+  // Warnings — bandeaux par section (panier-niches → L2, surdimensionnement → L2)
+  const warnings = P.computeWarnings(detApres);
+  ['L1', 'L2', 'L3'].forEach(s => {
+    const box = document.getElementById('precoWarnings' + s);
+    if (box) box.innerHTML = '';
+  });
+  const boxL2 = document.getElementById('precoWarningsL2');
+  warnings.forEach(w => {
+    // cap-indiv et panier-niches et surdimensionnement → tous Levier 2
+    if (!boxL2) return;
+    const chip = document.createElement('div');
+    chip.className = 'preco-warning preco-warning-' + w.level;
+    chip.textContent = (w.level === 'info' ? 'ℹ ' : '⚠ ') + w.message;
+    boxL2.appendChild(chip);
+  });
 
   // Jauges
   // Budget alloué : ne compte QUE les leviers à cash sortant réel (budget: 'cash').

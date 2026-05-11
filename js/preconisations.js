@@ -218,8 +218,22 @@ let preconisations = [];   // [{ id, leverId, montant, paramValue? }]
 let budgetDispo = 0;
 let nextRowId = 1;
 
-function addLever(leverId = null) {
-  preconisations.push({ id: nextRowId++, leverId: leverId || '', montant: 0, paramValue: null });
+// addLever({ leverId, assignedLevier }) — assignedLevier (1/2/3) détermine dans
+// quelle section UI la ligne apparaît, même si leverId n'est pas encore choisi.
+// Si leverId est fourni, on en déduit le levier réel pour assignedLevier.
+function addLever(opts = {}) {
+  // Compat ancienne signature : addLever('per') ou addLever()
+  if (typeof opts === 'string') opts = { leverId: opts };
+  const lev = opts.leverId
+    ? LEVIERS_CATALOGUE.find(l => l.id === opts.leverId)
+    : null;
+  preconisations.push({
+    id: nextRowId++,
+    leverId: opts.leverId || '',
+    montant: 0,
+    paramValue: null,
+    assignedLevier: (lev && lev.levier) || opts.assignedLevier || null,
+  });
 }
 
 function removeLever(rowId) {
@@ -231,9 +245,11 @@ function updateLever(rowId, field, value) {
   if (!p) return;
   if (field === 'leverId') {
     p.leverId = value;
-    // Reset paramValue à l'option par défaut si le levier en a un
     const lev = LEVIERS_CATALOGUE.find(l => l.id === value);
+    // Reset paramValue à l'option par défaut si le levier en a un
     p.paramValue = (lev && lev.params) ? lev.params[0].options[0].value : null;
+    // Mémorise le levier (1/2/3) — utile si la preco n'avait pas encore d'assignment
+    if (lev && lev.levier) p.assignedLevier = lev.levier;
   } else if (field === 'montant') {
     p.montant = parseFloat(value) || 0;
   } else if (field === 'paramValue') {
