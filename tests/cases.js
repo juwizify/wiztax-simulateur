@@ -840,13 +840,24 @@ const CASES = [
   // (Phase 2.3 : Math.min(input, versementMax × tauxMax))
   // -------------------------------------------------------------------
   {
-    name: 'Cap individuel SOFICA — saisie 18 000 € de RI → tronqué à 8 640 € (18k × 48%)',
+    name: 'Cap SOFICA — sal 100k + SOFICA 18k → cap absolu 18 000 € × 48 % = 8 640 €',
     input: makeInput({ sal1: 100000, sofica: 18000 }),
-    // Avant Phase 2.3 : SOFICA aurait été retenu intégralement (18k) → impôt 2 701
-    // Maintenant : capRiMax.sofica = 18 000 × 48 % = 8 640 €
-    // ri18 panier = 8 640 → poche1 = 8 640, poche2 = 0, perdues = 0
-    // RI niche18 retenue = 8 640 → impôt net = 20 701 - 8 640 = 12 061
+    // RNI 90 000 → 25 % = 22 500 > 18 000 → cap absolu domine, versement effectif = 18 000
+    // capRiMax.sofica = 18 000 × 48 % = 8 640 € (taux le plus permissif)
+    // ri18 panier = 8 640 → poche1 = 8 640, poche2 = 0
+    // impôt net = 20 701 - 8 640 = 12 061
     expected: { impotNet: 12061, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+  },
+  {
+    name: 'Cap SOFICA — sal 50k + SOFICA 18k → cap 25 % RNG = 11 250, RI tronquée à 5 400 €',
+    input: makeInput({ sal1: 50000, sofica: 18000 }),
+    // RNI 45 000 → 25 % = 11 250 < 18 000 → CAP 25 % RNG domine
+    // Versement effectif SOFICA = min(18 000, 11 250) = 11 250
+    // capRiMax.sofica = 11 250 × 48 % = 5 400 €
+    // impôt brut (sal 50k célib) = 6 604 → moins 5 400 = 1 204
+    // Démontre que le cap relatif 25 % RNG (art. 199 unvicies CGI) est plus
+    // restrictif que le cap absolu 18 000 € pour les revenus modestes.
+    expected: { impotNet: 1204, revenuReference: 45000, tmi: 0.30 },
   },
   {
     name: 'Cap individuel FCPI JEI single — saisie 10k de RI → tronqué à 3 600 € (12k × 30%)',

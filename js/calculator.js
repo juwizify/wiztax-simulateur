@@ -379,8 +379,16 @@ function calculerIR(input) {
   const versCouple = (d) => isCouple && d.versementMaxCouple !== undefined
     ? d.versementMaxCouple : d.versementMax;
   const tauxMax = (d) => Math.max(...Object.values(d.taux));
+  // SOFICA : double plafond — art. 199 unvicies CGI (BOI-IR-RICI-180-20 §140).
+  // Versement effectif = min(18 000 €, 25 % du revenu net global).
+  // Le wiztax utilise det.revenuNetImposable comme proxy du RNG (mêmes composantes
+  // après charges déductibles).
+  const versSoficaEffectif = Math.min(
+    PD.sofica.versementMax,
+    det.revenuNetImposable * 0.25
+  );
   const capRiMax = {
-    sofica:       PD.sofica.versementMax * tauxMax(PD.sofica),                    // 18 000 × 48 % = 8 640
+    sofica:       versSoficaEffectif * tauxMax(PD.sofica),                         // min(18k, 25%RNG) × 48 %
     fcpi:         versCouple(PD.fcpi) * PD.fcpi.taux,                              // 12k/24k × 18 %
     fcpiJei:      versCouple(PD.fcpiJei) * PD.fcpiJei.taux,                        // 12k/24k × 30 %
     fipCorse:     versCouple(PD.fipCorse) * PD.fipCorse.taux,                      // 12k/24k × 30 %

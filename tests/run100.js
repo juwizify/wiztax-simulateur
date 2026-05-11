@@ -301,7 +301,9 @@ function oracleCalc(input) {
   // Couple : SOFICA = 18 000 × 48 % = 8 640 (pas de différence single/couple).
   const couple = i.situation === 'marie-pacse';
   const cv = (single, c) => couple && c !== undefined ? c : single;
-  const capSofica   = 18000 * 0.48;                  // 8 640
+  // SOFICA double plafond : min(18 000, 25 % RNG) × 48 %
+  const versSoficaEff = Math.min(18000, rni * 0.25);
+  const capSofica   = versSoficaEff * 0.48;
   const capFCPI     = cv(12000, 24000) * 0.18;       // 2 160 / 4 320
   const capFcpiJei  = cv(12000, 24000) * 0.30;       // 3 600 / 7 200
   const capFipCorse = cv(12000, 24000) * 0.30;       // 3 600 / 7 200
