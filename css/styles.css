@@ -1315,3 +1315,51 @@ header span {
 @media (max-width: 1280px) {
   .preco-sticky-recap { display: none; }
 }
+
+/* ─── Widget rendement libre (Girardin PD/AG) ─── */
+.preco-rendement-wrap {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+.preco-rendement-btn {
+  width: 26px;
+  border: 0;
+  background: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+  font-size: 1.1em;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.15s;
+}
+.preco-rendement-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.preco-rendement-input {
+  width: 56px;
+  border: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  background: transparent;
+  outline: none;
+  padding: 4px 0;
+}
+.preco-rendement-input::-webkit-outer-spin-button,
+.preco-rendement-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.preco-rendement-suffix {
+  display: flex;
+  align-items: center;
+  padding: 0 6px 0 2px;
+  color: #64748b;
+  font-size: 0.9em;
+}

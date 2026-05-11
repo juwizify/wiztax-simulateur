@@ -521,7 +521,48 @@ function renderPreconisations() {
     // Param additionnel (taux-variable / jeanbrun)
     const tdParam = document.createElement('td');
     const lev = P.LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
-    if (lev && lev.params) {
+    if (lev && lev.mode === 'taux-libre') {
+      // Girardin PD/AG : input numérique de rendement avec boutons ± 0,5 %
+      const wrap = document.createElement('div');
+      wrap.className = 'preco-rendement-wrap';
+      const minus = document.createElement('button');
+      minus.type = 'button';
+      minus.className = 'preco-rendement-btn';
+      minus.textContent = '−';
+      minus.title = `− ${(lev.rendementStep * 100).toFixed(1)} %`;
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.className = 'preco-rendement-input';
+      input.min = (lev.rendementMin * 100).toFixed(1);
+      input.max = (lev.rendementMax * 100).toFixed(1);
+      input.step = (lev.rendementStep * 100).toFixed(1);
+      const cur = (p.paramValue || lev.rendementDefaut) * 100;
+      input.value = cur.toFixed(1);
+      const plus = document.createElement('button');
+      plus.type = 'button';
+      plus.className = 'preco-rendement-btn';
+      plus.textContent = '+';
+      plus.title = `+ ${(lev.rendementStep * 100).toFixed(1)} %`;
+      const suffix = document.createElement('span');
+      suffix.className = 'preco-rendement-suffix';
+      suffix.textContent = '%';
+
+      const apply = (newPct) => {
+        const clamped = Math.max(lev.rendementMin * 100, Math.min(lev.rendementMax * 100, newPct));
+        input.value = clamped.toFixed(1);
+        P.updateLever(p.id, 'paramValue', clamped / 100);
+        refreshPreconisationsCalculs();
+      };
+      minus.addEventListener('click', () => apply(parseFloat(input.value) - lev.rendementStep * 100));
+      plus.addEventListener('click',  () => apply(parseFloat(input.value) + lev.rendementStep * 100));
+      input.addEventListener('input', () => apply(parseFloat(input.value) || (lev.rendementDefaut * 100)));
+
+      wrap.appendChild(minus);
+      wrap.appendChild(input);
+      wrap.appendChild(suffix);
+      wrap.appendChild(plus);
+      tdParam.appendChild(wrap);
+    } else if (lev && lev.params) {
       const psel = document.createElement('select');
       psel.className = 'preco-param-select';
       psel.innerHTML = lev.params[0].options

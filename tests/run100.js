@@ -713,7 +713,7 @@ function testPreconisations(baseInput, baseResult, idx) {
   const precoBatch = [
     { id: 1, leverId: 'per', montant: 3000 },                      // versement-direct
     { id: 2, leverId: 'fcpiJei', montant: 1000 },                  // taux 0.30 → +300 sur fcpiJei
-    { id: 3, leverId: 'girardinPD', montant: 2000, paramValue: '113' }, // taux-variable 1.13 → +2260
+    { id: 3, leverId: 'girardinPD', montant: 2000, paramValue: 1.13 }, // taux-libre 1.13 → +2260
     { id: 4, leverId: 'jeanbrun', montant: 6000, paramValue: 'social' }, // jeanbrun
   ];
   const merged = appliquerPreconisations(baseInput, precoBatch);

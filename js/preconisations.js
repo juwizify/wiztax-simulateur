@@ -159,35 +159,24 @@ const LEVIERS_CATALOGUE = [
   },
   {
     id: 'girardinPD', label: 'Girardin Industriel — Plein Droit',
-    levier: 2, cat: 'niche18', mode: 'taux-variable', inputKey: 'girardinPD',
+    levier: 2, cat: 'niche18', mode: 'taux-libre', inputKey: 'girardinPD',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir le MONTANT INVESTI DANS LE PROGRAMME GIRARDIN PD de l\'année (versement à l\'opérateur, à fonds perdus). Cash sortant. Mécanique one-shot : RI majorée encaissée l\'année suivante. Quote-part 44 % dans le plafond niches 18 k€.',
-    params: [
-      { name: 'rendement', label: 'Rendement (RI / investissement)',
-        options: [
-          { value: '110', label: '110 % (rentabilité 10 % — conservateur)', taux: 1.10 },
-          { value: '113', label: '113 % (rentabilité 13 % — médian marché)', taux: 1.13 },
-          { value: '116', label: '116 % (rentabilité 16 % — performant)', taux: 1.16 },
-          { value: '120', label: '120 % (rentabilité 20 % — premium / fin d\'année)', taux: 1.20 },
-        ]
-      },
-    ],
+    // Rendement libre : l'utilisateur saisit un % entre 100 et 130 % (boutons ± 0,5 %).
+    rendementDefaut: 1.10,    // 110 %
+    rendementMin:    1.00,    // 100 %
+    rendementMax:    1.30,    // 130 %
+    rendementStep:   0.005,   // 0,5 %
+    info: 'Saisir le MONTANT INVESTI DANS LE PROGRAMME GIRARDIN PD de l\'année (versement à l\'opérateur, à fonds perdus). Cash sortant. Mécanique one-shot : RI majorée encaissée l\'année suivante. Quote-part 44 % dans le plafond niches 18 k€.\n\nRendement = ratio RI / investissement. Marché 2026 typiquement 108–115 %. Boutons ± 0,5 % ou saisie clavier directe.',
   },
   {
     id: 'girardinAG', label: 'Girardin Industriel — Avec Agrément',
-    levier: 2, cat: 'niche18', mode: 'taux-variable', inputKey: 'girardinAG',
+    levier: 2, cat: 'niche18', mode: 'taux-libre', inputKey: 'girardinAG',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir le MONTANT INVESTI DANS LE PROGRAMME GIRARDIN AG de l\'année (versement à l\'opérateur, à fonds perdus). Idem Plein Droit mais avec agrément ministériel (programmes > 250 k€). Cash sortant. Quote-part 34 % dans le plafond niches 18 k€.',
-    params: [
-      { name: 'rendement', label: 'Rendement (RI / investissement)',
-        options: [
-          { value: '105', label: '105 % (rentabilité 5 % — conservateur)', taux: 1.05 },
-          { value: '108', label: '108 % (rentabilité 8 % — médian marché)', taux: 1.08 },
-          { value: '112', label: '112 % (rentabilité 12 % — performant)', taux: 1.12 },
-          { value: '115', label: '115 % (rentabilité 15 % — premium)', taux: 1.15 },
-        ]
-      },
-    ],
+    rendementDefaut: 1.08,    // 108 %
+    rendementMin:    1.00,
+    rendementMax:    1.25,
+    rendementStep:   0.005,
+    info: 'Saisir le MONTANT INVESTI DANS LE PROGRAMME GIRARDIN AG de l\'année (versement à l\'opérateur, à fonds perdus). Idem Plein Droit mais avec agrément ministériel (programmes > 250 k€). Cash sortant. Quote-part 34 % dans le plafond niches 18 k€.\n\nRendement = ratio RI / investissement. Marché 2026 typiquement 105–112 %.',
   },
 
   // ─── LEVIER 3 — CRÉDITS D'IMPÔT (REMBOURSÉS SI IR = 0) ──
@@ -246,8 +235,17 @@ function updateLever(rowId, field, value) {
   if (field === 'leverId') {
     p.leverId = value;
     const lev = LEVIERS_CATALOGUE.find(l => l.id === value);
-    // Reset paramValue à l'option par défaut si le levier en a un
-    p.paramValue = (lev && lev.params) ? lev.params[0].options[0].value : null;
+    // Reset paramValue selon le type de paramètre :
+    //   - mode 'taux-libre' (Girardin PD/AG) → rendement par défaut (1.10 etc.)
+    //   - autres modes avec params → 1ère option par défaut
+    //   - aucun paramètre → null
+    if (lev && lev.mode === 'taux-libre') {
+      p.paramValue = lev.rendementDefaut;
+    } else if (lev && lev.params) {
+      p.paramValue = lev.params[0].options[0].value;
+    } else {
+      p.paramValue = null;
+    }
     // Mémorise le levier (1/2/3) — utile si la preco n'avait pas encore d'assignment
     if (lev && lev.levier) p.assignedLevier = lev.levier;
   } else if (field === 'montant') {
@@ -281,6 +279,12 @@ function appliquerPreconisations(input, precos) {
       const opt = lev.params[0].options.find(o => o.value === p.paramValue);
       if (opt) out[lev.inputKey] = (out[lev.inputKey] || 0) + p.montant * opt.taux;
     }
+    else if (lev.mode === 'taux-libre') {
+      // Rendement saisi directement par l'utilisateur (Girardin PD/AG).
+      // p.paramValue est un nombre décimal (1.10 = 110 %).
+      const rendement = parseFloat(p.paramValue) || lev.rendementDefaut;
+      out[lev.inputKey] = (out[lev.inputKey] || 0) + p.montant * rendement;
+    }
     else if (lev.mode === 'jeanbrun') {
       // Mode legacy spécifique — sera unifié vers versement-direct + paramKey
       // dans une itération suivante (le catalogue déclare désormais paramKey
@@ -304,6 +308,10 @@ function avantageEstime(p, inputAvant) {
   if (lev.mode === 'taux-variable') {
     const opt = lev.params[0].options.find(o => o.value === p.paramValue);
     return opt ? p.montant * opt.taux : 0;
+  }
+  if (lev.mode === 'taux-libre') {
+    const rendement = parseFloat(p.paramValue) || lev.rendementDefaut;
+    return p.montant * rendement;
   }
   if (lev.mode === 'jeanbrun') {
     return null; // pas un avantage IR direct

@@ -102,12 +102,12 @@ const TESTS = [
   // SOFICA : 5000 × 30% = 1500
   { id: 'sofica', montant: 5000, key: 'sofica', expected: 1500, delta: 1500, deltaTol: 1 },
 
-  // Girardin PD 113% : 5000 × 1.13 = 5650 input ; quote-part 44% dans niche 18k
-  // Avantage IR brut = 5650, mais à vérifier vs niche
-  { id: 'girardinPD', montant: 5000, paramValue: '113', key: 'girardinPD', expected: 5650, delta: 5650, deltaTol: 1 },
-
-  // Girardin AG 108% : 5000 × 1.08 = 5400
-  { id: 'girardinAG', montant: 5000, paramValue: '108', key: 'girardinAG', expected: 5400, delta: 5400, deltaTol: 1 },
+  // Girardin PD mode taux-libre : rendement saisi en décimal (1.13 = 113 %)
+  //   versement 5 000 × rendement 1.13 = 5 650 € de RI brute Girardin.
+  //   Quote-part 44 % dans niche 18k.
+  { id: 'girardinPD', montant: 5000, paramValue: 1.13, key: 'girardinPD', expected: 5650, delta: 5650, deltaTol: 1 },
+  // Girardin AG 108 %
+  { id: 'girardinAG', montant: 5000, paramValue: 1.08, key: 'girardinAG', expected: 5400, delta: 5400, deltaTol: 1 },
 
   // Pinel : retiré du catalogue préco Phase 3.1 (dispositif fermé fin 2024).
   // Si un engagement Pinel existant est saisi par l'utilisateur, c'est via
