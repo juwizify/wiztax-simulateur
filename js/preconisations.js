@@ -490,7 +490,7 @@ function computeWarnings(det) {
   // 3. Surdimensionnement — RI L2 demandées dépassent l'impôt à effacer.
   //    Heuristique : si totalReductions (somme RI saisies/calculées avant
   //    plafonnement niches) > impôt avant L2, la fraction excédentaire est
-  //    perdue par effacement à zéro (≠ crédits qui sont remboursés).
+  //    perdue ou reportable selon le dispositif (≠ crédits qui sont remboursés).
   const impotAvantReductions = (det.impotApresDecote || 0) + (det.irMobilier || 0);
   const totalRiL2 = (det.totalReductions || 0)
     + (det.fraisScol || 0) + (det.redEhpad || 0) + (det.redMalraux || 0);
@@ -500,7 +500,12 @@ function computeWarnings(det) {
       type: 'surdimensionnement',
       level: 'info',
       leverId: null,
-      message: `${fmt(excedent)} € de réductions au-delà de l'impôt restant — ces € sont perdus (les réductions ne sont pas remboursables, contrairement aux crédits).`,
+      message:
+        `${fmt(excedent)} € de réductions L2 au-delà de l'impôt restant. Selon le dispositif : ` +
+        `PERDU (Pinel, FCPI, FIP, GFI, SOFICA, Malraux, EHPAD, Loc'Avantages) · ` +
+        `REPORTABLE sur les années suivantes pour Girardin industriel (5 ans), IR-PME / Madelin (4 ans), dons > 20 % RNI (5 ans). ` +
+        `Le report n'est pas géré dans ce simulateur (calcul mono-année). ` +
+        `À l'inverse, les crédits Levier 3 (emploi domicile, garde enfants, cot. syndicales) sont remboursés même si l'impôt tombe à 0.`,
       amount: excedent,
     });
   }

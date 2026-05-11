@@ -873,7 +873,8 @@ function renderExistingByLevier(inputAvant, detAvant) {
     tr.appendChild(tdEff);
 
     const tdPl = document.createElement('td');
-    tdPl.innerHTML = '<span class="preco-plafond-existing">déjà pris en compte</span>';
+    tdPl.className = 'preco-plafond preco-ok';
+    tdPl.textContent = '✓';
     tr.appendChild(tdPl);
 
     const tdEmpty = document.createElement('td');
