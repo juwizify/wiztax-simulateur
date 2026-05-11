@@ -1203,10 +1203,8 @@ header span {
   padding: 1px 6px;
   border-radius: 3px;
   background: #f1f5f9;
-  font-size: 0.66em;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  text-transform: uppercase;
+  font-size: 0.72em;
+  font-weight: 500;
   margin-left: 6px;
   vertical-align: middle;
   white-space: nowrap;
