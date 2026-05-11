@@ -451,6 +451,32 @@ function renderCatBadge(cat) {
   return ` <span class="preco-cat-badge preco-cat-${cat}">${label}</span>`;
 }
 
+// Pastille indiquant le sort de l'EXCÉDENT (= ce qui dépasse l'impôt ou le
+// plafond) pour ce dispositif : perdu ? reportable N années ? remboursé ?
+// Affichée à côté du badge de catégorie sur chaque ligne.
+function renderNaturePastille(lev) {
+  if (!lev) return '';
+  const reportables = {
+    per:           'Reportable 3 ans',
+    deficitFoncier:'Reportable 10 ans (foncier)',
+    girardinPD:    'Reportable 5 ans',
+    girardinAG:    'Reportable 5 ans',
+    irPme:         'Reportable 4 ans',
+    dons7UD:       'Reportable 5 ans',
+    dons7UF:       'Reportable 5 ans',
+  };
+  if (reportables[lev.id]) {
+    return ` <span class="preco-cat-badge preco-nat-rep">${reportables[lev.id]}</span>`;
+  }
+  if (lev.levier === 2) {
+    return ` <span class="preco-cat-badge preco-nat-perdu">Perdu si dépassement</span>`;
+  }
+  if (lev.levier === 3) {
+    return ` <span class="preco-cat-badge preco-nat-rembours">Remboursable</span>`;
+  }
+  return '';
+}
+
 // Quel pourcentage d'1 € saisi dans la ligne préco entre dans le panier
 // niches ? Dépend du mode du levier :
 //   - 'taux'         : lev.taux       (FCPI 30 %, IR-PME 25 %, etc.)
@@ -725,10 +751,11 @@ function renderPreconisations() {
       }
       tip.setAttribute('data-tip', tipText);
       tdLev.appendChild(tip);
-      // Pastille catégorie (Niche 10k / 18k / Hors / Foncier)
-      const badge = document.createElement('span');
-      badge.innerHTML = renderCatBadge(levSelected.cat);
-      tdLev.appendChild(badge.firstChild || document.createTextNode(''));
+      // Pastilles : catégorie (Niche 10k / 18k / Hors / Foncier) + nature
+      // (Perdu / Reportable N ans / Remboursable) — empilées à droite.
+      const wrap = document.createElement('span');
+      wrap.innerHTML = renderCatBadge(levSelected.cat) + renderNaturePastille(levSelected);
+      while (wrap.firstChild) tdLev.appendChild(wrap.firstChild);
     }
     tr.appendChild(tdLev);
 
@@ -1139,8 +1166,8 @@ function renderExistingByLevier(inputAvant, detAvant) {
 
     const tdLab = document.createElement('td');
     const catLev = P.LEVIERS_CATALOGUE.find(l => l.id === it.id);
-    const catBadge = catLev ? renderCatBadge(catLev.cat) : '';
-    tdLab.innerHTML = `<span class="preco-existing-marker">✓ déjà saisi</span> ${it.label}${catBadge}`;
+    const badges = catLev ? renderCatBadge(catLev.cat) + renderNaturePastille(catLev) : '';
+    tdLab.innerHTML = `<span class="preco-existing-marker">✓ déjà saisi</span> ${it.label}${badges}`;
     tr.appendChild(tdLab);
 
     const tdMt = document.createElement('td');

@@ -429,6 +429,15 @@ function checkPlafond(p, inputAvant, detSeul, inputSeul) {
     }
   }
 
+  // ─── Déficit foncier : cap d'imputation RG 10 700 €/an ───
+  if (lev.id === 'deficitFoncier' && inputSeul) {
+    const deficitTotal = -Math.min(0, inputSeul.foncierReel || 0);
+    if (deficitTotal > 10700 + 0.5) {
+      const surplus = deficitTotal - 10700;
+      return { ok: false, msg: `${fmtEur(surplus)} € au-delà du cap 10 700 € (reportable 10 ans sur foncier)` };
+    }
+  }
+
   // ─── Jeanbrun : plafond par catégorie ───
   if (lev.mode === 'jeanbrun') {
     const opt = lev.params[0].options.find(o => o.value === p.paramValue);
@@ -511,12 +520,7 @@ function computeWarnings(det) {
       type: 'surdimensionnement',
       level: 'info',
       leverId: null,
-      message:
-        `${fmt(excedent)} € de réductions L2 au-delà de l'impôt restant. Selon le dispositif : ` +
-        `PERDU (Pinel, FCPI, FIP, GFI, SOFICA, Malraux, EHPAD, Loc'Avantages) · ` +
-        `REPORTABLE sur les années suivantes pour Girardin industriel (5 ans), IR-PME / Madelin (4 ans), dons > 20 % RNI (5 ans). ` +
-        `Le report n'est pas géré dans ce simulateur (calcul mono-année). ` +
-        `À l'inverse, les crédits Levier 3 (emploi domicile, garde enfants, cot. syndicales) sont remboursés même si l'impôt tombe à 0.`,
+      message: `${fmt(excedent)} € de réductions L2 au-delà de l'impôt restant — voir la pastille « Perdu » ou « Reportable » sur chaque ligne pour le sort de l'excédent.`,
       amount: excedent,
     });
   }

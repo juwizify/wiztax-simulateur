@@ -1216,6 +1216,11 @@ header span {
 .preco-cat-hors    { color: #475569; }
 .preco-cat-foncier { color: #166534; }
 
+/* Pastille "nature" (sort de l'excédent) — même style que cat-badge */
+.preco-nat-rep      { color: #075985; }   /* reportable : bleu sobre */
+.preco-nat-perdu    { color: #9a3412; }   /* perdu : ocre sobre      */
+.preco-nat-rembours { color: #166534; }   /* remboursable : vert sobre */
+
 /* ─── Warnings inline ─── */
 .preco-section-warnings {
   margin: 12px 0 4px;
