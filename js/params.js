@@ -65,10 +65,81 @@ const PARAMS = {
 
   // --- NICHES FISCALES ---
   niches: {
+    // Plafond global art. 200-0 A CGI : 2 poches.
+    //   poche 1 (10 000 €) : ouverte à tous les dispositifs cat. niche10 + niche18
+    //   poche 2 (+8 000 €) : RÉSERVÉE aux dispositifs cat. niche18 (Girardin / SOFICA)
     plafond:       10000,
     plafondMajore: 18000,
     girardinPdQuotePart: 0.44,  // rétrocession 56% → 44% dans le plafond (art. 200-0 A, 4° CGI)
     girardinAgQuotePart: 0.34,  // rétrocession 66% → 34% dans le plafond (art. 200-0 A, 4° CGI)
+  },
+
+  // --- PLAFONDS INDIVIDUELS DES DISPOSITIFS DE RÉDUCTION ---
+  // Source de vérité unique pour les caps individuels (single / couple) et
+  // les taux applicables. Quand la LF de l'année suivante modifie ces valeurs,
+  // on met à jour ici et tout le calcul moteur + UI suit automatiquement.
+  // Utilisé par calculator.js (Math.min sur det.redXXX) et preconisations.js
+  // (calcul de RI à partir du versement + warnings UI).
+  plafondsDispositifs: {
+    // SOFICA — art. 199 unvicies CGI, niche majorée 18 k
+    sofica: {
+      versementMax: 18000,
+      // Taux selon engagement de la SOFICA (production indépendante / langue régionale…)
+      taux: { '30': 0.30, '36': 0.36, '48': 0.48 },
+      tauxDefaut: '36',
+    },
+    // FCPI JEI — LF 2026 (remplace le FCPI classique pour les souscriptions 2026+)
+    fcpiJei: {
+      versementMax:        12000,
+      versementMaxCouple:  24000,
+      taux: 0.30,
+    },
+    // FCPI classique — extinction au 21/02/2026 (LF 2026)
+    fcpi: {
+      versementMax:        12000,
+      versementMaxCouple:  24000,
+      taux: 0.18,
+    },
+    // FIP Corse / Outre-mer — art. 199 terdecies-0 A bis
+    fipCorse: {
+      versementMax:        12000,
+      versementMaxCouple:  24000,
+      taux: 0.30,
+    },
+    // IR-PME / Madelin — art. 199 terdecies-0 A
+    irPme: {
+      versementMax:        50000,
+      versementMaxCouple: 100000,
+      taux: 0.25,
+    },
+    // GFI — art. 199 decies H CGI (Groupements Forestiers d'Investissement)
+    gfi: {
+      versementMax:        50000,
+      versementMaxCouple: 100000,
+      taux: 0.18,
+    },
+    // Malraux — art. 199 tervicies CGI
+    malraux: {
+      depensesParAnMax: 100000,  // base travaux retenue, plafond annuel
+      taux: { 'spr-non': 0.22, 'spr-oui': 0.30 },
+      tauxDefaut: 'spr-non',
+    },
+    // Loc'Avantages — art. 199 tricies CGI (ex-Cosse)
+    locAvantages: {
+      depensesMax: 10000,
+      taux: { 'loc1': 0.15, 'loc2': 0.35, 'loc3': 0.65 },
+      tauxDefaut: 'loc1',
+    },
+    // Girardin — pas de cap individuel propre (la limite vient du panier 18 k)
+    // mais on centralise quote-part + rendement par défaut pour cohérence.
+    girardinPD: {
+      quotePart: 0.44,
+      rendementDefaut: 1.10,
+    },
+    girardinAG: {
+      quotePart: 0.34,
+      rendementDefaut: 1.08,
+    },
   },
 
   // --- PLAFONDS RÉDUCTIONS / CRÉDITS ---
