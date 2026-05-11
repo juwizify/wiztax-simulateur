@@ -1094,7 +1094,8 @@
     <p>À partir d'un budget d'épargne disponible, allouer des montants sur plusieurs leviers fiscaux. Les préconisations <strong>s'ajoutent aux montants déjà saisis</strong> dans l'onglet Simulateur. Le calcul à droite affiche la situation actuelle vs projetée.</p>
   </div>
 
-  <!-- Récap sticky : suit le scroll dans cet onglet pour garder le contexte -->
+  <!-- Sidebar sticky : évolution de l'impôt + indicateurs résiduels (Budget,
+       PER, Dons). Fixe en haut à droite tant que l'onglet est actif. -->
   <aside class="preco-sticky-recap" id="precoStickyRecap" aria-label="Récapitulatif d'évolution de l'impôt">
     <h4>Évolution de l'impôt</h4>
     <div class="recap-line">
@@ -1117,6 +1118,23 @@
       <span class="recap-label">Économie totale</span>
       <span class="recap-val" id="recapEco">—</span>
     </div>
+
+    <h4 class="recap-divider">Indicateurs</h4>
+    <div class="recap-jauge">
+      <span class="recap-jauge-label">Budget alloué</span>
+      <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugeBudgetFill"></div></div>
+      <span class="recap-jauge-val" id="jaugeBudgetVal">— / —</span>
+    </div>
+    <div class="recap-jauge">
+      <span class="recap-jauge-label">Plafond PER</span>
+      <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugePerFill"></div></div>
+      <span class="recap-jauge-val" id="jaugePerVal">— / —</span>
+    </div>
+    <div class="recap-jauge">
+      <span class="recap-jauge-label">Dons (20 % RNI)</span>
+      <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugeDonsFill"></div></div>
+      <span class="recap-jauge-val" id="jaugeDonsVal">— / —</span>
+    </div>
   </aside>
 
   <div class="preco-budget">
@@ -1125,46 +1143,15 @@
     <span class="preco-budget-suffix">€</span>
   </div>
 
-  <!-- Barre de synthèse — impôt évolutif au fil des 3 leviers -->
-  <div class="preco-summary-bar">
-    <div class="preco-step">
-      <span class="preco-step-label">Impôt actuel</span>
-      <span class="preco-step-val" id="precoStepInit">—</span>
-    </div>
-    <span class="preco-step-arrow">→</span>
-    <div class="preco-step">
-      <span class="preco-step-label">après Levier 1<br><small>(base imposable)</small></span>
-      <span class="preco-step-val" id="precoStepL1">—</span>
-    </div>
-    <span class="preco-step-arrow">→</span>
-    <div class="preco-step">
-      <span class="preco-step-label">après Levier 2<br><small>(réductions)</small></span>
-      <span class="preco-step-val" id="precoStepL2">—</span>
-    </div>
-    <span class="preco-step-arrow">→</span>
-    <div class="preco-step preco-step-final">
-      <span class="preco-step-label">Impôt final<br><small>(après Levier 3 crédits)</small></span>
-      <span class="preco-step-val" id="precoStepFinal">—</span>
-    </div>
-  </div>
-
   <!-- ─── LEVIER 1 — Réduire la base imposable ─── -->
   <div class="preco-section preco-section-l1">
     <div class="preco-section-header">
       <h3>Levier 1 — Réduire la base imposable</h3>
-      <p class="preco-section-desc">Déduit du revenu imposable. Économie ≈ versement × TMI. Recalcule l'impôt à effacer.</p>
+      <p class="preco-section-desc">Déduit du revenu imposable. Économie ≈ versement × TMI.</p>
     </div>
+    <div class="preco-existing" id="precoExistingL1"></div>
     <table class="preco-table preco-table-section">
-      <thead>
-        <tr>
-          <th>Dispositif</th>
-          <th>Montant</th>
-          <th>Paramètre</th>
-          <th>Économie estimée</th>
-          <th>Plafond</th>
-          <th></th>
-        </tr>
-      </thead>
+      <thead><tr><th>Dispositif</th><th>Montant</th><th>Paramètre</th><th>Économie</th><th>Plafond</th><th></th></tr></thead>
       <tbody id="precoRowsL1"></tbody>
     </table>
     <div class="preco-section-warnings" id="precoWarningsL1"></div>
@@ -1175,31 +1162,23 @@
   <div class="preco-section preco-section-l2">
     <div class="preco-section-header">
       <h3>Levier 2 — Réductions d'impôt</h3>
-      <p class="preco-section-desc">Perdues si IR = 0 (≠ crédits). Plafond niches : 2 poches (10 000 € commune + 8 000 € majoration Girardin/SOFICA).</p>
+      <p class="preco-section-desc">Perdues si IR = 0 (≠ crédits). 2 poches : 10 000 € commune + 8 000 € Girardin/SOFICA.</p>
     </div>
-    <div class="preco-niches-jauges">
+    <div class="preco-niches-jauges preco-niches-jauges-compact">
       <div class="preco-jauge-row">
-        <span class="preco-jauge-label">Poche 1 (10 000 € — tous)</span>
+        <span class="preco-jauge-label">Poche 1 (10 k€)</span>
         <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugePoche1Fill"></div></div>
         <span class="preco-jauge-val" id="jaugePoche1Val">— / 10 000 €</span>
       </div>
       <div class="preco-jauge-row">
-        <span class="preco-jauge-label">Poche 2 (+8 000 € — Girardin/SOFICA)</span>
+        <span class="preco-jauge-label">Poche 2 (+8 k€)<small> Girardin/SOFICA</small></span>
         <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugePoche2Fill"></div></div>
         <span class="preco-jauge-val" id="jaugePoche2Val">— / 8 000 €</span>
       </div>
     </div>
+    <div class="preco-existing" id="precoExistingL2"></div>
     <table class="preco-table preco-table-section">
-      <thead>
-        <tr>
-          <th>Dispositif</th>
-          <th>Montant</th>
-          <th>Paramètre</th>
-          <th>RI estimée</th>
-          <th>Plafond</th>
-          <th></th>
-        </tr>
-      </thead>
+      <thead><tr><th>Dispositif</th><th>Montant</th><th>Paramètre</th><th>RI</th><th>Plafond</th><th></th></tr></thead>
       <tbody id="precoRowsL2"></tbody>
     </table>
     <div class="preco-section-warnings" id="precoWarningsL2"></div>
@@ -1212,45 +1191,15 @@
       <h3>Levier 3 — Crédits d'impôt</h3>
       <p class="preco-section-desc">Remboursés même si IR = 0 — un crédit n'est jamais perdu.</p>
     </div>
+    <div class="preco-existing" id="precoExistingL3"></div>
     <table class="preco-table preco-table-section">
-      <thead>
-        <tr>
-          <th>Dispositif</th>
-          <th>Montant</th>
-          <th>Paramètre</th>
-          <th>Crédit estimé</th>
-          <th>Plafond</th>
-          <th></th>
-        </tr>
-      </thead>
+      <thead><tr><th>Dispositif</th><th>Montant</th><th>Paramètre</th><th>Crédit</th><th>Plafond</th><th></th></tr></thead>
       <tbody id="precoRowsL3"></tbody>
     </table>
     <div class="preco-section-warnings" id="precoWarningsL3"></div>
     <button type="button" class="preco-add-btn" data-add-levier="3">+ Ajouter un crédit d'impôt</button>
   </div>
 
-  <!-- Indicateurs résiduels : Budget + Plafond PER + Plafond dons.
-       Les anciennes jauges "Plafond niches global", "Bonus OM/SOFICA" et
-       "Économie totale" ont été retirées (redondantes avec les jauges
-       poches L2 et le récap sticky). Compact 3 colonnes pour ne plus
-       occuper toute la largeur. -->
-  <div class="preco-jauges preco-jauges-grid">
-    <div class="preco-jauge-row">
-      <div class="preco-jauge-label">Budget alloué</div>
-      <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugeBudgetFill"></div></div>
-      <div class="preco-jauge-val" id="jaugeBudgetVal">— / —</div>
-    </div>
-    <div class="preco-jauge-row">
-      <div class="preco-jauge-label">Plafond PER</div>
-      <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugePerFill"></div></div>
-      <div class="preco-jauge-val" id="jaugePerVal">— / —</div>
-    </div>
-    <div class="preco-jauge-row">
-      <div class="preco-jauge-label">Dons (20 % RNI)</div>
-      <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugeDonsFill"></div></div>
-      <div class="preco-jauge-val" id="jaugeDonsVal">— / —</div>
-    </div>
-  </div>
 
   <div class="preco-comparison">
     <h3>Comparaison Actuelle / Projetée</h3>

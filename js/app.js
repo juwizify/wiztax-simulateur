@@ -644,23 +644,20 @@ function refreshPreconisationsCalculs() {
   const inputApres = P.appliquerPreconisations(inputAvant, state.preconisations);
   const detApres = calculerIR(inputApres);
 
-  // Barre synthèse (en haut)
+  // Récap sticky (sidebar fixe en haut à droite)
   const setText = (id, txt) => {
     const el = document.getElementById(id);
     if (el) el.textContent = txt;
   };
-  setText('precoStepInit',  fmt(detAvant.impotNet));
-  setText('precoStepL1',    fmt(detL1.impotNet));
-  setText('precoStepL2',    fmt(detL12.impotNet));
-  setText('precoStepFinal', fmt(detApres.impotNet));
-
-  // Récap sticky (même contenu en format compact)
   setText('recapInit',  fmt(detAvant.impotNet));
   setText('recapL1',    fmt(detL1.impotNet));
   setText('recapL2',    fmt(detL12.impotNet));
   setText('recapFinal', fmt(detApres.impotNet));
   const eco = detAvant.impotNet - detApres.impotNet;
   setText('recapEco', eco > 0 ? '− ' + fmt(eco) + ' €' : fmt(eco) + ' €');
+
+  // Pré-affichage des dispositifs déjà saisis dans le Simulateur, par section
+  renderExistingByLevier(inputAvant, detAvant);
 
   // Jauges 2 poches niches dans la section L2
   setJauge('Poche1', detApres.poche1Utilisee || 0, 10000);
@@ -752,6 +749,63 @@ function refreshPreconisationsCalculs() {
   document.getElementById('cmp-tm-pro').textContent = fmtPct(detApres.tauxMoyen);
   document.getElementById('cmp-tmi-act').textContent = fmtPct(detAvant.tmi);
   document.getElementById('cmp-tmi-pro').textContent = fmtPct(detApres.tmi);
+}
+
+// Affiche en haut de chaque section les dispositifs déjà saisis dans le
+// Simulateur (input > 0), avec leur effet IR estimé. Format compact en vert.
+// L'utilisateur voit que ces leviers sont DÉJÀ pris en compte sans avoir
+// besoin de les ré-ajouter en préconisation.
+function renderExistingByLevier(inputAvant, detAvant) {
+  if (typeof window.PRECONISATIONS === 'undefined') return;
+  const P = window.PRECONISATIONS;
+  const boxes = {
+    1: document.getElementById('precoExistingL1'),
+    2: document.getElementById('precoExistingL2'),
+    3: document.getElementById('precoExistingL3'),
+  };
+  if (!boxes[1] || !boxes[2] || !boxes[3]) return;
+  Object.values(boxes).forEach(b => { b.innerHTML = ''; });
+
+  // Liste des dispositifs avec leur valeur d'input + estimation effet IR
+  // L'effet d'un dispositif déjà saisi = (det.redXXX OU det.creditXXX OU ...)
+  const items = [
+    { id: 'per',        levier: 1, inputKey: 'per',                  label: 'PER',                effet: detAvant.per * detAvant.tmi },
+    { id: 'jeanbrun',   levier: 1, inputKey: 'jeanbrunAmort',        label: 'Amortissement Jeanbrun', effet: null },
+    { id: 'dons7UD',    levier: 2, inputKey: 'dons7UD',              label: 'Dons Coluche 75 %',  effet: null },
+    { id: 'dons7UF',    levier: 2, inputKey: 'dons',                 label: 'Dons 66 %',          effet: null },
+    { id: 'ehpad',      levier: 2, inputKey: 'ehpadFrais',           label: 'EHPAD',              effet: detAvant.redEhpad },
+    { id: 'malraux',    levier: 2, inputKey: 'malrauxTravaux',       label: 'Malraux',            effet: detAvant.redMalraux, fallback: 'malraux' },
+    { id: 'fcpiJei',    levier: 2, inputKey: 'fcpiJei',              label: 'FCPI JEI',           effet: detAvant.redFcpiJei },
+    { id: 'fipCorse',   levier: 2, inputKey: 'fipCorse',             label: 'FIP Corse',          effet: detAvant.redFipCorse },
+    { id: 'irPme',      levier: 2, inputKey: 'irPme',                label: 'IR-PME',             effet: detAvant.redIrPme },
+    { id: 'gfi',        levier: 2, inputKey: 'gfi',                  label: 'GFI',                effet: detAvant.redGfi },
+    { id: 'locAvantages',levier: 2, inputKey: 'locAvantagesDepenses',label: "Loc'Avantages",      effet: detAvant.redLocAvantages, fallback: 'locAvantages' },
+    { id: 'sofica',     levier: 2, inputKey: 'sofica',               label: 'SOFICA',             effet: detAvant.redSofica },
+    { id: 'girardinPD', levier: 2, inputKey: 'girardinPD',           label: 'Girardin PD',        effet: detAvant.redGirardinPD },
+    { id: 'girardinAG', levier: 2, inputKey: 'girardinAG',           label: 'Girardin AG',        effet: detAvant.redGirardinAG },
+    { id: 'emploiDom',  levier: 3, inputKey: 'emploiDomicile',       label: 'Emploi à domicile',  effet: detAvant.credDomicile },
+    { id: 'gardeEnf',   levier: 3, inputKey: 'gardeEnfants',         label: 'Garde enfants',      effet: detAvant.credGarde },
+    { id: 'syndic',     levier: 3, inputKey: 'cotSyndicales',        label: 'Cotisations syndicales', effet: detAvant.credSyndic },
+  ];
+
+  items.forEach(it => {
+    const val = (inputAvant[it.inputKey] || 0)
+      || (it.fallback ? (inputAvant[it.fallback] || 0) : 0);
+    if (val <= 0) return;
+    const chip = document.createElement('span');
+    chip.className = 'preco-existing-chip';
+    const eff = it.effet;
+    const effTxt = (eff !== null && eff !== undefined && eff > 0)
+      ? ` → −${fmt(eff)} €`
+      : '';
+    chip.textContent = `✓ ${it.label} : ${fmt(val)} €${effTxt}`;
+    boxes[it.levier].appendChild(chip);
+  });
+
+  // Si une section est vide, on cache son conteneur pour ne pas occuper d'espace
+  Object.entries(boxes).forEach(([_, box]) => {
+    box.style.display = box.children.length ? '' : 'none';
+  });
 }
 
 function setCmp(key, valAct, valPro, isNeg) {
