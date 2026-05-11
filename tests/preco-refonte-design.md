@@ -24,25 +24,25 @@ L'onglet est organisé en **3 sections séquentielles**, dans cet ordre, qui cor
 **Mécanisme** : viennent en déduction de l'IR (après barème). **Perdues si IR = 0**.
 **Plafond** : 2 poches (10k normale + 8k majoration Girardin/SOFICA).
 
-| Dispositif | inputKey actuel | Cat. niche | Mode actuel | Mode cible | Plafond versement |
-|---|---|---|---|---|---|
-| Pinel | `pinel` | 10k | RI déjà calculée | versement + durée | 300 000 € / 2 inv |
-| Girardin PD | `girardinPD` | 18k (qp 44 %) | versement | versement + rendement | pas de cap propre |
-| Girardin AG | `girardinAG` | 18k (qp 34 %) | versement | versement + rendement | pas de cap propre |
-| SOFICA | `sofica` | 18k | RI déjà calculée | versement + taux 30/36/48 % | 18 000 € |
-| FCPI JEI | `fcpiJei` | 10k | versement (× taux) | versement | 12 000 / 24 000 € |
-| FCPI classique | `fcpi` | 10k | versement (× taux) | versement | 12 000 / 24 000 € |
-| FIP Corse | `fipCorse` | 10k | versement (× taux) | versement | 12 000 / 24 000 € |
-| IR-PME | `irPme` | 10k | versement (× taux) | versement | 50 000 / 100 000 € |
-| GFI | `gfi` | 10k | versement (× taux) | versement | 50 000 / 100 000 € |
-| Dons 7UD (75 %) | `dons7UD` | hors | versement | versement | 2 000 € à 75 %, surplus → 66 % |
-| Dons 7UF (66 %) | `dons` | hors | versement | versement | 20 % du RNI |
-| EHPAD | `ehpadFrais` | hors | versement | versement | 10 000 € × nbPers |
-| Malraux | `malraux` | hors | RI déjà calculée | dépenses + zone 22/30 % | 100 000 €/an |
-| Loc'Avantages | `locAvantages` | 10k | RI déjà calculée | dépenses + palier | 10 000 € dépenses |
-| Cot. syndicales | `cotSyndicales` | hors | versement | versement | 1 % salaires/chom/pen |
+| Dispositif | inputKey actuel | Cat. niche | Mode cible | Plafond versement |
+|---|---|---|---|---|
+| Girardin PD | `girardinPD` | 18k (qp 44 %) | versement + rendement libre (défaut 10 %, ± 0,5) | pas de cap propre |
+| Girardin AG | `girardinAG` | 18k (qp 34 %) | versement + rendement libre (défaut 8 %, ± 0,5) | pas de cap propre |
+| SOFICA | `sofica` | 18k | versement + taux 30 / 36 / 48 % | 18 000 € |
+| FCPI JEI | `fcpiJei` | 10k | versement | 12 000 / 24 000 € |
+| FCPI classique | `fcpi` | 10k | versement | 12 000 / 24 000 € |
+| FIP Corse | `fipCorse` | 10k | versement | 12 000 / 24 000 € |
+| IR-PME | `irPme` | 10k | versement | 50 000 / 100 000 € |
+| GFI | `gfi` | 10k | versement | 50 000 / 100 000 € |
+| Dons 7UD (75 %) | `dons7UD` | hors | versement | 2 000 € à 75 %, surplus → 66 % |
+| Dons 7UF (66 %) | `dons` | hors | versement | 20 % du RNI |
+| EHPAD | `ehpadFrais` | hors | versement | 10 000 € × nbPers |
+| Malraux | `malraux` | hors | **dépenses travaux + zone SPR/QAD** | 100 000 €/an |
+| Loc'Avantages | `locAvantages` | 10k | **dépenses loyer + palier Loc 1/2/3** | 10 000 € dépenses |
 
-> **Note** : « hors » signifie hors plafond niches (réduction conservée même si poche 1+2 saturée). Cas particulier : les dons sont une réduction « hors niches » mais avec leur propre cap RNI 20 %.
+> **« hors »** = hors plafond niches : réduction conservée même si poche 1 + 2 saturées. Cas particulier dons : hors niches mais avec leur cap propre 20 % RNI.
+
+> **Pinel retiré du catalogue préconisations** : le dispositif est fermé aux nouveaux investissements (extinction fin 2024). Pour les engagements en cours, le calcul reste disponible dans l'onglet Simulateur (mode complet). Donc rien dans préco.
 
 ### Levier 3 — Crédits d'impôt
 **Mécanisme** : viennent en déduction de l'IR. **Remboursés si IR = 0** (différence clé avec Levier 2).
@@ -51,9 +51,10 @@ L'onglet est organisé en **3 sections séquentielles**, dans cet ordre, qui cor
 |---|---|---|---|
 | Emploi à domicile | `emploiDomicile` | 12 000 € (+ majo 15 k) | 50 % |
 | Garde enfants < 6 ans | `gardeEnfants` | 3 500 € × nbEnfants | 50 % |
+| Cot. syndicales | `cotSyndicales` | 1 % salaires + chômage + pensions | 66 % |
 | Autres crédits | `autresCredits` | aucun | direct |
 
-(Cotisations syndicales sont conceptuellement un crédit 66 %, mais classées par le moteur dans le bloc « réductions » `credSyndic`. À harmoniser ou à laisser tel — voir question ouverte plus bas.)
+> **Cot. syndicales reclassée en Levier 3** : c'est légalement un crédit d'impôt à 66 % (art. 199 quater C CGI), remboursable même si IR = 0. Le moteur la traite déjà comme telle (`credSyndic`, hors plafond niches) — juste un reclassement de présentation côté UI.
 
 ---
 
@@ -160,7 +161,7 @@ Section nouvelle à ajouter dans `PARAMS.plafonds` (ou un sous-objet `plafondsDi
 
 ```js
 plafondsDispositifs: {
-  pinel:        { versement: 300000, taux: { '6': 0.12, '9': 0.18, '12': 0.21 } },
+  // Pinel non listé (retiré du catalogue préco). Reste dans P.plafonds pour le simulateur si besoin.
   sofica:       { versement: 18000,  taux: { '30': 0.30, '36': 0.36, '48': 0.48 } },
   fcpiJei:      { versement: 12000,  versementCouple: 24000, taux: 0.30 },
   fcpiClassique:{ versement: 12000,  versementCouple: 24000, taux: 0.18 },
@@ -169,8 +170,10 @@ plafondsDispositifs: {
   gfi:          { versement: 50000,  versementCouple: 100000, taux: 0.18 },
   malraux:      { depensesParAn: 100000, taux: { 'spr-non': 0.22, 'spr-oui': 0.30 } },
   locAvantages: { depenses: 10000, taux: { 'loc1': 0.15, 'loc2': 0.35, 'loc3': 0.65 } },
-  // Pas de plafond propre pour Girardin (cap via panier majoré)
-  // PER, pensions alim, EHPAD, emploi dom, garde enfants : déjà dans P.plafonds
+  girardinPD:   { rendementDefaut: 1.10, quotePart: 0.44 },  // pas de cap versement propre
+  girardinAG:   { rendementDefaut: 1.08, quotePart: 0.34 },  // pas de cap versement propre
+  // PER, pensions alim, EHPAD, emploi dom, garde enfants, cot. syndicales :
+  // déjà dans P.plafonds, on garde tel quel.
 },
 ```
 
@@ -207,13 +210,14 @@ Sources réglementaires à valider (LF 2024 / LF 2026, BOI-IR-RICI-…) — à c
 │ Poche 1 (10 000 €) : ████████░░ 7 000 € / 10 000 €                  │
 │ Poche 2 (+8 000 €) : ░░░░░░░░░░     0 € /  8 000 €                  │
 ├──────────────────────────────────────────────────────────────────────┤
-│ [+] Pinel — Engagement 9 ans (18 %)                                  │
-│     Investissement : 200 000 €    RI annuelle : 4 000 €              │
-│     → Retenu (poche 1) : 4 000 €                                     │
-│ [+] Dons d'intérêt général                                           │
+│ [+] FCPI JEI                                                         │
+│     Versement : 12 000 €    RI 30 % : 3 600 €                        │
+│     → Retenu (poche 1) : 3 600 €                                     │
+│ [+] Dons d'intérêt général      [hors plafond niches]                │
 │     Versement : 5 000 €                                              │
 │     → Retenu : 3 300 € (réduction 66 %)                              │
-│ ⚠ Tu effaces déjà 3 300 € — il te reste 1 200 € d'impôt à effacer.   │
+│ ⚠ Tu effaces déjà 6 900 € — tu dépasses ton impôt de 2 400 € en L2.  │
+│   Réduction perdue (non remboursable).                               │
 │ [+ Ajouter une réduction d'impôt]                                    │
 └──────────────────────────────────────────────────────────────────────┘
 
@@ -259,19 +263,26 @@ Triggers :
 
 ---
 
-## 7. Questions ouvertes (à trancher avant Phase 2)
+## 7. Décisions tranchées (post-revue user)
 
-1. **Cotisations syndicales** : conceptuellement crédit 66 %, mais classé en bloc « réductions » dans le moteur (`credSyndic`). On le déplace en Levier 3 ou on le laisse à part ?
+1. **Cotisations syndicales** → **Levier 3** (crédit d'impôt 66 %, art. 199 quater C CGI, remboursable). Reclassement purement de présentation, le moteur ne change pas.
 
-2. **Bascule versement pour Girardin PD/AG** : le wiztax demande aujourd'hui le « versement » (qui produit une RI > versement par effet de levier). On garde le mode « versement + rendement » qui existe dans le catalogue actuel ?
+2. **Girardin PD/AG** → input « **versement** » + input « **rendement** » libre :
+   - Valeurs par défaut : **110 %** (PD), **108 %** (AG).
+   - Boutons **± 0,5** sur le côté pour incrémenter facilement (10 → 10,5 → 11 → 11,5 …).
+   - Saisie directe possible (clavier).
+   - L'amplitude reste large : permet de couvrir 105–125 % en pratique.
+   - Le moteur calcule la RI brute = versement × (rendement / 100), puis applique la quote-part (× 0,44 PD / × 0,34 AG) dans le panier niches.
 
-3. **Pinel étalement multi-annuel** : on garde le calcul « RI annuelle » pour la simulation année courante, ou on simule la RI étalée sur N années ? Le moteur calcule pour 1 année — on ne va pas casser ça en Phase 2. La maquette montre « RI annuelle ».
+3. **Pinel** → **retiré du catalogue préconisations**. Plus de nouveaux investissements possibles (extinction fin 2024). Pour les engagements en cours, le calcul reste dans l'onglet Simulateur. **Pas de simulation multi-année dans préco**.
 
-4. **Loc'Avantages mode « dépenses »** : aujourd'hui input = RI. On bascule en input = « dépenses + palier » ? OK ; à confirmer.
+4. **Loc'Avantages** → bascule input **« dépenses de loyer décoté annuelles » + dropdown palier** (Loc 1 = 15 %, Loc 2 = 35 %, Loc 3 = 65 %). Le moteur calcule la RI = `min(dépenses, 10 000) × taux palier`.
 
-5. **Malraux** : input actuel = RI déjà calculée. On bascule en « dépenses + zone » ? Note : le mode 'taux-variable' existe déjà au catalogue mais inputKey = `malraux` qui dans le moteur est traité comme RI directe. Donc le catalogue est déjà à moitié migré.
+5. **Malraux** → bascule input **« dépenses de travaux annuelles » + dropdown zone** (SPR avec PSMV/QAD = 30 %, SPR sans PSMV = 22 %). Le moteur calcule la RI = `min(dépenses, 100 000) × taux zone`. Plafond 4 ans cumulé (400 000 €) non géré V1.
 
-6. **Levier 2 « hors panier niches »** : les dons, EHPAD, cot. syndicales, Malraux ne sont pas dans le panier niches. Visuellement dans Levier 2, ils ne tombent pas sous les jauges de poche 1/2. Comment on les présente — section séparée intra-Levier 2 ou simplement chip « hors plafond niches » ?
+6. **Levier 2 « dans panier » vs « hors panier »** → **liste unique** dans la section Levier 2, avec un **badge gris « hors plafond niches »** posé sur chaque ligne concernée (Dons 7UD/7UF, EHPAD, Malraux). Les jauges poche 1/2 ne sont alimentées que par les dispositifs « dans panier » (Girardin, SOFICA, FCPI, FIP, IR-PME, GFI, Loc'Avantages).
+
+> Ce bloc remplace les questions ouvertes initiales. Toutes les décisions sont actées et prêtes à être implémentées en Phase 2.
 
 ---
 
