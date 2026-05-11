@@ -436,6 +436,30 @@ document.addEventListener('DOMContentLoaded', () => {
 // ─────────────────────────────────────────────
 // PRÉCONISATIONS — bridge UI/moteur
 // ─────────────────────────────────────────────
+// Quel pourcentage d'1 € saisi dans la ligne préco entre dans le panier
+// niches ? Dépend du mode du levier :
+//   - 'taux'         : lev.taux       (FCPI 30 %, IR-PME 25 %, etc.)
+//   - 'taux-variable': option.taux    (SOFICA 30/36/48 %, Loc'Av legacy…)
+//   - 'taux-libre'   : rendement × quote-part   (Girardin PD/AG)
+//   - 'versement-direct' avec quote-part 1 : ratio = 1
+// Utilisé par computeMaxForLevier pour ne pas surévaluer le max.
+function panierRatioParInput(lev, paramValue) {
+  if (lev.id === 'girardinPD') {
+    const r = parseFloat(paramValue) || lev.rendementDefaut || 1.10;
+    return r * 0.44;
+  }
+  if (lev.id === 'girardinAG') {
+    const r = parseFloat(paramValue) || lev.rendementDefaut || 1.08;
+    return r * 0.34;
+  }
+  if (lev.mode === 'taux') return lev.taux || 1;
+  if (lev.mode === 'taux-variable' && lev.params && paramValue) {
+    const opt = lev.params[0].options.find(o => o.value === paramValue);
+    if (opt && opt.taux) return opt.taux;
+  }
+  return 1; // mode versement-direct : la saisie est = à la valeur de panier
+}
+
 // Calcule le maximum saisissable pour un dispositif sur une ligne préco,
 // en combinant TROIS plafonds (on retient le plus restrictif) :
 //   1. Plafond individuel propre au dispositif (et cumul avec l'existant
@@ -492,19 +516,22 @@ function computeMaxForLevier(lev, inputAvant, paramValue, detAvant, isCouple) {
   }
 
   // ─── 2. Place restante dans le panier niches ─────────────────────────
+  // Pour convertir "panier disponible (€)" en "saisie max (€)", il faut
+  // diviser par le RATIO d'entrée dans le panier propre au dispositif :
+  //   - mode 'taux'         : ratio = lev.taux  (FCPI, FIP, IR-PME, GFI)
+  //   - mode 'taux-variable': ratio = opt.taux  (SOFICA)
+  //   - mode 'taux-libre'   : ratio = rendement × quote-part  (Girardin)
+  //   - mode 'versement-direct' : ratio = 1     (dons, EHPAD, emploi dom…)
+  // Sinon on surévalue le max et on génère du surdim sur Girardin.
   let maxNiches = Infinity;
   const poche1Reste = POS(10000 - (detAvant.poche1Utilisee || 0));
   const poche2Reste = POS(8000  - (detAvant.poche2Utilisee || 0));
-  if (lev.cat === 'niche10') {
-    maxNiches = poche1Reste;            // niche10 ne va PAS en poche 2
-  } else if (lev.cat === 'niche18') {
-    // niche18 peut occuper poche 1 puis déborder en poche 2
-    let panierDispo = poche1Reste + poche2Reste;
-    // Convertir le "panier disponible" en SAISIE max (versement Girardin
-    // ou RI brute pour SOFICA/autres niche18).
-    if (lev.id === 'girardinPD') panierDispo = panierDispo / 0.44;
-    else if (lev.id === 'girardinAG') panierDispo = panierDispo / 0.34;
-    maxNiches = panierDispo;
+  if (lev.cat === 'niche10' || lev.cat === 'niche18') {
+    const ratio = panierRatioParInput(lev, paramValue);
+    const panierDispo = lev.cat === 'niche10'
+      ? poche1Reste                  // niche10 reste cantonné à la poche 1
+      : (poche1Reste + poche2Reste); // niche18 peut déborder en poche 2
+    maxNiches = ratio > 0 ? panierDispo / ratio : panierDispo;
   }
   // cat 'hors' / 'foncier' : pas de cap niches → reste Infinity.
 
