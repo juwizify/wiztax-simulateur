@@ -256,3 +256,90 @@ Oracle `tests/run100.js` aligné sur la même règle.
 ### Tests
 52/52 dirigés + 100/100 oracle + 21/21 leviers — verts.
 
+---
+
+## #8 — Niches fiscales : poches 10k + 8k mal modélisées
+
+**Statut** : Open — sera traité dans la refonte préco (branche `feat/preco-refonte`).
+**Détecté sur** : analyse de [`js/calculator.js:420-421`](../js/calculator.js#L420).
+
+### Symptôme
+Dès qu'il y a 1 € de Girardin/SOFICA, le plafond global passe à 18 000 € pour **tout** le panier. Donc Pinel 17 000 € + Girardin 1 000 € → tout passe (faux fiscalement).
+
+### Règle correcte (art. 200-0 A CGI)
+1. Tout le monde se met d'abord en file pour la **poche 1 (10 000 €)**.
+2. Si poche 1 saturée :
+   - Solutions cat. niche10 → surplus perdu.
+   - Solutions cat. niche18 (Girardin/SOFICA) → surplus dans **poche 2 (+8 000 €)**.
+3. Si poche 2 aussi saturée → surplus perdu.
+
+### Impact
+Sous-estime l'impôt sur tous les cas mixtes (niche10 substantielle + bonus Girardin/SOFICA). Les tests `cases.js` actuels n'ont pas de scénario qui révèle ce bug — à ajouter en Phase 2.
+
+---
+
+## #9 — Plafonds individuels manquants sur les dispositifs de réduction
+
+**Statut** : Open — sera traité dans la refonte préco.
+**Détecté sur** : `calculator.js:371-381` (étape 9).
+
+### Symptôme
+Pour tous les `det.redXXX` qui prennent directement l'input sans `Math.min` :
+- `pinel`, `girardinPD`, `girardinAG`, `sofica`, `fcpi`, `fcpiJei`, `fipCorse`, `gfi`, `irPme`, `malraux`, `locAvantages`, `autresReductions`.
+
+Conséquence : on peut saisir 200 000 € en FCPI sans aucune validation moteur. Le panier niches absorbe ensuite ce qu'il peut (tronqué silencieusement).
+
+### Règle pour le fix (validée user)
+- Plafonds centralisés dans `js/params.js` (source de vérité pour évolutions annuelles).
+- Cap appliqué **en dur** dans le moteur (`Math.min`) sur la base entrant dans la RI.
+- **L'input n'est pas bloqué** : l'utilisateur peut saisir un versement supérieur au plafond (réalité de son patrimoine).
+- L'UI affiche un **warning** explicite : « X € excèdent le plafond, non pris en compte dans la RI ».
+
+### Plafonds à modéliser (par dispositif)
+| Dispositif | Plafond versement single / couple | Taux RI |
+|---|---|---|
+| Pinel | 300 000 € (et 5 500 €/m², 2 inv/an) | 12 / 18 / 21 % selon durée (LF 2024) |
+| SOFICA | 18 000 € | 30 / 36 / 48 % selon scénario |
+| FCPI JEI | 12 000 / 24 000 € | 30 % |
+| FCPI classique | 12 000 / 24 000 € | 18 % |
+| FIP Corse | 12 000 / 24 000 € | 30 % |
+| IR-PME | 50 000 / 100 000 € | 25 % (boost) ou 18 % |
+| GFI | 50 000 / 100 000 € | 18 % (jusqu'à 25 % zone) |
+| Malraux | 400 000 € / 4 ans = 100 000 €/an | 22 / 30 % |
+| Loc'Avantages | 10 000 € dépenses | 15 / 35 / 65 % |
+| Girardin PD/AG | pas de cap individuel ; limite via poche 2 | 1,xx |
+
+---
+
+## #10 — Pas de garde-fou « surdimensionnement » dans l'onglet préco
+
+**Statut** : Open — sera traité dans la refonte préco (UI).
+**Détecté sur** : UX onglet préconisations.
+
+### Symptôme
+Utilisateur a 6 000 € d'impôt à payer. Il saisit 25 000 € de versement Girardin → RI projetée énorme, écran ne dit rien d'autre que « ça rentre dans le plafond niches ».
+
+Aucun message qui dit : « Tu effaces 11 000 € de plus que ton impôt — réduction perdue, investissement potentiellement disproportionné. »
+
+### Fix
+Helper `computeWarnings(inputAvant, precos, calcAvant, calcApres)` qui détecte :
+- RI projetée > impôt à effacer → afficher la perte.
+- Caps individuels dépassés (alimenté par #9).
+- Cap niches global → reporting visuel des paniers 1 et 2.
+
+---
+
+## #11 — UX préco : cascade pédagogique 3 leviers absente
+
+**Statut** : Open — sera traité dans la refonte préco (UI).
+
+### Symptôme
+L'onglet préco actuel est un tableau plat « dispositif → montant → gain », sans structure pédagogique. Il ne reflète pas les 3 catégories fiscales (réduction base / réduction impôt / crédit) et ne montre pas la cascade de l'impôt évoluant levier après levier.
+
+### Cible
+Refonte selon la structure validée :
+- Barre synthèse en haut (impôt à effacer → impôt final, segments colorés par levier).
+- 3 sections détaillées : « Réduire la base imposable », « Réductions d'impôt », « Crédits d'impôt ».
+- Distinction visuelle « réduction perdue si impôt = 0 » (rouge) vs « crédit remboursé » (vert).
+- Warnings inline branchés sur `computeWarnings` (#10).
+
