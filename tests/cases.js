@@ -598,16 +598,35 @@ const CASES = [
   },
 
   // -------------------------------------------------------------------
-  // 7QO/7QP/7QR — Loc'Avantages (réduction DANS plafond niches 10 000 €)
-  // L'utilisateur saisit le montant de la réduction (15/35/65 % selon décote).
+  // 7QO/7QP/7QR — Loc'Avantages
+  // 2 modes acceptés par le moteur :
+  //   * NOUVEAU (Phase 2.4) : locAvantagesDepenses + locAvantagesPalier → RI calculée
+  //   * LEGACY : locAvantages (RI saisie directement)
   // -------------------------------------------------------------------
   {
-    name: "Loc'Avantages : 60k sal + 3 000 € (Loc 2, sous niche)",
+    name: "Loc'Avantages legacy : 60k sal + RI 3 000 € saisie directement",
     input: makeInput({ sal1: 60000, locAvantages: 3000 }),
     // sal net 54k → impôt baseline 9 304
-    // total niches 3 000 < 10 000 → réduction appliquée intégralement
+    // RI 3 000 € directe (legacy), capée par capRiMax.locAvantages = 6 500
+    // 3 000 < 10 000 niche → réduction appliquée intégralement
     // impôt net = 9 304 - 3 000 = 6 304
     expected: { impotNet: 6304, revenuReference: 54000, tmi: 0.30 },
+  },
+  {
+    name: "Loc'Avantages mode dépenses Loc 2 : 100k sal + 8k dépenses → RI 2 800 €",
+    input: makeInput({ sal1: 100000, locAvantagesDepenses: 8000, locAvantagesPalier: 'loc2' }),
+    // 8 000 < 10 000 plafond → dépenses retenues = 8 000
+    // RI = 8 000 × 35 % (palier Loc 2) = 2 800 €
+    // impôt net = 20 701 - 2 800 = 17 901
+    expected: { impotNet: 17901, revenuReference: 90000, tmi: 0.41 },
+  },
+  {
+    name: "Loc'Avantages mode dépenses Loc 3 (CAP 10k) : 100k sal + 20k dépenses → RI 6 500 €",
+    input: makeInput({ sal1: 100000, locAvantagesDepenses: 20000, locAvantagesPalier: 'loc3' }),
+    // 20 000 > 10 000 plafond → dépenses retenues = 10 000 (capées)
+    // RI = 10 000 × 65 % (palier Loc 3, IML) = 6 500 €
+    // impôt net = 20 701 - 6 500 = 14 201
+    expected: { impotNet: 14201, revenuReference: 90000, tmi: 0.41 },
   },
 
   // -------------------------------------------------------------------

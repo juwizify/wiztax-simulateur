@@ -322,7 +322,16 @@ function oracleCalc(input) {
   const redFipCorse = Math.min(i.fipCorse || 0, capFipCorse);
   const redGfi = Math.min(i.gfi || 0,           capGfi);
   const redIrPme = Math.min(i.irPme || 0,       capIrPme);
-  const redLocAv = Math.min(i.locAvantages || 0, capLocAv);
+  // Loc'Avantages — mode "dépenses + palier" prioritaire, sinon fallback legacy
+  let redLocAv;
+  if ((i.locAvantagesDepenses || 0) > 0) {
+    const tauxLocAv = { loc1: 0.15, loc2: 0.35, loc3: 0.65 };
+    const palier = i.locAvantagesPalier || 'loc1';
+    const depRet = Math.min(i.locAvantagesDepenses, 10000);
+    redLocAv = depRet * (tauxLocAv[palier] || tauxLocAv.loc1);
+  } else {
+    redLocAv = Math.min(i.locAvantages || 0, capLocAv);
+  }
   const redSofica = Math.min(i.sofica || 0,     capSofica);
   const redAutres = i.autresReductions;
 

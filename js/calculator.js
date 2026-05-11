@@ -409,7 +409,20 @@ function calculerIR(input) {
   det.redFipCorse    = Math.min(input.fipCorse || 0,     capRiMax.fipCorse);
   det.redGfi         = Math.min(input.gfi || 0,          capRiMax.gfi);
   det.redIrPme       = Math.min(input.irPme || 0,        capRiMax.irPme);
-  det.redLocAvantages= Math.min(input.locAvantages || 0, capRiMax.locAvantages);
+  // Loc'Avantages — 2 modes acceptés :
+  //   * NOUVEAU (Phase 2.4) : input.locAvantagesDepenses + input.locAvantagesPalier
+  //     → moteur calcule la RI = min(dépenses, 10 000 €) × taux palier (15/35/65 %).
+  //   * LEGACY : input.locAvantages directement (RI saisie), conservé pour rétro-compat
+  //     des tests et de toute UI/intégration existante.
+  if ((input.locAvantagesDepenses || 0) > 0) {
+    const palier = input.locAvantagesPalier || PD.locAvantages.tauxDefaut;
+    const tauxPalier = PD.locAvantages.taux[palier]
+      || PD.locAvantages.taux[PD.locAvantages.tauxDefaut];
+    const depensesRetenues = Math.min(input.locAvantagesDepenses, PD.locAvantages.depensesMax);
+    det.redLocAvantages = depensesRetenues * tauxPalier;
+  } else {
+    det.redLocAvantages = Math.min(input.locAvantages || 0, capRiMax.locAvantages);
+  }
   det.redSofica      = Math.min(input.sofica || 0,       capRiMax.sofica);
   det.redAutres      = input.autresReductions;  // catch-all, pas de cap
 

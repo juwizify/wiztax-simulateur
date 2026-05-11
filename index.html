@@ -819,15 +819,26 @@
           </div>
 
           <div class="form-row">
-            <label for="locAvantages">
-              Loc'Avantages — location à loyer modéré
-              <i class="tip" data-tip="Cases 7QO / 7QP / 7QR de la déclaration (art. 199 tricies CGI).&#10;Ex-dispositif Cosse « Louer abordable », réformé en 2022.&#10;Réduction d'impôt pour location d'un logement à un loyer décoté par rapport au marché :&#10;&#10;· Loc 1 (décote 15 %) : taux 15 %&#10;· Loc 2 (décote 30 %) : taux 35 %&#10;· Loc 3 (intermédiation locative IML, décote 45 %) : taux 65 %&#10;&#10;Plafond annuel de dépenses retenues : 10 000 €.&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.&#10;Plafond global niches : 10 000 €.">i</i>
+            <label for="locAvantagesDepenses">
+              Loc'Avantages — dépenses annuelles
+              <i class="tip" data-tip="Cases 7QO / 7QP / 7QR de la déclaration (art. 199 tricies CGI).&#10;Ex-dispositif Cosse « Louer abordable », réformé en 2022.&#10;&#10;Saisir le MONTANT DES DÉPENSES annuelles (loyer décoté brut) — pas la réduction.&#10;Le simulateur calcule la RI = min(dépenses, 10 000 €) × taux du palier.&#10;&#10;Paliers (choisir ci-dessous) :&#10;· Loc 1 (décote 15 %) : taux 15 %&#10;· Loc 2 (décote 30 %) : taux 35 %&#10;· Loc 3 (intermédiation locative IML, décote 45 %) : taux 65 %&#10;&#10;Plafond de dépenses retenues : 10 000 €/an.&#10;Plafond global niches : 10 000 €.">i</i>
             </label>
-            <input type="number" id="locAvantages" value="0" min="0">
+            <input type="number" id="locAvantagesDepenses" value="0" min="0">
             <div class="niche-cell">
               <span class="niche-marker niche-10k">niche 10 000 €</span>
-              <span class="niche-plaf">15 / 35 / 65 % selon décote loyer</span>
             </div>
+          </div>
+
+          <div class="form-row">
+            <label for="locAvantagesPalier">
+              ↳ Palier de décote Loc'Avantages
+              <i class="tip tip-down" data-tip="Détermine le taux de réduction appliqué aux dépenses :&#10;· Loc 1 — décote loyer 15 % → RI 15 %&#10;· Loc 2 — décote 30 % → RI 35 %&#10;· Loc 3 — intermédiation locative (IML), décote 45 % → RI 65 %">i</i>
+            </label>
+            <select id="locAvantagesPalier">
+              <option value="loc1">Loc 1 — décote 15 % (RI 15 %)</option>
+              <option value="loc2">Loc 2 — décote 30 % (RI 35 %)</option>
+              <option value="loc3">Loc 3 — IML décote 45 % (RI 65 %)</option>
+            </select>
           </div>
 
           <div class="form-row">

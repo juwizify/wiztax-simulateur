@@ -99,7 +99,9 @@ function getInputs() {
     gfi:             v('gfi'),
     irPme:           v('irPme'),
     malraux:         v('malraux'),
-    locAvantages:    v('locAvantages'),
+    locAvantages:    v('locAvantages'),  // legacy (RI directe) — UI n'expose plus ce champ, conservé pour rétro-compat
+    locAvantagesDepenses: v('locAvantagesDepenses'),
+    locAvantagesPalier:   document.getElementById('locAvantagesPalier')?.value || 'loc1',
     sofica:          v('sofica'),
     autresReductions: v('autresReductions'),
     autresCredits:   v('autresCredits'),
