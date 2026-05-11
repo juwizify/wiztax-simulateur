@@ -1321,6 +1321,35 @@ header span {
   .preco-sidebar { position: static; }
 }
 
+/* ─── Bouton "max" à droite de l'input montant ─── */
+.preco-montant-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.preco-montant-wrap .preco-montant-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.preco-max-btn {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  color: #475569;
+  font-size: 0.72em;
+  font-weight: 500;
+  cursor: pointer;
+  text-transform: lowercase;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.preco-max-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
 /* ─── Widget rendement libre (Girardin PD/AG) ─── */
 .preco-rendement-wrap {
   display: inline-flex;

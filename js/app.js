@@ -436,6 +436,62 @@ document.addEventListener('DOMContentLoaded', () => {
 // ─────────────────────────────────────────────
 // PRÉCONISATIONS — bridge UI/moteur
 // ─────────────────────────────────────────────
+// Calcule le maximum saisissable pour un dispositif sur une ligne préco,
+// compte tenu des plafonds individuels et de l'existant déjà dans le
+// Simulateur. Retourne null si pas de cap calculable (cas Girardin —
+// plafond venant de la poche niches uniquement).
+function computeMaxForLevier(lev, inputAvant, paramValue, detAvant, isCouple) {
+  const existant = inputAvant[lev.inputKey] || 0;
+
+  if (lev.id === 'per') {
+    return Math.max(0, (detAvant.perCap || 0) - existant);
+  }
+  if (lev.id === 'ehpad') {
+    const nbPers = Math.max(1, inputAvant.ehpadNbPers || 1);
+    return Math.max(0, 10000 * nbPers - existant);
+  }
+  if (lev.id === 'emploiDom') {
+    return Math.max(0, 12000 - existant);
+  }
+  if (lev.id === 'gardeEnf') {
+    const nbEnf = Math.max(1, inputAvant.nbEnfants || 1);
+    return Math.max(0, 3500 * nbEnf - existant);
+  }
+  if (lev.id === 'syndic') {
+    const baseMax = ((inputAvant.sal1 || 0) + (inputAvant.sal2 || 0)
+      + (inputAvant.allocChomage1 || 0) + (inputAvant.allocChomage2 || 0)
+      + (inputAvant.pen1 || 0) + (inputAvant.pen2 || 0)) * 0.01;
+    return Math.max(0, baseMax - existant);
+  }
+  if (lev.id === 'dons7UD') {
+    // Cap 75 % à 2 000 € (au-delà bascule en 7UF 66 % automatiquement)
+    return Math.max(0, 2000 - existant);
+  }
+  if (lev.id === 'dons7UF') {
+    const cap = (detAvant.revenuNetImposable || 0) * 0.20;
+    const dejaUtilise = (inputAvant.dons7UD || 0) + (inputAvant.dons || 0);
+    return Math.max(0, cap - dejaUtilise);
+  }
+  // Mode jeanbrun : plafond par catégorie de loyer
+  if (lev.mode === 'jeanbrun') {
+    const opt = lev.params[0].options.find(o => o.value === paramValue);
+    const cap = opt ? opt.plafond : 8000;
+    return Math.max(0, cap - existant);
+  }
+  // Dispositifs Phase 2.3 avec plafondsDispositifs centralisés
+  if (typeof PARAMS !== 'undefined' && PARAMS.plafondsDispositifs && PARAMS.plafondsDispositifs[lev.id]) {
+    const cfg = PARAMS.plafondsDispositifs[lev.id];
+    if (cfg.versementMax !== undefined) {
+      const vMax = isCouple && cfg.versementMaxCouple !== undefined
+        ? cfg.versementMaxCouple : cfg.versementMax;
+      return Math.max(0, vMax - existant);
+    }
+    if (cfg.depensesMax !== undefined) return Math.max(0, cfg.depensesMax - existant);
+    if (cfg.depensesParAnMax !== undefined) return Math.max(0, cfg.depensesParAnMax - existant);
+  }
+  return null;  // Girardin PD/AG : pas de cap individuel
+}
+
 // ─────────────────────────────────────────────
 // DEV TOOLBAR — bouton "Charger cas démo" + "Vider"
 // Temporaire pour faciliter le test manuel. À retirer avant prod.
@@ -563,8 +619,10 @@ function renderPreconisations() {
     }
     tr.appendChild(tdLev);
 
-    // Montant
+    // Montant + bouton "max" (si calculable)
     const tdMt = document.createElement('td');
+    const wrapMt = document.createElement('div');
+    wrapMt.className = 'preco-montant-wrap';
     const inMt = document.createElement('input');
     inMt.type = 'number';
     inMt.min = 0;
@@ -572,9 +630,41 @@ function renderPreconisations() {
     inMt.className = 'preco-montant-input';
     inMt.addEventListener('input', () => {
       P.updateLever(p.id, 'montant', inMt.value);
-      refreshPreconisationsCalculs();   // Update partiel — préserve le focus de l'input
+      refreshPreconisationsCalculs();
     });
-    tdMt.appendChild(inMt);
+    wrapMt.appendChild(inMt);
+    // Bouton max — visible uniquement si un levier est sélectionné ET qu'on
+    // peut calculer un max (pas applicable à Girardin qui n'a pas de cap propre).
+    const levSel = P.LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
+    if (levSel) {
+      const btnMax = document.createElement('button');
+      btnMax.type = 'button';
+      btnMax.className = 'preco-max-btn';
+      btnMax.textContent = 'max';
+      btnMax.title = 'Remplir avec le maximum disponible (plafond − déjà saisi)';
+      btnMax.addEventListener('click', () => {
+        const ipAv = getInputs();
+        const dtAv = calculerIR(ipAv);
+        const isC  = ipAv.situation === 'marie-pacse';
+        const m = computeMaxForLevier(levSel, ipAv, p.paramValue, dtAv, isC);
+        if (m !== null && m > 0) {
+          const rounded = Math.floor(m);
+          inMt.value = rounded;
+          P.updateLever(p.id, 'montant', rounded);
+          refreshPreconisationsCalculs();
+        } else if (m !== null) {
+          // max = 0 → plafond déjà atteint
+          btnMax.textContent = 'atteint';
+          setTimeout(() => { btnMax.textContent = 'max'; }, 1500);
+        } else {
+          // Pas de cap calculable (Girardin)
+          btnMax.textContent = 'n/a';
+          setTimeout(() => { btnMax.textContent = 'max'; }, 1500);
+        }
+      });
+      wrapMt.appendChild(btnMax);
+    }
+    tdMt.appendChild(wrapMt);
     tr.appendChild(tdMt);
 
     // Param additionnel (taux-variable / jeanbrun)
