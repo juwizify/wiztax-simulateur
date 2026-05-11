@@ -43,131 +43,123 @@
 //     → params[0].options[].taux
 //   - 'jeanbrun' : amortissement spécifique foncier (pas IR direct)
 
+// Schéma cible (Phase 3.1) — chaque levier a un champ `levier: 1|2|3` qui
+// pilote son groupement dans la nouvelle UI 3 sections :
+//   1 = Réduire la base imposable (déductions du revenu)
+//   2 = Réductions d'impôt (perdues si IR = 0)
+//   3 = Crédits d'impôt (remboursés même si IR = 0)
+// `cat` reste utilisé par la mécanique 2 poches niches (niche10 / niche18 / hors / foncier).
 const LEVIERS_CATALOGUE = [
-  // ─── HORS NICHES ───────────────────────────────────────
+  // ─── LEVIER 1 — RÉDUIRE LA BASE IMPOSABLE ──────────────
   {
     id: 'per', label: 'PER (Plan d\'Épargne Retraite)',
-    cat: 'hors', mode: 'versement-direct', inputKey: 'per',
+    levier: 1, cat: 'hors', mode: 'versement-direct', inputKey: 'per',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir le VERSEMENT VOLONTAIRE de l\'année sur le PER. Cash sortant pour le client (épargne bloquée jusqu\'à la retraite). Déduction du revenu imposable → économie ≈ versement × TMI. Plafond auto = 10 % des revenus pro (cap 37 680 €).',
+    info: 'Saisir le VERSEMENT VOLONTAIRE de l\'année sur le PER. Cash sortant pour le client (épargne bloquée jusqu\'à la retraite). Déduction du revenu imposable → économie ≈ versement × TMI. Plafond auto = 10 % des revenus pro (cap 37 680 €), par déclarant.',
   },
   {
+    id: 'jeanbrun', label: 'Dispositif Jeanbrun (LF 2026)',
+    levier: 1, cat: 'foncier', mode: 'jeanbrun', inputKey: 'jeanbrunAmort',
+    paramKey: 'jeanbrunCategorie',
+    nature: 'amortissement-annuel', budget: 'exclu',
+    info: 'Saisir l\'AMORTISSEMENT ANNUEL = prix d\'achat du bien × taux selon la catégorie de loyer (3,5 / 4,5 / 5,5 %). Ce n\'est PAS du cash sortant — c\'est une déduction comptable qui réduit l\'assiette des revenus fonciers → EXCLU du budget annuel. Le bien lui-même est généralement financé à crédit. Applicable aux acquisitions jusqu\'au 31/12/2028.',
+    params: [
+      { name: 'categorie', label: 'Catégorie de loyer',
+        options: [
+          { value: 'intermediaire', label: 'Intermédiaire (3,5 % · plafond 8 000 €)', plafond: 8000 },
+          { value: 'social',        label: 'Social (4,5 % · plafond 10 000 €)',       plafond: 10000 },
+          { value: 'tres-social',   label: 'Très social (5,5 % · plafond 12 000 €)',  plafond: 12000 },
+        ]
+      },
+    ],
+  },
+
+  // ─── LEVIER 2 — RÉDUCTIONS D'IMPÔT ─────────────────────
+  // 2.a) Hors plafond niches
+  {
     id: 'dons7UD', label: 'Dons « Coluche » (organismes d\'aide, 75%)',
-    cat: 'hors', mode: 'versement-direct', inputKey: 'dons7UD',
+    levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'dons7UD',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Saisir le MONTANT DES DONS de l\'année à des organismes d\'aide aux personnes en difficulté (Restos du Cœur, Croix-Rouge, etc.). Cash sortant. Réduction 75 % jusqu\'à 2 000 €, surplus bascule sur le régime 7UF (66 %).',
   },
   {
     id: 'dons7UF', label: 'Dons d\'intérêt général (66%)',
-    cat: 'hors', mode: 'versement-direct', inputKey: 'dons',
+    levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'dons',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Saisir le MONTANT DES DONS de l\'année à des associations / fondations / écoles d\'intérêt général. Cash sortant. Réduction 66 %, total dons plafonné à 20 % du RNI.',
   },
   {
     id: 'ehpad', label: 'Frais EHPAD ascendants (25%)',
-    cat: 'hors', mode: 'versement-direct', inputKey: 'ehpadFrais',
+    levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'ehpadFrais',
     nature: 'depenses-annuelles', budget: 'cash',
     info: 'Saisir les DÉPENSES D\'HÉBERGEMENT ET DE DÉPENDANCE de l\'année facturées par l\'EHPAD pour un ascendant. Cash sortant. Réduction 25 %, plafond 10 000 € par personne hébergée.',
   },
   {
-    id: 'syndic', label: 'Cotisations syndicales (66%)',
-    cat: 'hors', mode: 'versement-direct', inputKey: 'cotSyndicales',
-    nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir la COTISATION SYNDICALE de l\'année (CGT, CFDT, FO, CFTC, Sud, etc.). Cash sortant. Crédit d\'impôt 66 %, plafond 1 % des salaires + alloc chômage + pensions.',
-  },
-  {
     id: 'malraux', label: 'Loi Malraux (22% ou 30%)',
-    cat: 'hors', mode: 'taux-variable', inputKey: 'malraux',
+    levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'malrauxTravaux',
+    paramKey: 'malrauxZone',
     nature: 'depenses-annuelles', budget: 'exclu',
-    info: 'Saisir les TRAVAUX DE RESTAURATION DE L\'ANNÉE sur immeuble en SPR ou QAD. Généralement financés à crédit → EXCLU du budget annuel. Réduction 22 % ou 30 % selon zone, hors plafond niches. Cumul possible jusqu\'à 400 000 € de travaux étalés sur 4 ans.',
+    info: 'Saisir les TRAVAUX DE RESTAURATION DE L\'ANNÉE sur immeuble en SPR ou QAD. Généralement financés à crédit → EXCLU du budget annuel. Le moteur calcule la RI = min(travaux, 100 000 €/an) × 22 % ou 30 % selon zone. Hors plafond niches.',
     params: [
       { name: 'zone', label: 'Zone',
         options: [
-          { value: 'spr-non', label: 'SPR sans PSMV (22 %)', taux: 0.22 },
-          { value: 'spr-oui', label: 'SPR avec PSMV ou QAD (30 %)', taux: 0.30 },
+          { value: 'spr-non', label: 'SPR sans PSMV (22 %)' },
+          { value: 'spr-oui', label: 'SPR avec PSMV ou QAD (30 %)' },
         ]
       },
     ],
   },
-
-  // ─── NICHE 10 000 € ────────────────────────────────────
-  {
-    id: 'emploiDom', label: 'Emploi à domicile (50%)',
-    cat: 'niche10', mode: 'versement-direct', inputKey: 'emploiDomicile',
-    nature: 'depenses-annuelles', budget: 'cash',
-    info: 'Saisir les DÉPENSES DE L\'ANNÉE (salaires + charges sociales) pour un employé à domicile (ménage, jardinage, soutien scolaire, aide à la personne, etc.). Cash sortant. Crédit 50 %, plafond 12 000 € (15 000 € avec majoration enfants).',
-  },
-  {
-    id: 'gardeEnf', label: 'Garde enfants < 6 ans (50%)',
-    cat: 'niche10', mode: 'versement-direct', inputKey: 'gardeEnfants',
-    nature: 'depenses-annuelles', budget: 'cash',
-    info: 'Saisir les DÉPENSES DE GARDE DE L\'ANNÉE pour enfants de moins de 6 ans (crèche, assistante maternelle, garderie périscolaire). Cash sortant. Crédit 50 %, plafond 3 500 € par enfant.',
-  },
+  // 2.b) Dans le panier niche 10 000 €
   {
     id: 'fcpiJei', label: 'FCPI JEI (30%)',
-    cat: 'niche10', mode: 'taux', taux: 0.30, inputKey: 'fcpiJei',
+    levier: 2, cat: 'niche10', mode: 'taux', taux: 0.30, inputKey: 'fcpiJei',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de FCPI investissant dans des Jeunes Entreprises Innovantes. Cash sortant. Réduction 30 %. Plafond 12 000 € (single) / 24 000 € (couple). Blocage 5 à 10 ans.',
   },
   {
     id: 'fipCorse', label: 'FIP Corse / Outre-mer (30%)',
-    cat: 'niche10', mode: 'taux', taux: 0.30, inputKey: 'fipCorse',
+    levier: 2, cat: 'niche10', mode: 'taux', taux: 0.30, inputKey: 'fipCorse',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de FIP Corse ou Outre-mer. Cash sortant. Réduction 30 %. Plafond 12 000 € / 24 000 €. Blocage 5 à 10 ans.',
   },
   {
     id: 'irPme', label: 'IR-PME / Madelin (25%)',
-    cat: 'niche10', mode: 'taux', taux: 0.25, inputKey: 'irPme',
+    levier: 2, cat: 'niche10', mode: 'taux', taux: 0.25, inputKey: 'irPme',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Saisir le MONTANT DE LA SOUSCRIPTION DIRECTE DE L\'ANNÉE au capital d\'une PME non cotée (≠ via fonds). Cash sortant. Réduction 25 % (taux boost 2024-2025). Plafond 50 000 € (single) / 100 000 € (couple). Conservation 5 ans.',
   },
   {
     id: 'gfi', label: 'GFI Forestier (18%)',
-    cat: 'niche10', mode: 'taux', taux: 0.18, inputKey: 'gfi',
+    levier: 2, cat: 'niche10', mode: 'taux', taux: 0.18, inputKey: 'gfi',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de Groupement Forestier d\'Investissement. Cash sortant. Réduction 18 % (jusqu\'à 25 % en zone éligible). Plafond 50 k€ / 100 k€. Avantages annexes IFI et succession.',
   },
   {
     id: 'locAvantages', label: 'Loc\'Avantages',
-    cat: 'niche10', mode: 'taux-variable', inputKey: 'locAvantages',
+    levier: 2, cat: 'niche10', mode: 'versement-direct', inputKey: 'locAvantagesDepenses',
+    paramKey: 'locAvantagesPalier',
     nature: 'depenses-annuelles', budget: 'exclu',
-    info: 'Saisir les DÉPENSES (loyers décotés) DE L\'ANNÉE liées à la location à loyer modéré (ex-Cosse). Pas du cash sortant strict, plutôt un manque à gagner sur loyer → EXCLU du budget annuel. Plafond 10 000 € de dépenses retenues. Taux 15/35/65 % selon palier de décote.',
+    info: 'Saisir les DÉPENSES (loyers décotés) DE L\'ANNÉE liées à la location à loyer modéré (ex-Cosse). Pas du cash sortant strict, plutôt un manque à gagner sur loyer → EXCLU du budget annuel. Le moteur calcule la RI = min(dépenses, 10 000 €) × 15/35/65 % selon palier de décote.',
     params: [
       { name: 'palier', label: 'Palier de décote',
         options: [
-          { value: 'loc1', label: 'Loc 1 — décote 15 % (RI 15 %)', taux: 0.15 },
-          { value: 'loc2', label: 'Loc 2 — décote 30 % (RI 35 %)', taux: 0.35 },
-          { value: 'loc3', label: 'Loc 3 — IML décote 45 % (RI 65 %)', taux: 0.65 },
+          { value: 'loc1', label: 'Loc 1 — décote 15 % (RI 15 %)' },
+          { value: 'loc2', label: 'Loc 2 — décote 30 % (RI 35 %)' },
+          { value: 'loc3', label: 'Loc 3 — IML décote 45 % (RI 65 %)' },
         ]
       },
     ],
   },
-  {
-    id: 'pinel', label: 'Pinel (engagement existant)',
-    cat: 'niche10', mode: 'taux-variable', inputKey: 'pinel',
-    nature: 'investissement-total', budget: 'exclu',
-    info: '⚠ CALCUL ACTUELLEMENT INCORRECT : la RI Pinel devrait être ÉTALÉE sur la durée d\'engagement (200 k€ × 18 % / 9 ans = 4 000 €/an), mais le simulateur applique le taux total sur l\'année (= 36 000 €/an, sur-estimé). À corriger en V2. Saisir le PRIX D\'ACHAT du bien immobilier — généralement financé à crédit, donc EXCLU du budget annuel.',
-    params: [
-      { name: 'duree', label: 'Durée d\'engagement',
-        options: [
-          { value: '6',  label: '6 ans (12 %)',  taux: 0.12 },
-          { value: '9',  label: '9 ans (18 %)',  taux: 0.18 },
-          { value: '12', label: '12 ans (21 %)', taux: 0.21 },
-        ]
-      },
-    ],
-  },
-
-  // ─── NICHE 18 000 € (majorée) ──────────────────────────
+  // 2.c) Dans le panier niche 18 000 € (majoration)
   {
     id: 'sofica', label: 'SOFICA (30%)',
-    cat: 'niche18', mode: 'taux', taux: 0.30, inputKey: 'sofica',
+    levier: 2, cat: 'niche18', mode: 'taux', taux: 0.30, inputKey: 'sofica',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de SOFICA (financement cinéma/audiovisuel). Cash sortant. Réduction 30 %. Plafond 18 000 € de souscription. Niche majorée 18 k€. Conservation 5 ans.',
+    info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de SOFICA (financement cinéma/audiovisuel). Cash sortant. Réduction 30 % standard (36 % ou 48 % si conditions majorées). Versement plafonné à min(18 000 €, 25 % du RNG). Niche majorée 18 k€. Conservation 5 ans.',
   },
   {
     id: 'girardinPD', label: 'Girardin Industriel — Plein Droit',
-    cat: 'niche18', mode: 'taux-variable', inputKey: 'girardinPD',
+    levier: 2, cat: 'niche18', mode: 'taux-variable', inputKey: 'girardinPD',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Saisir le MONTANT INVESTI DANS LE PROGRAMME GIRARDIN PD de l\'année (versement à l\'opérateur, à fonds perdus). Cash sortant. Mécanique one-shot : RI majorée encaissée l\'année suivante. Quote-part 44 % dans le plafond niches 18 k€.',
     params: [
@@ -183,7 +175,7 @@ const LEVIERS_CATALOGUE = [
   },
   {
     id: 'girardinAG', label: 'Girardin Industriel — Avec Agrément',
-    cat: 'niche18', mode: 'taux-variable', inputKey: 'girardinAG',
+    levier: 2, cat: 'niche18', mode: 'taux-variable', inputKey: 'girardinAG',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Saisir le MONTANT INVESTI DANS LE PROGRAMME GIRARDIN AG de l\'année (versement à l\'opérateur, à fonds perdus). Idem Plein Droit mais avec agrément ministériel (programmes > 250 k€). Cash sortant. Quote-part 34 % dans le plafond niches 18 k€.',
     params: [
@@ -198,21 +190,24 @@ const LEVIERS_CATALOGUE = [
     ],
   },
 
-  // ─── DÉDUCTION D'ASSIETTE FONCIER ──────────────────────
+  // ─── LEVIER 3 — CRÉDITS D'IMPÔT (REMBOURSÉS SI IR = 0) ──
   {
-    id: 'jeanbrun', label: 'Dispositif Jeanbrun (LF 2026)',
-    cat: 'foncier', mode: 'jeanbrun', inputKey: 'jeanbrunAmort',
-    nature: 'amortissement-annuel', budget: 'exclu',
-    info: 'Saisir l\'AMORTISSEMENT ANNUEL = prix d\'achat du bien × taux selon la catégorie de loyer (3,5 / 4,5 / 5,5 %). Ce n\'est PAS du cash sortant — c\'est une déduction comptable qui réduit l\'assiette des revenus fonciers → EXCLU du budget annuel. Le bien lui-même est généralement financé à crédit. Applicable aux acquisitions jusqu\'au 31/12/2028.',
-    params: [
-      { name: 'categorie', label: 'Catégorie de loyer',
-        options: [
-          { value: 'intermediaire', label: 'Intermédiaire (3,5 % · plafond 8 000 €)', plafond: 8000 },
-          { value: 'social',        label: 'Social (4,5 % · plafond 10 000 €)',       plafond: 10000 },
-          { value: 'tres-social',   label: 'Très social (5,5 % · plafond 12 000 €)',  plafond: 12000 },
-        ]
-      },
-    ],
+    id: 'emploiDom', label: 'Emploi à domicile (50%)',
+    levier: 3, cat: 'niche10', mode: 'versement-direct', inputKey: 'emploiDomicile',
+    nature: 'depenses-annuelles', budget: 'cash',
+    info: 'Saisir les DÉPENSES DE L\'ANNÉE (salaires + charges sociales) pour un employé à domicile (ménage, jardinage, soutien scolaire, aide à la personne, etc.). Cash sortant. Crédit 50 %, plafond 12 000 € (15 000 € avec majoration enfants).',
+  },
+  {
+    id: 'gardeEnf', label: 'Garde enfants < 6 ans (50%)',
+    levier: 3, cat: 'niche10', mode: 'versement-direct', inputKey: 'gardeEnfants',
+    nature: 'depenses-annuelles', budget: 'cash',
+    info: 'Saisir les DÉPENSES DE GARDE DE L\'ANNÉE pour enfants de moins de 6 ans (crèche, assistante maternelle, garderie périscolaire). Cash sortant. Crédit 50 %, plafond 3 500 € par enfant.',
+  },
+  {
+    id: 'syndic', label: 'Cotisations syndicales (66%)',
+    levier: 3, cat: 'hors', mode: 'versement-direct', inputKey: 'cotSyndicales',
+    nature: 'versement-annuel', budget: 'cash',
+    info: 'Saisir la COTISATION SYNDICALE de l\'année (CGT, CFDT, FO, CFTC, Sud, etc.). Cash sortant. Crédit d\'impôt 66 %, plafond 1 % des salaires + alloc chômage + pensions.',
   },
 ];
 
@@ -257,6 +252,11 @@ function appliquerPreconisations(input, precos) {
 
     if (lev.mode === 'versement-direct') {
       out[lev.inputKey] = (out[lev.inputKey] || 0) + p.montant;
+      // Si un paramètre additionnel est associé (palier Loc'Avantages, zone
+      // Malraux, catégorie Jeanbrun) on le propage dans l'input correspondant.
+      if (lev.paramKey && p.paramValue) {
+        out[lev.paramKey] = p.paramValue;
+      }
     }
     else if (lev.mode === 'taux') {
       out[lev.inputKey] = (out[lev.inputKey] || 0) + p.montant * lev.taux;
@@ -266,6 +266,9 @@ function appliquerPreconisations(input, precos) {
       if (opt) out[lev.inputKey] = (out[lev.inputKey] || 0) + p.montant * opt.taux;
     }
     else if (lev.mode === 'jeanbrun') {
+      // Mode legacy spécifique — sera unifié vers versement-direct + paramKey
+      // dans une itération suivante (le catalogue déclare désormais paramKey
+      // = 'jeanbrunCategorie' pour préparer la migration).
       out.jeanbrunAmort = (out.jeanbrunAmort || 0) + p.montant;
       if (p.paramValue) out.jeanbrunCategorie = p.paramValue;
     }
