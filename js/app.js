@@ -425,6 +425,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Préconisations : init + listeners
   initPreconisations();
 
+  // Dev toolbar : bouton "Charger cas démo" + "Vider" — temporaire, à retirer.
+  initDevToolbar();
+
   // Premiers calculs
   recalculer();
   recalculerSimple();
@@ -433,6 +436,62 @@ document.addEventListener('DOMContentLoaded', () => {
 // ─────────────────────────────────────────────
 // PRÉCONISATIONS — bridge UI/moteur
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// DEV TOOLBAR — bouton "Charger cas démo" + "Vider"
+// Temporaire pour faciliter le test manuel. À retirer avant prod.
+// ─────────────────────────────────────────────
+const DEMO_CASE = {
+  // Foyer : couple marié 2 enfants
+  situation: 'marie-pacse',
+  nbEnfants: 2,
+  // Salaires
+  sal1: 150000,
+  sal2: 80000,
+  // Levier 1 — base imposable
+  per: 10000,
+  // Levier 2 — quelques réductions pour avoir de la matière
+  girardinPD: 3000,
+  sofica: 5000,
+  dons: 1000,
+  ehpadFrais: 4000,
+  // Levier 3 — crédits d'impôt
+  gardeEnfants: 6000,
+  emploiDomicile: 7000,
+  // Revenus mobiliers + foncier pour tester PS et niches
+  dividendes: 5000,
+  microFoncier: 3000,
+};
+
+function initDevToolbar() {
+  const btnLoad = document.getElementById('btnLoadDemo');
+  const btnReset = document.getElementById('btnResetInputs');
+  if (btnLoad) {
+    btnLoad.addEventListener('click', () => {
+      Object.entries(DEMO_CASE).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      });
+      recalculer();
+    });
+  }
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      // Reset = remettre tous les inputs numériques du Simulateur à 0
+      // et les selects à leur 1ère option.
+      document.querySelectorAll('#simulateur input[type="number"]').forEach(el => {
+        el.value = el.defaultValue || 0;
+      });
+      document.querySelectorAll('#simulateur select').forEach(el => {
+        if (el.options.length) el.selectedIndex = 0;
+      });
+      document.querySelectorAll('#simulateur input[type="checkbox"]').forEach(el => {
+        el.checked = false;
+      });
+      recalculer();
+    });
+  }
+}
+
 function initPreconisations() {
   if (typeof window.PRECONISATIONS === 'undefined') return;
   const budgetInput = document.getElementById('precoBudget');
