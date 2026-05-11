@@ -613,6 +613,14 @@ function refreshPreconisationsCalculs() {
   setText('precoStepL2',    fmt(detL12.impotNet));
   setText('precoStepFinal', fmt(detApres.impotNet));
 
+  // Récap sticky (même contenu en format compact)
+  setText('recapInit',  fmt(detAvant.impotNet));
+  setText('recapL1',    fmt(detL1.impotNet));
+  setText('recapL2',    fmt(detL12.impotNet));
+  setText('recapFinal', fmt(detApres.impotNet));
+  const eco = detAvant.impotNet - detApres.impotNet;
+  setText('recapEco', eco > 0 ? '− ' + fmt(eco) + ' €' : fmt(eco) + ' €');
+
   // Jauges 2 poches niches dans la section L2
   setJauge('Poche1', detApres.poche1Utilisee || 0, 10000);
   setJauge('Poche2', detApres.poche2Utilisee || 0, 8000);

@@ -1094,6 +1094,31 @@
     <p>À partir d'un budget d'épargne disponible, allouer des montants sur plusieurs leviers fiscaux. Les préconisations <strong>s'ajoutent aux montants déjà saisis</strong> dans l'onglet Simulateur. Le calcul à droite affiche la situation actuelle vs projetée.</p>
   </div>
 
+  <!-- Récap sticky : suit le scroll dans cet onglet pour garder le contexte -->
+  <aside class="preco-sticky-recap" id="precoStickyRecap" aria-label="Récapitulatif d'évolution de l'impôt">
+    <h4>Évolution de l'impôt</h4>
+    <div class="recap-line">
+      <span class="recap-label">Actuel</span>
+      <span class="recap-val" id="recapInit">—</span>
+    </div>
+    <div class="recap-line">
+      <span class="recap-label">après L1 base</span>
+      <span class="recap-val" id="recapL1">—</span>
+    </div>
+    <div class="recap-line">
+      <span class="recap-label">après L2 réduc.</span>
+      <span class="recap-val" id="recapL2">—</span>
+    </div>
+    <div class="recap-line recap-final">
+      <span class="recap-label">Final</span>
+      <span class="recap-val" id="recapFinal">—</span>
+    </div>
+    <div class="recap-line recap-eco">
+      <span class="recap-label">Économie totale</span>
+      <span class="recap-val" id="recapEco">—</span>
+    </div>
+  </aside>
+
   <div class="preco-budget">
     <label for="precoBudget">Budget total disponible / an</label>
     <input type="number" id="precoBudget" value="0" min="0" placeholder="ex : 20 000">

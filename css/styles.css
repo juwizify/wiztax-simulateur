@@ -1242,3 +1242,76 @@ header span {
   display: block;
   margin: 0 auto;
 }
+
+/* ─── Récap sticky en haut à droite ─── */
+.preco-sticky-recap {
+  position: fixed;
+  top: 88px;
+  right: 20px;
+  width: 220px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  z-index: 50;
+  font-size: 0.9em;
+}
+.preco-sticky-recap h4 {
+  margin: 0 0 10px 0;
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #64748b;
+  font-weight: 600;
+}
+.preco-sticky-recap .recap-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 4px 0;
+  gap: 8px;
+}
+.preco-sticky-recap .recap-label {
+  font-size: 0.85em;
+  color: #64748b;
+}
+.preco-sticky-recap .recap-val {
+  font-size: 1em;
+  font-weight: 600;
+  color: #1e293b;
+  font-variant-numeric: tabular-nums;
+}
+.preco-sticky-recap .recap-final {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+.preco-sticky-recap .recap-final .recap-label {
+  color: #0f172a;
+  font-weight: 600;
+}
+.preco-sticky-recap .recap-final .recap-val {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: #0f172a;
+}
+.preco-sticky-recap .recap-eco {
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: #ecfdf5;
+  border-radius: 6px;
+}
+.preco-sticky-recap .recap-eco .recap-label {
+  color: #14532d;
+  font-weight: 500;
+}
+.preco-sticky-recap .recap-eco .recap-val {
+  color: #15803d;
+  font-weight: 700;
+}
+
+/* Sur écrans étroits : on cache le sticky pour ne pas se chevaucher */
+@media (max-width: 1280px) {
+  .preco-sticky-recap { display: none; }
+}
