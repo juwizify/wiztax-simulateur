@@ -312,7 +312,16 @@ function oracleCalc(input) {
   const capMalraux  = 100000 * 0.30;                 // 30 000
   const capLocAv    = 10000 * 0.65;                  //  6 500
 
-  const redMalraux = Math.min(i.malraux || 0, capMalraux);
+  // Malraux — mode "travaux + zone" prioritaire, sinon fallback legacy
+  let redMalraux;
+  if ((i.malrauxTravaux || 0) > 0) {
+    const tauxMalrauxZone = { 'spr-non': 0.22, 'spr-oui': 0.30 };
+    const zone = i.malrauxZone || 'spr-non';
+    const travRet = Math.min(i.malrauxTravaux, 100000);
+    redMalraux = travRet * (tauxMalrauxZone[zone] || tauxMalrauxZone['spr-non']);
+  } else {
+    redMalraux = Math.min(i.malraux || 0, capMalraux);
+  }
 
   const redPinel = i.pinel;                                   // pas de cap V1
   const redGirPD = i.girardinPD;                              // pas de cap (panier majoré)

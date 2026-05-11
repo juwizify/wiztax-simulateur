@@ -398,7 +398,18 @@ function calculerIR(input) {
     locAvantages: PD.locAvantages.depensesMax * tauxMax(PD.locAvantages),          // 10 000 × 65 % = 6 500
   };
 
-  det.redMalraux     = Math.min(input.malraux || 0, capRiMax.malraux);
+  // Malraux — 2 modes acceptés :
+  //   * NOUVEAU (Phase 2.5) : input.malrauxTravaux + input.malrauxZone
+  //     → RI = min(travaux, 100 000 €/an) × taux zone (22 % SPR sans PSMV / 30 % SPR-PSMV ou QAD).
+  //   * LEGACY : input.malraux directement (RI saisie), conservé pour rétro-compat.
+  if ((input.malrauxTravaux || 0) > 0) {
+    const zone = input.malrauxZone || PD.malraux.tauxDefaut;
+    const tauxZone = PD.malraux.taux[zone] || PD.malraux.taux[PD.malraux.tauxDefaut];
+    const travauxRetenus = Math.min(input.malrauxTravaux, PD.malraux.depensesParAnMax);
+    det.redMalraux = travauxRetenus * tauxZone;
+  } else {
+    det.redMalraux = Math.min(input.malraux || 0, capRiMax.malraux);
+  }
 
   // Réductions dans le plafond niches
   det.redPinel       = input.pinel;             // Pinel : retiré du périmètre (fermé fin 2024). Pas de cap V1.

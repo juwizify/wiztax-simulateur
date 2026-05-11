@@ -585,16 +585,34 @@ const CASES = [
 
   // -------------------------------------------------------------------
   // 7NX / 7NY — Loi Malraux (réduction HORS plafond niches)
-  // L'utilisateur saisit le montant de la réduction calculée (22 % ou 30 %).
+  // 2 modes acceptés par le moteur :
+  //   * NOUVEAU (Phase 2.5) : malrauxTravaux + malrauxZone → RI calculée
+  //   * LEGACY : malraux (RI saisie directement)
   // -------------------------------------------------------------------
   {
-    name: 'Malraux : 60k sal + 5 000 € de réduction Malraux (hors niches)',
+    name: 'Malraux legacy : 60k sal + RI 5 000 € saisie directement',
     input: makeInput({ sal1: 60000, malraux: 5000 }),
     // sal net 54k → tranches 1 977.69 + (54k-29 579)×0.30 = 1 977.69 + 7 326.30
     //   = 9 303.99 → 9 304
     // - réduction Malraux 5 000 (hors niches, plafonnée à l'impôt dû)
     // impôt net = 9 304 - 5 000 = 4 304
     expected: { impotNet: 4304, revenuReference: 54000, tmi: 0.30 },
+  },
+  {
+    name: 'Malraux mode travaux SPR-non 22 % : sal 500k + 50k travaux → RI 11 000 €',
+    input: makeInput({ sal1: 500000, malrauxTravaux: 50000, malrauxZone: 'spr-non' }),
+    // 50 000 < 100 000 plafond → travaux retenus = 50 000
+    // RI = 50 000 × 22 % = 11 000 €
+    // impôt brut 202 037 (sal 500k célib) - 11 000 = 191 037
+    expected: { impotNet: 191037, revenuReference: 485445, tmi: 0.45 },
+  },
+  {
+    name: 'Malraux mode travaux SPR-oui 30 % CAP : sal 500k + 200k travaux → RI 30 000 €',
+    input: makeInput({ sal1: 500000, malrauxTravaux: 200000, malrauxZone: 'spr-oui' }),
+    // 200 000 > 100 000 plafond annuel → travaux retenus = 100 000
+    // RI = 100 000 × 30 % = 30 000 € (= cap historique Phase 2.3)
+    // impôt brut 202 037 - 30 000 = 172 037
+    expected: { impotNet: 172037, revenuReference: 485445, tmi: 0.45 },
   },
 
   // -------------------------------------------------------------------

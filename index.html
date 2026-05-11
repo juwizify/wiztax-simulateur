@@ -807,15 +807,25 @@
           </div>
 
           <div class="form-row">
-            <label for="malraux">
-              Loi Malraux — restauration en SPR
-              <i class="tip" data-tip="Cases 7NX / 7NY de la déclaration (art. 199 tervicies CGI).&#10;Réduction d'impôt pour travaux de restauration sur immeubles situés en :&#10;· Site Patrimonial Remarquable (SPR) avec PSMV approuvé : taux 30 %&#10;· SPR avec PSMV non approuvé / QAD : taux 22 %&#10;&#10;Base : montant des travaux, plafonné à 400 000 € étalé sur 4 ans (100 000 € moyenne/an).&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.&#10;&#10;⚠ HORS plafond des niches fiscales — un atout majeur de ce dispositif.">i</i>
+            <label for="malrauxTravaux">
+              Loi Malraux — travaux de l'année
+              <i class="tip" data-tip="Cases 7NX / 7NY de la déclaration (art. 199 tervicies CGI).&#10;Restauration d'immeubles situés en Site Patrimonial Remarquable (SPR) ou QAD.&#10;&#10;Saisir le MONTANT DES TRAVAUX engagés dans l'année — pas la réduction.&#10;Le simulateur calcule la RI = min(travaux, 100 000 €/an) × taux zone.&#10;&#10;Plafond cumulé légal : 400 000 € de travaux sur 4 ans (= 100 000 €/an).&#10;⚠ Phase 2.5 : on ne suit pas le cumul multi-année — le cap 100 k€ est appliqué chaque année indépendamment.&#10;&#10;⚠ HORS plafond des niches fiscales (atout majeur du dispositif).">i</i>
             </label>
-            <input type="number" id="malraux" value="0" min="0">
+            <input type="number" id="malrauxTravaux" value="0" min="0">
             <div class="niche-cell">
               <span class="niche-marker niche-hors">hors plafond niches</span>
-              <span class="niche-plaf">22 % ou 30 % · base ≤ 400 k€ / 4 ans</span>
             </div>
+          </div>
+
+          <div class="form-row">
+            <label for="malrauxZone">
+              ↳ Zone Malraux
+              <i class="tip tip-down" data-tip="Détermine le taux de réduction :&#10;· SPR avec PSMV approuvé / QAD : 30 %&#10;· SPR sans PSMV approuvé : 22 %">i</i>
+            </label>
+            <select id="malrauxZone">
+              <option value="spr-non">SPR sans PSMV — taux 22 %</option>
+              <option value="spr-oui">SPR avec PSMV ou QAD — taux 30 %</option>
+            </select>
           </div>
 
           <div class="form-row">

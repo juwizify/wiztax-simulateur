@@ -98,7 +98,9 @@ function getInputs() {
     fipCorse:        v('fipCorse'),
     gfi:             v('gfi'),
     irPme:           v('irPme'),
-    malraux:         v('malraux'),
+    malraux:          v('malraux'),  // legacy (RI directe) — UI n'expose plus ce champ
+    malrauxTravaux:   v('malrauxTravaux'),
+    malrauxZone:      document.getElementById('malrauxZone')?.value || 'spr-non',
     locAvantages:    v('locAvantages'),  // legacy (RI directe) — UI n'expose plus ce champ, conservé pour rétro-compat
     locAvantagesDepenses: v('locAvantagesDepenses'),
     locAvantagesPalier:   document.getElementById('locAvantagesPalier')?.value || 'loc1',
