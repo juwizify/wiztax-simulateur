@@ -365,20 +365,57 @@ function calculerIR(input) {
 
   // Loi Malraux (7NX/7NY) — HORS plafond niches (art. 199 tervicies CGI)
   // L'utilisateur saisit le montant de la réduction (taux 22 % ou 30 % selon zone, déjà calculé).
-  det.redMalraux = input.malraux || 0;
+  // Caps individuels par dispositif (art. 199 ... CGI spécifiques).
+  // Règle : l'input utilisateur reste libre (il peut saisir 200 000 € de
+  // SOFICA s'il les a vraiment versés, fidélité à sa réalité patrimoniale),
+  // mais le moteur tronque la RI retenue au plafond fiscal applicable.
+  // Le surplus est exposé dans det.capExcedents pour affichage UI.
+  //
+  // Aujourd'hui l'input est la RI déjà calculée sans préciser le scénario,
+  // donc on prend le cap au TAUX MAXIMUM du dispositif (= scénario le plus
+  // avantageux). Phase 3 (refonte préco) basculera vers input versement +
+  // scénario explicite, ce qui permettra des caps plus précis.
+  const PD = P.plafondsDispositifs;
+  const versCouple = (d) => isCouple && d.versementMaxCouple !== undefined
+    ? d.versementMaxCouple : d.versementMax;
+  const tauxMax = (d) => Math.max(...Object.values(d.taux));
+  const capRiMax = {
+    sofica:       PD.sofica.versementMax * tauxMax(PD.sofica),                    // 18 000 × 48 % = 8 640
+    fcpi:         versCouple(PD.fcpi) * PD.fcpi.taux,                              // 12k/24k × 18 %
+    fcpiJei:      versCouple(PD.fcpiJei) * PD.fcpiJei.taux,                        // 12k/24k × 30 %
+    fipCorse:     versCouple(PD.fipCorse) * PD.fipCorse.taux,                      // 12k/24k × 30 %
+    irPme:        versCouple(PD.irPme) * PD.irPme.taux,                            // 50k/100k × 25 %
+    gfi:          versCouple(PD.gfi) * PD.gfi.taux,                                // 50k/100k × 18 %
+    malraux:      PD.malraux.depensesParAnMax * tauxMax(PD.malraux),               // 100 000 × 30 % = 30 000
+    locAvantages: PD.locAvantages.depensesMax * tauxMax(PD.locAvantages),          // 10 000 × 65 % = 6 500
+  };
+
+  det.redMalraux     = Math.min(input.malraux || 0, capRiMax.malraux);
 
   // Réductions dans le plafond niches
-  det.redPinel       = input.pinel;
-  det.redGirardinPD  = input.girardinPD;
+  det.redPinel       = input.pinel;             // Pinel : retiré du périmètre (fermé fin 2024). Pas de cap V1.
+  det.redGirardinPD  = input.girardinPD;        // Girardin : pas de cap individuel, limité par panier majoré.
   det.redGirardinAG  = input.girardinAG;
-  det.redFCPI        = input.fcpi;
-  det.redFcpiJei     = input.fcpiJei || 0;
-  det.redFipCorse    = input.fipCorse || 0;
-  det.redGfi         = input.gfi || 0;
-  det.redIrPme       = input.irPme || 0;
-  det.redLocAvantages = input.locAvantages || 0;
-  det.redSofica      = input.sofica;
-  det.redAutres      = input.autresReductions;
+  det.redFCPI        = Math.min(input.fcpi || 0,         capRiMax.fcpi);
+  det.redFcpiJei     = Math.min(input.fcpiJei || 0,      capRiMax.fcpiJei);
+  det.redFipCorse    = Math.min(input.fipCorse || 0,     capRiMax.fipCorse);
+  det.redGfi         = Math.min(input.gfi || 0,          capRiMax.gfi);
+  det.redIrPme       = Math.min(input.irPme || 0,        capRiMax.irPme);
+  det.redLocAvantages= Math.min(input.locAvantages || 0, capRiMax.locAvantages);
+  det.redSofica      = Math.min(input.sofica || 0,       capRiMax.sofica);
+  det.redAutres      = input.autresReductions;  // catch-all, pas de cap
+
+  // Surplus écrasés par les caps individuels (pour affichage UI)
+  det.capExcedents = {
+    sofica:       Math.max(0, (input.sofica || 0)       - det.redSofica),
+    fcpi:         Math.max(0, (input.fcpi || 0)         - det.redFCPI),
+    fcpiJei:      Math.max(0, (input.fcpiJei || 0)      - det.redFcpiJei),
+    fipCorse:     Math.max(0, (input.fipCorse || 0)     - det.redFipCorse),
+    irPme:        Math.max(0, (input.irPme || 0)        - det.redIrPme),
+    gfi:          Math.max(0, (input.gfi || 0)          - det.redGfi),
+    malraux:      Math.max(0, (input.malraux || 0)      - det.redMalraux),
+    locAvantages: Math.max(0, (input.locAvantages || 0) - det.redLocAvantages),
+  };
 
   det.totalReductions = det.redDons + det.redPinel + det.redGirardinPD + det.redGirardinAG
     + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages

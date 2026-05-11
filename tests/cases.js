@@ -800,16 +800,17 @@ const CASES = [
     expected: { impotNet: 7701, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
   },
   {
-    name: 'Niches 2 poches — autresReductions 12k + SOFICA 11k : poches saturées, 5k perdus',
-    input: makeInput({ sal1: 100000, autresReductions: 12000, sofica: 11000 }),
-    // ri10=12 000, ri18=11 000
-    // poche1 = 10 000 niche10 (saturée par niche10 seule) ; poche2 = 8 000 niche18
-    // surplus_10 = 2 000 PERDU ; surplus_18 = 11 000 - 0 = 11 000 → poche2 = 8 000, perdu_18 = 3 000
-    // Total perdu = 2 000 + 3 000 = 5 000
-    // facteur10 = 10 000/12 000 = 5/6 → RI niche10 retenue = 10 000
-    // facteur18 = 8 000/11 000 → RI niche18 retenue = 8 000
-    // impôt net = 20 701 - 18 000 = 2 701
-    expected: { impotNet: 2701, revenuReference: 90000, nichesPerdues: 5000, tmi: 0.41 },
+    name: 'Niches 2 poches — autresReductions 12k + Girardin PD 25k : poches saturées, 5k perdus (panier)',
+    input: makeInput({ sal1: 100000, autresReductions: 12000, girardinPD: 25000 }),
+    // ri10=12 000 (autresReductions, quote-part 1)
+    // ri18 panier = 25 000 × 0.44 = 11 000 (Girardin PD avec quote-part)
+    // poche1 = 10 000 (saturée par niche10 seule) ; poche2 = 8 000 (Girardin)
+    // surplus_10 = 2 000 PERDU ; surplus_18 panier = 11 000 - 0 = 11 000 → poche2 = 8 000, perdu_18 = 3 000
+    // Total perdu panier = 5 000
+    // RI niche10 retenue = 12 000 × (10 000/12 000) = 10 000
+    // RI niche18 retenue = 25 000 × (8 000/11 000) ≈ 18 182
+    // RI totale = 28 182 > impôt 20 701 → cap à 20 701 → impôt net = 0
+    expected: { impotNet: 0, revenuReference: 90000, nichesPerdues: 5000, tmi: 0.41 },
   },
   {
     name: 'Niches 2 poches — autresReductions 17k + SOFICA 1k (révèle l\'ancien bug)',
@@ -824,13 +825,44 @@ const CASES = [
     expected: { impotNet: 9701, revenuReference: 90000, nichesPerdues: 7000, tmi: 0.41 },
   },
   {
-    name: 'Niches 2 poches — SOFICA 18k seul : maxe poche1 + poche2, 0 perdu',
-    input: makeInput({ sal1: 100000, sofica: 18000 }),
-    // ri10=0, ri18=18 000 (SOFICA quote-part = 1)
+    name: 'Niches 2 poches — Girardin PD 40 910 : maxe poche1 + poche2, 0 perdu',
+    input: makeInput({ sal1: 100000, girardinPD: 40910 }),
+    // ri10=0
+    // ri18 panier = 40 910 × 0.44 ≈ 18 000 (= plafond majoré)
     // poche1 = 10 000 ; poche2 = 8 000 ; perdu = 0
-    // facteur18 = 18 000/18 000 = 1 → RI retenue = 18 000
-    // impôt net = 20 701 - 18 000 = 2 701
-    expected: { impotNet: 2701, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+    // facteur18 = 18 000/18 000 = 1 → RI brute Girardin retenue = 40 910
+    // 40 910 > impôt 20 701 → cap à 20 701 → impôt net = 0
+    expected: { impotNet: 0, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+  },
+
+  // -------------------------------------------------------------------
+  // CAPS INDIVIDUELS — vérifient le plafonnement par dispositif
+  // (Phase 2.3 : Math.min(input, versementMax × tauxMax))
+  // -------------------------------------------------------------------
+  {
+    name: 'Cap individuel SOFICA — saisie 18 000 € de RI → tronqué à 8 640 € (18k × 48%)',
+    input: makeInput({ sal1: 100000, sofica: 18000 }),
+    // Avant Phase 2.3 : SOFICA aurait été retenu intégralement (18k) → impôt 2 701
+    // Maintenant : capRiMax.sofica = 18 000 × 48 % = 8 640 €
+    // ri18 panier = 8 640 → poche1 = 8 640, poche2 = 0, perdues = 0
+    // RI niche18 retenue = 8 640 → impôt net = 20 701 - 8 640 = 12 061
+    expected: { impotNet: 12061, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+  },
+  {
+    name: 'Cap individuel FCPI JEI single — saisie 10k de RI → tronqué à 3 600 € (12k × 30%)',
+    input: makeInput({ sal1: 100000, fcpiJei: 10000 }),
+    // capRiMax.fcpiJei (single) = 12 000 × 30 % = 3 600 €
+    // ri10 = 3 600 → poche1 = 3 600 ; impôt net = 20 701 - 3 600 = 17 101
+    expected: { impotNet: 17101, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+  },
+  {
+    name: 'Cap individuel Malraux — sal 500k + Malraux 200k → RI tronquée à 30 000 €',
+    input: makeInput({ sal1: 500000, malraux: 200000 }),
+    // Sal 500k → impôt brut 202 037 (hors plafond niches, Malraux est hors panier)
+    // capRiMax.malraux = 100 000 × 30 % = 30 000 €
+    // impôt net = 202 037 - 30 000 = 172 037
+    // Démontre que le cap individuel s'applique aussi aux dispositifs HORS panier.
+    expected: { impotNet: 172037, revenuReference: 485445, tmi: 0.45 },
   },
 
   // Profil 10 : Cas remboursement — faible revenu + crédit garde enfants

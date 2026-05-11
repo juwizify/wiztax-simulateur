@@ -297,18 +297,31 @@ function oracleCalc(input) {
   const ehBase = Math.min(i.ehpadFrais || 0, 10000 * ehNbP);
   const redEhpad = ehBase * 0.25;
 
-  const redMalraux = i.malraux || 0;
+  // Caps individuels (aligné sur calculator.js — versementMax × tauxMax)
+  // Couple : SOFICA = 18 000 × 48 % = 8 640 (pas de différence single/couple).
+  const couple = i.situation === 'marie-pacse';
+  const cv = (single, c) => couple && c !== undefined ? c : single;
+  const capSofica   = 18000 * 0.48;                  // 8 640
+  const capFCPI     = cv(12000, 24000) * 0.18;       // 2 160 / 4 320
+  const capFcpiJei  = cv(12000, 24000) * 0.30;       // 3 600 / 7 200
+  const capFipCorse = cv(12000, 24000) * 0.30;       // 3 600 / 7 200
+  const capIrPme    = cv(50000, 100000) * 0.25;      // 12 500 / 25 000
+  const capGfi      = cv(50000, 100000) * 0.18;      //  9 000 / 18 000
+  const capMalraux  = 100000 * 0.30;                 // 30 000
+  const capLocAv    = 10000 * 0.65;                  //  6 500
 
-  const redPinel = i.pinel;
-  const redGirPD = i.girardinPD;
+  const redMalraux = Math.min(i.malraux || 0, capMalraux);
+
+  const redPinel = i.pinel;                                   // pas de cap V1
+  const redGirPD = i.girardinPD;                              // pas de cap (panier majoré)
   const redGirAG = i.girardinAG;
-  const redFCPI = i.fcpi;
-  const redFcpiJei = i.fcpiJei || 0;
-  const redFipCorse = i.fipCorse || 0;
-  const redGfi = i.gfi || 0;
-  const redIrPme = i.irPme || 0;
-  const redLocAv = i.locAvantages || 0;
-  const redSofica = i.sofica;
+  const redFCPI = Math.min(i.fcpi || 0,         capFCPI);
+  const redFcpiJei = Math.min(i.fcpiJei || 0,   capFcpiJei);
+  const redFipCorse = Math.min(i.fipCorse || 0, capFipCorse);
+  const redGfi = Math.min(i.gfi || 0,           capGfi);
+  const redIrPme = Math.min(i.irPme || 0,       capIrPme);
+  const redLocAv = Math.min(i.locAvantages || 0, capLocAv);
+  const redSofica = Math.min(i.sofica || 0,     capSofica);
   const redAutres = i.autresReductions;
 
   const totalReductions = redDons + redPinel + redGirPD + redGirAG
