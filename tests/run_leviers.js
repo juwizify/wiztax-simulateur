@@ -99,8 +99,9 @@ const TESTS = [
   { id: 'locAvantages', montant: 8000, paramValue: 'loc2', key: 'locAvantagesDepenses', expected: 8000, delta: 8000 * 0.35, deltaTol: 1 },
   { id: 'locAvantages', montant: 8000, paramValue: 'loc3', key: 'locAvantagesDepenses', expected: 8000, delta: 8000 * 0.65, deltaTol: 1 },
 
-  // SOFICA : 5000 × 30% = 1500
-  { id: 'sofica', montant: 5000, key: 'sofica', expected: 1500, delta: 1500, deltaTol: 1 },
+  // SOFICA taux-variable : 30 / 36 / 48 % selon scénario
+  { id: 'sofica', montant: 5000, paramValue: '30', key: 'sofica', expected: 1500, delta: 1500, deltaTol: 1 },
+  { id: 'sofica', montant: 5000, paramValue: '48', key: 'sofica', expected: 2400, delta: 2400, deltaTol: 1 },
 
   // Girardin PD mode taux-libre : rendement saisi en décimal (1.13 = 113 %)
   //   versement 5 000 × rendement 1.13 = 5 650 € de RI brute Girardin.

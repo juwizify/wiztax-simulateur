@@ -1050,48 +1050,56 @@ header span {
    PRÉCONISATIONS — refonte 3 leviers (Phase 3)
 ═══════════════════════════════════════════════════════════ */
 
-/* ─── Sections par levier (densifié) ─── */
+/* ─── Layout 2 colonnes ─── */
+.preco-layout {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 20px;
+  align-items: start;
+  margin-top: 16px;
+}
+.preco-main { min-width: 0; }
+.preco-sidebar {
+  position: sticky;
+  top: 80px;
+  align-self: start;
+}
+
+/* ─── Sections par levier — palette sobre ─── */
 .preco-section {
   margin: 12px 0;
-  padding: 12px 14px;
+  padding: 14px 16px;
   background: #fff;
-  border-radius: 10px;
-  border-left: 4px solid var(--accent);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-  /* Laisser de l'espace pour la sidebar sticky droite */
-  margin-right: 260px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
 }
-.preco-section-l1 { border-left-color: #2E7D52; }  /* vert : déductions revenu */
-.preco-section-l2 { border-left-color: #b45309; }  /* orange : réductions (perdues si IR=0) */
-.preco-section-l3 { border-left-color: #2563eb; }  /* bleu : crédits (remboursables) */
-
+/* Différenciation des leviers : juste une étiquette discrète, plus de
+   border-left coloré ni de h3 coloré (trop bruyant) */
 .preco-section-header {
   margin-bottom: 8px;
 }
 .preco-section-header h3 {
   margin: 0 0 2px 0;
   font-size: 1em;
-  color: #1e293b;
+  font-weight: 600;
+  color: #0f172a;
 }
-.preco-section-l1 .preco-section-header h3 { color: #2E7D52; }
-.preco-section-l2 .preco-section-header h3 { color: #b45309; }
-.preco-section-l3 .preco-section-header h3 { color: #2563eb; }
 .preco-section-desc {
   margin: 0;
   font-size: 0.82em;
   color: #64748b;
-  font-style: italic;
 }
 
 .preco-table-section {
   margin-top: 6px;
 }
 
-/* ─── Jauges 2 poches dans la section L2 — version compacte ─── */
+/* ─── Jauges 2 poches dans la section L2 — version compacte sobre ─── */
 .preco-niches-jauges-compact {
-  margin: 8px 0 8px;
+  margin: 8px 0 10px;
   padding: 8px 10px;
-  background: #fef3c7;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   display: flex;
   gap: 18px;
@@ -1101,38 +1109,38 @@ header span {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1 1 280px;
+  flex: 1 1 240px;
   padding: 0;
 }
 .preco-niches-jauges-compact .preco-jauge-label {
   flex: 0 0 auto;
   font-size: 0.78em;
-  color: #78350f;
+  color: #475569;
   white-space: nowrap;
   font-weight: 500;
 }
 .preco-niches-jauges-compact .preco-jauge-label small {
-  color: #92400e;
+  color: #94a3b8;
   font-weight: 400;
   margin-left: 2px;
 }
 .preco-niches-jauges-compact .preco-jauge-bar {
   flex: 1 1 60px;
   height: 6px;
-  background: #fde68a;
+  background: #e2e8f0;
   border-radius: 3px;
   overflow: hidden;
 }
 .preco-niches-jauges-compact .preco-jauge-fill {
   height: 100%;
-  background: #d97706;
+  background: var(--accent);
   transition: width 0.2s ease, background 0.2s ease;
 }
 .preco-niches-jauges-compact .preco-jauge-val {
   flex: 0 0 auto;
   font-size: 0.78em;
   font-variant-numeric: tabular-nums;
-  color: #78350f;
+  color: #475569;
   white-space: nowrap;
 }
 
@@ -1145,12 +1153,12 @@ header span {
 }
 .preco-existing-chip {
   display: inline-block;
-  padding: 3px 8px;
-  background: #dcfce7;
-  border: 1px solid #86efac;
+  padding: 2px 8px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   border-radius: 4px;
   font-size: 0.78em;
-  color: #14532d;
+  color: #475569;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1214,21 +1222,15 @@ header span {
   margin: 0 auto;
 }
 
-/* ─── Récap sticky en haut à droite ─── */
-.preco-sticky-recap {
-  position: fixed;
-  top: 88px;
-  right: 20px;
-  width: 220px;
+/* ─── Sidebar récap (sticky dans le layout grid 2 colonnes) ─── */
+.preco-sidebar {
   padding: 14px 16px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  z-index: 50;
+  border-radius: 8px;
   font-size: 0.9em;
 }
-.preco-sticky-recap h4 {
+.preco-sidebar h4 {
   margin: 0 0 10px 0;
   font-size: 0.7em;
   text-transform: uppercase;
@@ -1236,54 +1238,51 @@ header span {
   color: #64748b;
   font-weight: 600;
 }
-.preco-sticky-recap .recap-line {
+.preco-sidebar .recap-line {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   padding: 4px 0;
   gap: 8px;
 }
-.preco-sticky-recap .recap-label {
+.preco-sidebar .recap-label {
   font-size: 0.85em;
   color: #64748b;
 }
-.preco-sticky-recap .recap-val {
+.preco-sidebar .recap-val {
   font-size: 1em;
   font-weight: 600;
   color: #1e293b;
   font-variant-numeric: tabular-nums;
 }
-.preco-sticky-recap .recap-final {
+.preco-sidebar .recap-final {
   margin-top: 4px;
   padding-top: 8px;
   border-top: 1px solid #e2e8f0;
 }
-.preco-sticky-recap .recap-final .recap-label {
+.preco-sidebar .recap-final .recap-label {
   color: #0f172a;
   font-weight: 600;
 }
-.preco-sticky-recap .recap-final .recap-val {
+.preco-sidebar .recap-final .recap-val {
   font-size: 1.15em;
   font-weight: 700;
   color: #0f172a;
 }
-.preco-sticky-recap .recap-eco {
-  margin-top: 6px;
-  padding: 6px 8px;
-  background: #ecfdf5;
-  border-radius: 6px;
+.preco-sidebar .recap-eco {
+  margin-top: 2px;
 }
-.preco-sticky-recap .recap-eco .recap-label {
-  color: #14532d;
+.preco-sidebar .recap-eco .recap-label {
+  color: #475569;
   font-weight: 500;
 }
-.preco-sticky-recap .recap-eco .recap-val {
-  color: #15803d;
+.preco-sidebar .recap-eco .recap-val {
+  color: #0f172a;
   font-weight: 700;
 }
 
 /* Séparateur Évolution / Indicateurs dans le sticky */
-.preco-sticky-recap .recap-divider {
+.preco-sidebar .recap-divider {
   margin: 14px 0 6px 0;
   padding-top: 10px;
   border-top: 1px solid #e2e8f0;
@@ -1293,27 +1292,27 @@ header span {
   color: #64748b;
   font-weight: 600;
 }
-.preco-sticky-recap .recap-jauge {
+.preco-sidebar .recap-jauge {
   margin-bottom: 6px;
 }
-.preco-sticky-recap .recap-jauge-label {
+.preco-sidebar .recap-jauge-label {
   display: block;
   font-size: 0.78em;
   color: #475569;
   margin-bottom: 2px;
 }
-.preco-sticky-recap .recap-jauge-bar {
+.preco-sidebar .recap-jauge-bar {
   height: 4px;
   background: #e2e8f0;
   border-radius: 2px;
   overflow: hidden;
 }
-.preco-sticky-recap .recap-jauge-fill {
+.preco-sidebar .recap-jauge-fill {
   height: 100%;
   background: var(--accent);
   transition: width 0.2s ease, background 0.2s ease;
 }
-.preco-sticky-recap .recap-jauge-val {
+.preco-sidebar .recap-jauge-val {
   font-size: 0.72em;
   font-variant-numeric: tabular-nums;
   color: #64748b;
@@ -1322,11 +1321,11 @@ header span {
   margin-top: 2px;
 }
 
-/* Sur écrans étroits : on cache le sticky et on supprime le margin-right
-   des sections (sinon elles auraient un trou à droite). */
-@media (max-width: 1280px) {
-  .preco-sticky-recap { display: none; }
-  .preco-section { margin-right: 0; }
+/* Sur écrans étroits : layout passe en 1 colonne, sidebar empilée en bas
+   (au lieu de cachée — l'info reste accessible). */
+@media (max-width: 1100px) {
+  .preco-layout { grid-template-columns: 1fr; }
+  .preco-sidebar { position: static; }
 }
 
 /* ─── Widget rendement libre (Girardin PD/AG) ─── */

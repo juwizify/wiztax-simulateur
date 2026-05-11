@@ -165,7 +165,7 @@ function updateResults(d) {
   if (perduesRow) {
     if ((d.nichesPerdues || 0) > 0) {
       perduesRow.style.display = '';
-      set('res-niches-perdues', '− ' + fmt(d.nichesPerdues) + ' €');
+      set('res-niches-perdues', '− ' + fmt(d.nichesPerdues));
     } else {
       perduesRow.style.display = 'none';
     }
@@ -654,7 +654,7 @@ function refreshPreconisationsCalculs() {
   setText('recapL2',    fmt(detL12.impotNet));
   setText('recapFinal', fmt(detApres.impotNet));
   const eco = detAvant.impotNet - detApres.impotNet;
-  setText('recapEco', eco > 0 ? '− ' + fmt(eco) + ' €' : fmt(eco) + ' €');
+  setText('recapEco', eco > 0 ? '− ' + fmt(eco) : fmt(eco));
 
   // Pré-affichage des dispositifs déjà saisis dans le Simulateur, par section
   renderExistingByLevier(inputAvant, detAvant);
@@ -692,8 +692,8 @@ function refreshPreconisationsCalculs() {
         // Gain réel : montant d'impôt en moins, en tenant compte des plafonds
         // et de l'input existant déjà dans le Simulateur.
         tdAv.textContent = gainMarginal > 0
-          ? '− ' + fmt(gainMarginal) + ' €'
-          : gainMarginal < 0 ? '+ ' + fmt(-gainMarginal) + ' €' : fmt(0) + ' €';
+          ? '− ' + fmt(gainMarginal)
+          : gainMarginal < 0 ? '+ ' + fmt(-gainMarginal) : fmt(0);
       }
     }
     if (tdPl) {

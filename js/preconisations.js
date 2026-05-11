@@ -152,10 +152,19 @@ const LEVIERS_CATALOGUE = [
   },
   // 2.c) Dans le panier niche 18 000 € (majoration)
   {
-    id: 'sofica', label: 'SOFICA (30%)',
-    levier: 2, cat: 'niche18', mode: 'taux', taux: 0.30, inputKey: 'sofica',
+    id: 'sofica', label: 'SOFICA',
+    levier: 2, cat: 'niche18', mode: 'taux-variable', inputKey: 'sofica',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de SOFICA (financement cinéma/audiovisuel). Cash sortant. Réduction 30 % standard (36 % ou 48 % si conditions majorées). Versement plafonné à min(18 000 €, 25 % du RNG). Niche majorée 18 k€. Conservation 5 ans.',
+    info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de SOFICA (financement cinéma/audiovisuel). Cash sortant. Choisir ensuite le taux selon le scénario de la SOFICA. Versement plafonné à min(18 000 €, 25 % du RNG). Niche majorée 18 k€. Conservation 5 ans.',
+    params: [
+      { name: 'taux', label: 'Taux SOFICA',
+        options: [
+          { value: '30', label: '30 % — standard',                                taux: 0.30 },
+          { value: '36', label: '36 % — engagement production (10 %)',             taux: 0.36 },
+          { value: '48', label: '48 % — production indép. + langues régionales',   taux: 0.48 },
+        ]
+      },
+    ],
   },
   {
     id: 'girardinPD', label: 'Girardin Industriel — Plein Droit',
