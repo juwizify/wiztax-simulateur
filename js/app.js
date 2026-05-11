@@ -751,10 +751,13 @@ function renderPreconisations() {
       }
       tip.setAttribute('data-tip', tipText);
       tdLev.appendChild(tip);
-      // Pastilles : catégorie (Niche 10k / 18k / Hors / Foncier) + nature
-      // (Perdu / Reportable N ans / Remboursable) — empilées à droite.
+      // Pastille catégorie uniquement (Niche 10k / 18k / Hors / Foncier).
+      // Les pastilles "nature" (perdu/reportable) ont été retirées : elles
+      // alourdissaient la lecture et pouvaient induire en erreur (ex :
+      // "Remboursable" sur Emploi à domicile, alors qu'au-delà de 12 000 €
+      // de dépenses le surplus est PERDU, pas remboursé).
       const wrap = document.createElement('span');
-      wrap.innerHTML = renderCatBadge(levSelected.cat) + renderNaturePastille(levSelected);
+      wrap.innerHTML = renderCatBadge(levSelected.cat);
       while (wrap.firstChild) tdLev.appendChild(wrap.firstChild);
     }
     tr.appendChild(tdLev);
@@ -1054,21 +1057,67 @@ function refreshPreconisationsCalculs() {
     }
   });
 
-  // Warnings — bandeaux par section (panier-niches → L2, surdimensionnement → L2)
+  // Warnings — bandeaux par section
   const warnings = P.computeWarnings(detApres);
   ['L1', 'L2', 'L3'].forEach(s => {
     const box = document.getElementById('precoWarnings' + s);
     if (box) box.innerHTML = '';
   });
   const boxL2 = document.getElementById('precoWarningsL2');
+
   warnings.forEach(w => {
-    // cap-indiv et panier-niches et surdimensionnement → tous Levier 2
     if (!boxL2) return;
+    if (w.type === 'surdimensionnement') return; // rendu enrichi ci-dessous
     const chip = document.createElement('div');
     chip.className = 'preco-warning preco-warning-' + w.level;
     chip.textContent = (w.level === 'info' ? 'ℹ ' : '⚠ ') + w.message;
     boxL2.appendChild(chip);
   });
+
+  // Box "surdimensionnement" enrichie : liste les dispositifs L2 actifs
+  // avec leur statut (perdu / reportable N ans). Source de vérité unique
+  // pour le sort de l'excédent, à la place des pastilles par ligne.
+  const surdim = warnings.find(w => w.type === 'surdimensionnement');
+  if (surdim && boxL2) {
+    const statusByLev = {
+      girardinPD: 'Reportable 5 ans',
+      girardinAG: 'Reportable 5 ans',
+      irPme:      'Reportable 4 ans',
+      dons7UD:    'Reportable 5 ans',
+      dons7UF:    'Reportable 5 ans',
+    };
+    // Récupère les dispositifs L2 actifs (préco + existant Simulateur).
+    const activesIds = new Set();
+    state.preconisations.forEach(p => {
+      const l = P.LEVIERS_CATALOGUE.find(x => x.id === p.leverId);
+      if (l && l.levier === 2 && p.montant > 0) activesIds.add(l.id);
+    });
+    // Existants Simulateur : on regarde tous les L2 avec valeur > 0
+    P.LEVIERS_CATALOGUE.forEach(l => {
+      if (l.levier !== 2) return;
+      const v = (inputAvant[l.inputKey] || 0)
+        || (l.id === 'malraux' ? (inputAvant.malraux || 0) : 0)
+        || (l.id === 'locAvantages' ? (inputAvant.locAvantages || 0) : 0);
+      if (v > 0) activesIds.add(l.id);
+    });
+    const items = [...activesIds].map(id => {
+      const l = P.LEVIERS_CATALOGUE.find(x => x.id === id);
+      return { label: l.label, status: statusByLev[id] || 'Perdu' };
+    });
+    const box = document.createElement('div');
+    box.className = 'preco-warning preco-warning-info preco-warning-surdim';
+    let html = `<div class="surdim-head">ℹ ${surdim.message}</div>`;
+    if (items.length) {
+      html += '<ul class="surdim-list">';
+      items.forEach(it => {
+        const cls = it.status.startsWith('Reportable') ? 'surdim-rep' : 'surdim-perdu';
+        html += `<li><span class="${cls}">${it.status}</span> · ${it.label}</li>`;
+      });
+      html += '</ul>';
+    }
+    box.innerHTML = html;
+    boxL2.appendChild(box);
+  }
 
   // Jauges
   // Budget alloué : ne compte QUE les leviers à cash sortant réel (budget: 'cash').
@@ -1166,7 +1215,7 @@ function renderExistingByLevier(inputAvant, detAvant) {
 
     const tdLab = document.createElement('td');
     const catLev = P.LEVIERS_CATALOGUE.find(l => l.id === it.id);
-    const badges = catLev ? renderCatBadge(catLev.cat) + renderNaturePastille(catLev) : '';
+    const badges = catLev ? renderCatBadge(catLev.cat) : '';
     tdLab.innerHTML = `<span class="preco-existing-marker">✓ déjà saisi</span> ${it.label}${badges}`;
     tr.appendChild(tdLab);
 

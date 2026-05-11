@@ -508,9 +508,10 @@ function computeWarnings(det) {
   }
 
   // 3. Surdimensionnement — RI L2 demandées dépassent l'impôt à effacer.
-  //    Heuristique : si totalReductions (somme RI saisies/calculées avant
-  //    plafonnement niches) > impôt avant L2, la fraction excédentaire est
-  //    perdue ou reportable selon le dispositif (≠ crédits qui sont remboursés).
+  //    Le détail (sort de chaque dispositif : perdu / reportable / etc.)
+  //    est rendu côté UI dans refreshPreconisationsCalculs (a accès au
+  //    state des préco actives, donc peut lister les dispositifs concernés).
+  //    On expose juste un signal "surdimensionnement" + le montant.
   const impotAvantReductions = (det.impotApresDecote || 0) + (det.irMobilier || 0);
   const totalRiL2 = (det.totalReductions || 0)
     + (det.fraisScol || 0) + (det.redEhpad || 0) + (det.redMalraux || 0);
@@ -520,7 +521,7 @@ function computeWarnings(det) {
       type: 'surdimensionnement',
       level: 'info',
       leverId: null,
-      message: `${fmt(excedent)} € de réductions L2 au-delà de l'impôt restant — voir la pastille « Perdu » ou « Reportable » sur chaque ligne pour le sort de l'excédent.`,
+      message: `${fmt(excedent)} € de réductions L2 au-delà de l'impôt restant.`,
       amount: excedent,
     });
   }

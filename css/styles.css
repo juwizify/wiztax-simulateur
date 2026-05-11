@@ -1216,10 +1216,31 @@ header span {
 .preco-cat-hors    { color: #475569; }
 .preco-cat-foncier { color: #166534; }
 
-/* Pastille "nature" (sort de l'excédent) — même style que cat-badge */
-.preco-nat-rep      { color: #075985; }   /* reportable : bleu sobre */
-.preco-nat-perdu    { color: #9a3412; }   /* perdu : ocre sobre      */
-.preco-nat-rembours { color: #166534; }   /* remboursable : vert sobre */
+/* Pastille "nature" — retirée des lignes (cf. fix surdim) mais classes
+   conservées au cas où on l'utilise ailleurs (récap surdim ci-dessous). */
+.preco-nat-rep      { color: #075985; }
+.preco-nat-perdu    { color: #9a3412; }
+.preco-nat-rembours { color: #166534; }
+
+/* Colonne "Plafond individuel" centrée — la coche ✓ tombe au milieu */
+.preco-table-section th:nth-child(5),
+.preco-table-section td:nth-child(5) {
+  text-align: center;
+}
+
+/* Box récap "surdimensionnement" avec liste des dispositifs L2 actifs */
+.preco-warning-surdim .surdim-head {
+  margin-bottom: 6px;
+}
+.preco-warning-surdim .surdim-list {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+  font-size: 0.92em;
+  line-height: 1.55;
+}
+.preco-warning-surdim .surdim-rep   { color: #075985; font-weight: 500; }
+.preco-warning-surdim .surdim-perdu { color: #9a3412; font-weight: 500; }
 
 /* ─── Warnings inline ─── */
 .preco-section-warnings {
