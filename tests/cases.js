@@ -456,6 +456,24 @@ const CASES = [
   },
 
   // -------------------------------------------------------------------
+  // 6NS/6NT — Plafond PER INDIVIDUEL par déclarant (art. 163 quatervicies CGI)
+  // Plancher 4 710 € chacun, plafonds additionnés en mutualisation conjugale.
+  // -------------------------------------------------------------------
+  {
+    name: 'PER plafond couple : 42k + 31k salaires, chacun au plancher 4 710',
+    input: makeInput({ situation: 'marie-pacse', sal1: 42000, sal2: 31000, per: 9000 }),
+    // revenuPro1 = 42 000 → 10 % = 4 200 < plancher 4 710 → perCap1 = 4 710
+    // revenuPro2 = 31 000 → 10 % = 3 100 < plancher 4 710 → perCap2 = 4 710
+    // perCap total = 9 420 €. PER versé 9 000 ≤ 9 420 → entièrement déduit.
+    // salNet1 = 42 000 - 4 200 = 37 800 ; salNet2 = 31 000 - 3 100 = 27 900
+    // salaireNet = 65 700 ; RNI = 65 700 - 9 000 = 56 700
+    // QF couple = 56 700 / 2 = 28 350 → tranche 2 (11 %) : (28 350-11 600) × 0,11 = 1 842,50
+    // impôt par part × 2 = 3 685 — pas de décote (> seuil 3 277), pas de QF supp
+    // RFR = salaireNet 65 700 (PER ne réduit pas le RFR)
+    expected: { impotNet: 3685, revenuReference: 65700, tmi: 0.11 },
+  },
+
+  // -------------------------------------------------------------------
   // 7UD / 7UF — Distinction dons "Coluche" (75 %) vs intérêt général (66 %)
   // Surplus 7UD au-delà de 2 000 € bascule sur 7UF.
   // Plafond commun 20 % RNI (priorité au 75 %).

@@ -188,10 +188,16 @@ function oracleCalc(input) {
             + i.autresRevenus;
 
   // --- Étape 2 : revenu net imposable ---
-  const revPro = i.sal1 + i.sal2 + i.bncMicro1 + i.bncMicro2 + i.bncReel1 + i.bncReel2;
-  const perCap = (i.perPlafondManuel || 0) > 0
-    ? i.perPlafondManuel
-    : (revPro > 0 ? Math.max(4710, Math.min(revPro * 0.10, 37680)) : 4710);
+  // PER : plafond INDIVIDUEL par déclarant (art. 163 quatervicies CGI),
+  // plancher 4 710 € chacun, plafonds additionnés en mutualisation.
+  const isCoupleForPER = i.situation === 'marie-pacse';
+  const revPro1 = i.sal1 + (i.allocChomage1 || 0) + (i.heuresSupExo1 || 0)
+                + i.bncMicro1 + i.bncReel1;
+  const revPro2 = i.sal2 + (i.allocChomage2 || 0) + (i.heuresSupExo2 || 0)
+                + i.bncMicro2 + i.bncReel2;
+  const perCapOf = r => Math.max(4710, Math.min(r * 0.10, 37680));
+  const perCapAuto = perCapOf(revPro1) + (isCoupleForPER ? perCapOf(revPro2) : 0);
+  const perCap = (i.perPlafondManuel || 0) > 0 ? i.perPlafondManuel : perCapAuto;
   const perDed = Math.min(i.per, perCap);
 
   const paCap = i.nbBeneficiairesPA > 0

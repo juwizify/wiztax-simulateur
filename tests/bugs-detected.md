@@ -8,7 +8,7 @@ Format : un bug = une section. Statut : `Open` / `Fix proposé` / `Corrigé`.
 
 ## #1 — PER : plafond de déduction calculé au niveau foyer au lieu d'individuel
 
-**Statut** : Open
+**Statut** : Corrigé (commit suivant) — à valider en navigateur sur le Cas 2
 **Détecté sur** : Cas 2 (couple marié, salaires 42 000 € + 31 000 €)
 **Sévérité** : impacte tous les couples qui versent sur PER.
 

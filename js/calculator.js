@@ -68,6 +68,7 @@ function calcParts(situation, nbEnfants, gardeAlternee, parentIsole, demiPartSup
 function calculerIR(input) {
   const P = PARAMS;
   const det = {}; // détail du calcul (pour l'onglet calcul détaillé)
+  const isCouple = input.situation === 'marie-pacse';
 
   // ============================================================
   // ÉTAPE 1 : REVENU BRUT GLOBAL
@@ -166,20 +167,32 @@ function calculerIR(input) {
   // ÉTAPE 2 : REVENU NET IMPOSABLE
   // ============================================================
 
-  // PER — plafond = 10% des revenus professionnels, plancher 4 710 €, max 37 680 €
+  // PER — plafond = 10 % des revenus pro de CHAQUE déclarant, plancher 4 710 €
+  // individuel, max 37 680 €. Les plafonds individuels s'additionnent (mutualisation
+  // conjugale considérée par défaut, comme la déclaration en ligne).
+  // Art. 163 quatervicies CGI — assiette = revenus d'activité pro :
+  // salaires + chômage + heures sup exonérées + BNC micro + BNC réel.
   // On utilise les revenus N comme proxy des revenus N-1 (approximation raisonnable).
-  const revenuPro = input.sal1 + input.sal2
-    + input.bncMicro1 + input.bncMicro2
-    + input.bncReel1  + input.bncReel2;
+  const revenuPro1 = input.sal1
+    + (input.allocChomage1 || 0)
+    + (input.heuresSupExo1 || 0)
+    + input.bncMicro1 + input.bncReel1;
+  const revenuPro2 = input.sal2
+    + (input.allocChomage2 || 0)
+    + (input.heuresSupExo2 || 0)
+    + input.bncMicro2 + input.bncReel2;
+  const capForRevenu = r => Math.max(
+    P.plafonds.perPlancher,
+    Math.min(r * P.plafonds.perTaux, P.plafonds.perMaxSalarie)
+  );
+  const perCapAuto = capForRevenu(revenuPro1)
+    + (isCouple ? capForRevenu(revenuPro2) : 0);
+
   // Plafond manuel (cases 6PS/6PT) : si l'utilisateur saisit > 0, on l'utilise
   // au lieu du calcul auto (utile quand il a des reports de plafonds non utilisés
   // des 3 dernières années, non modélisés ici).
   const perCapManuel = input.perPlafondManuel || 0;
-  det.perCap = perCapManuel > 0
-    ? perCapManuel
-    : (revenuPro > 0
-        ? Math.max(P.plafonds.perPlancher, Math.min(revenuPro * P.plafonds.perTaux, P.plafonds.perMaxSalarie))
-        : P.plafonds.perPlancher);
+  det.perCap = perCapManuel > 0 ? perCapManuel : perCapAuto;
   det.per = Math.min(input.per, det.perCap);
 
   // Pensions alimentaires — plafond (art. 156-II CGI)
@@ -242,7 +255,6 @@ function calculerIR(input) {
   // ============================================================
   // ÉTAPE 5 : DÉCOTE
   // ============================================================
-  const isCouple = input.situation === 'marie-pacse';
   const seuilDecote = isCouple ? P.decote.seuilCouple : P.decote.seuilCelibataire;
   const plafondDecote = isCouple ? P.decote.plafondCouple : P.decote.plafondCelibataire;
 
