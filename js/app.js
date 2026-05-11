@@ -437,59 +437,116 @@ document.addEventListener('DOMContentLoaded', () => {
 // PRÉCONISATIONS — bridge UI/moteur
 // ─────────────────────────────────────────────
 // Calcule le maximum saisissable pour un dispositif sur une ligne préco,
-// compte tenu des plafonds individuels et de l'existant déjà dans le
-// Simulateur. Retourne null si pas de cap calculable (cas Girardin —
-// plafond venant de la poche niches uniquement).
+// en combinant TROIS plafonds (on retient le plus restrictif) :
+//   1. Plafond individuel propre au dispositif (et cumul avec l'existant
+//      déjà saisi dans le Simulateur)
+//   2. Place encore disponible dans le panier niches (poche 1 + poche 2
+//      pour les cat. niche10/niche18). Pour Girardin sans cap individuel,
+//      c'est SOUVENT cette contrainte qui domine.
+//   3. Impôt restant à effacer côté Levier 2 : au-delà la réduction est
+//      perdue (Pinel/FCPI/SOFICA/Malraux) ou reportable (Girardin/IR-PME/
+//      dons > 20 % RNI) selon le dispositif.
+// Retourne null si l'algo ne peut absolument rien chiffrer (devrait être
+// rare avec cette refonte — Girardin tombe désormais sur la poche niches).
 function computeMaxForLevier(lev, inputAvant, paramValue, detAvant, isCouple) {
   const existant = inputAvant[lev.inputKey] || 0;
+  const POS = (v) => Math.max(0, v);
 
+  // ─── 1. Plafond individuel du dispositif ─────────────────────────────
+  let maxIndiv = Infinity;
   if (lev.id === 'per') {
-    return Math.max(0, (detAvant.perCap || 0) - existant);
-  }
-  if (lev.id === 'ehpad') {
-    const nbPers = Math.max(1, inputAvant.ehpadNbPers || 1);
-    return Math.max(0, 10000 * nbPers - existant);
-  }
-  if (lev.id === 'emploiDom') {
-    return Math.max(0, 12000 - existant);
-  }
-  if (lev.id === 'gardeEnf') {
-    const nbEnf = Math.max(1, inputAvant.nbEnfants || 1);
-    return Math.max(0, 3500 * nbEnf - existant);
-  }
-  if (lev.id === 'syndic') {
+    maxIndiv = POS((detAvant.perCap || 0) - existant);
+  } else if (lev.id === 'ehpad') {
+    maxIndiv = POS(10000 * Math.max(1, inputAvant.ehpadNbPers || 1) - existant);
+  } else if (lev.id === 'emploiDom') {
+    maxIndiv = POS(12000 - existant);
+  } else if (lev.id === 'gardeEnf') {
+    maxIndiv = POS(3500 * Math.max(1, inputAvant.nbEnfants || 1) - existant);
+  } else if (lev.id === 'syndic') {
     const baseMax = ((inputAvant.sal1 || 0) + (inputAvant.sal2 || 0)
       + (inputAvant.allocChomage1 || 0) + (inputAvant.allocChomage2 || 0)
       + (inputAvant.pen1 || 0) + (inputAvant.pen2 || 0)) * 0.01;
-    return Math.max(0, baseMax - existant);
-  }
-  if (lev.id === 'dons7UD') {
-    // Cap 75 % à 2 000 € (au-delà bascule en 7UF 66 % automatiquement)
-    return Math.max(0, 2000 - existant);
-  }
-  if (lev.id === 'dons7UF') {
+    maxIndiv = POS(baseMax - existant);
+  } else if (lev.id === 'dons7UD') {
+    maxIndiv = POS(2000 - existant);
+  } else if (lev.id === 'dons7UF') {
     const cap = (detAvant.revenuNetImposable || 0) * 0.20;
     const dejaUtilise = (inputAvant.dons7UD || 0) + (inputAvant.dons || 0);
-    return Math.max(0, cap - dejaUtilise);
-  }
-  // Mode jeanbrun : plafond par catégorie de loyer
-  if (lev.mode === 'jeanbrun') {
+    maxIndiv = POS(cap - dejaUtilise);
+  } else if (lev.mode === 'jeanbrun') {
     const opt = lev.params[0].options.find(o => o.value === paramValue);
     const cap = opt ? opt.plafond : 8000;
-    return Math.max(0, cap - existant);
-  }
-  // Dispositifs Phase 2.3 avec plafondsDispositifs centralisés
-  if (typeof PARAMS !== 'undefined' && PARAMS.plafondsDispositifs && PARAMS.plafondsDispositifs[lev.id]) {
+    maxIndiv = POS(cap - existant);
+  } else if (typeof PARAMS !== 'undefined' && PARAMS.plafondsDispositifs && PARAMS.plafondsDispositifs[lev.id]) {
     const cfg = PARAMS.plafondsDispositifs[lev.id];
     if (cfg.versementMax !== undefined) {
       const vMax = isCouple && cfg.versementMaxCouple !== undefined
         ? cfg.versementMaxCouple : cfg.versementMax;
-      return Math.max(0, vMax - existant);
+      maxIndiv = POS(vMax - existant);
+    } else if (cfg.depensesMax !== undefined) {
+      maxIndiv = POS(cfg.depensesMax - existant);
+    } else if (cfg.depensesParAnMax !== undefined) {
+      maxIndiv = POS(cfg.depensesParAnMax - existant);
     }
-    if (cfg.depensesMax !== undefined) return Math.max(0, cfg.depensesMax - existant);
-    if (cfg.depensesParAnMax !== undefined) return Math.max(0, cfg.depensesParAnMax - existant);
+    // Girardin : cfg n'a ni versementMax ni depensesMax → maxIndiv reste à Infinity
   }
-  return null;  // Girardin PD/AG : pas de cap individuel
+
+  // ─── 2. Place restante dans le panier niches ─────────────────────────
+  let maxNiches = Infinity;
+  const poche1Reste = POS(10000 - (detAvant.poche1Utilisee || 0));
+  const poche2Reste = POS(8000  - (detAvant.poche2Utilisee || 0));
+  if (lev.cat === 'niche10') {
+    maxNiches = poche1Reste;            // niche10 ne va PAS en poche 2
+  } else if (lev.cat === 'niche18') {
+    // niche18 peut occuper poche 1 puis déborder en poche 2
+    let panierDispo = poche1Reste + poche2Reste;
+    // Convertir le "panier disponible" en SAISIE max (versement Girardin
+    // ou RI brute pour SOFICA/autres niche18).
+    if (lev.id === 'girardinPD') panierDispo = panierDispo / 0.44;
+    else if (lev.id === 'girardinAG') panierDispo = panierDispo / 0.34;
+    maxNiches = panierDispo;
+  }
+  // cat 'hors' / 'foncier' : pas de cap niches → reste Infinity.
+
+  // ─── 3. Impôt restant à effacer (Levier 2 uniquement) ────────────────
+  // Pour les dispositifs L2 dans le panier niches : limiter à l'impôt
+  // restant pour éviter le surdimensionnement (RI perdue ou reportable
+  // selon dispositif). Hors panier niches (dons / EHPAD / Malraux /
+  // syndic) : pas concerné par la poche, mais idem pour l'impôt restant.
+  let maxUtile = Infinity;
+  if (lev.levier === 2) {
+    const impotRestant = POS((detAvant.impotApresDecote || 0) + (detAvant.irMobilier || 0));
+    // Taux applicable selon le mode du levier (pour convertir impôt → saisie)
+    let tauxRi = null;
+    if (lev.mode === 'taux') {
+      tauxRi = lev.taux;
+    } else if (lev.mode === 'taux-variable' && lev.params && paramValue) {
+      const opt = lev.params[0].options.find(o => o.value === paramValue);
+      if (opt && opt.taux) tauxRi = opt.taux;
+    } else if (lev.mode === 'taux-libre') {
+      tauxRi = parseFloat(paramValue) || lev.rendementDefaut || 1.10;
+    } else {
+      // versement-direct : taux selon dispositif
+      const tauxMap = {
+        dons7UD: 0.75, dons7UF: 0.66, ehpad: 0.25,
+      };
+      tauxRi = tauxMap[lev.id] || null;
+      // Malraux et Loc'Avantages en mode versement-direct avec paramKey
+      if (lev.id === 'malraux' && paramValue) {
+        tauxRi = (paramValue === 'spr-oui') ? 0.30 : 0.22;
+      }
+      if (lev.id === 'locAvantages' && paramValue) {
+        const m = { loc1: 0.15, loc2: 0.35, loc3: 0.65 };
+        tauxRi = m[paramValue] || 0.15;
+      }
+    }
+    if (tauxRi !== null && tauxRi > 0) {
+      maxUtile = impotRestant / tauxRi;
+    }
+  }
+
+  const result = Math.min(maxIndiv, maxNiches, maxUtile);
+  return isFinite(result) ? result : null;
 }
 
 // ─────────────────────────────────────────────
@@ -804,6 +861,22 @@ function refreshPreconisationsCalculs() {
   setText('recapFinal', fmt(detApres.impotNet));
   const eco = detAvant.impotNet - detApres.impotNet;
   setText('recapEco', eco > 0 ? '− ' + fmt(eco) : fmt(eco));
+
+  // Phrase de conclusion (impôt restant à payer / remboursé / effacé)
+  const conclEl = document.getElementById('recapConclusion');
+  if (conclEl) {
+    const final = detApres.impotNet;
+    if (final > 0.5) {
+      conclEl.textContent = `Il restera ${fmt(final)} à payer.`;
+      conclEl.className = 'recap-conclusion recap-conclusion-due';
+    } else if (final < -0.5) {
+      conclEl.textContent = `L'État vous remboursera ${fmt(-final)}.`;
+      conclEl.className = 'recap-conclusion recap-conclusion-remb';
+    } else {
+      conclEl.textContent = `Impôt entièrement effacé.`;
+      conclEl.className = 'recap-conclusion recap-conclusion-zero';
+    }
+  }
 
   // Pré-affichage des dispositifs déjà saisis dans le Simulateur, par section
   renderExistingByLevier(inputAvant, detAvant);

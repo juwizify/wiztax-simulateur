@@ -1265,6 +1265,28 @@ header span {
 .preco-sidebar .recap-eco {
   margin-top: 2px;
 }
+.preco-sidebar .recap-conclusion {
+  margin: 8px 0 4px 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.86em;
+  line-height: 1.4;
+  text-align: center;
+}
+.preco-sidebar .recap-conclusion-due {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.preco-sidebar .recap-conclusion-zero {
+  background: #f8fafc;
+  color: #475569;
+  font-style: italic;
+}
+.preco-sidebar .recap-conclusion-remb {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 600;
+}
 .preco-sidebar .recap-eco .recap-label {
   color: #475569;
   font-weight: 500;
