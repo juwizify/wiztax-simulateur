@@ -152,11 +152,23 @@ function updateResults(d) {
   // Plafond PER live (sous le champ de saisie)
   set('per-cap-live',    fmt(d.perCap));
 
-  // Niches : affichage "X € / Y €"
+  // Niches : 2 poches avec mini-jauges
+  // P1 : 10 000 €, accessible à tous (niche10 + niche18)
+  // P2 :  8 000 €, RÉSERVÉE aux niche18 (Girardin × qp + SOFICA)
   const nichesEl = document.getElementById('res-niches');
   if (nichesEl) {
-    nichesEl.textContent = fmt(d.nichesUtilisees) + ' / ' + fmt(d.plafondNiches);
-    nichesEl.classList.toggle('warning', d.depassementNiches > 0);
+    const gauge = (used, cap) => {
+      const filled = cap > 0 ? Math.round(Math.min(used, cap) / cap * 10) : 0;
+      return '█'.repeat(filled) + '░'.repeat(10 - filled);
+    };
+    const p1 = d.poche1Utilisee || 0;
+    const p2 = d.poche2Utilisee || 0;
+    const perdues = d.nichesPerdues || 0;
+    nichesEl.innerHTML =
+      `P1 ${gauge(p1, 10000)} ${fmt(p1)}/10 000 €  ·  ` +
+      `P2 ${gauge(p2, 8000)} ${fmt(p2)}/8 000 €` +
+      (perdues > 0 ? `<br><span class="warning">⚠ ${fmt(perdues)} € perdus (au-delà des poches)</span>` : '');
+    nichesEl.classList.toggle('warning', perdues > 0);
   }
 
   const impotNetEl = document.getElementById('res-impot-net');
@@ -252,9 +264,11 @@ function updateCalcDetaille(d) {
     ['cd-csynd',   'Cotisations syndicales 7AC (66 %) — HORS NICHE', d.credSyndic,    ''],
     ['cd-tcrd',    '▶ TOTAL CRÉDITS',                             d.totalCredits + (d.credSyndic||0), 'total'],
     // Étape 10
-    ['cd-nutil',   'Niches utilisées (pondérées)',                d.nichesUtilisees,   'GirPD ×44%, GirAG ×34%'],
-    ['cd-nplaf',   'Plafond applicable',                          d.plafondNiches,     d.depassementNiches > 0 ? '⚠ DÉPASSÉ' : 'OK'],
-    ['cd-ndep',    'Dépassement du plafond',                     d.depassementNiches, ''],
+    ['cd-nutil',   'Niches demandées (panier total)',             d.nichesUtilisees,   'GirPD ×44%, GirAG ×34%, SOFICA ×1'],
+    ['cd-npoche1', '↳ Retenu poche 1 (10 000 € — tous)',          d.poche1Utilisee,    ''],
+    ['cd-npoche2', '↳ Retenu poche 2 (+8 000 € — Girardin/SOFICA)', d.poche2Utilisee,  ''],
+    ['cd-nplaf',   'Plafond global applicable',                   d.plafondNiches,     ''],
+    ['cd-ndep',    'Niches perdues (au-delà des poches)',         d.nichesPerdues,     d.nichesPerdues > 0 ? '⚠ avantage non récupérable' : ''],
     // Étape 11
     ['cd-apd',     'Impôt après décote',                         d.impotApresDecote,  ''],
     ['cd-irm2',    '+ IR mobilier (PFU sur div/intérêts/PV)',     d.irMobilier,        ''],
