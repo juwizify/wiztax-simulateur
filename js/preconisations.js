@@ -342,6 +342,84 @@ function checkPlafond(p, inputAvant) {
   return { ok: true, msg: '' };
 }
 
+// ─────────────────────────────────────────────
+// WARNINGS — détection des situations pathologiques pour l'UI
+// ─────────────────────────────────────────────
+// Entrées : le résultat du calculator AVEC les préconisations appliquées
+// (det = retour de calculerIR). Sortie : liste de warnings typés à afficher
+// dans l'UI (chips inline, bandeaux, messages d'aide).
+//
+// Types couverts :
+//   - 'cap-indiv'        : un dispositif L2 dépasse son plafond fiscal
+//     individuel (SOFICA, FCPI, Malraux, etc.). Surplus tronqué dans le calcul.
+//   - 'panier-niches'    : la somme des RI niche10 + niche18 dépasse ce que
+//     les 2 poches peuvent absorber → surplus PERDU (panier).
+//   - 'surdimensionnement': la somme des réductions L2 demandées dépasse
+//     l'impôt à effacer → les RI au-delà sont PERDUES (≠ crédits L3).
+//
+// Pour chaque warning :
+//   { type, level: 'info'|'warning'|'error', leverId|null, message, amount }
+function computeWarnings(det) {
+  const warnings = [];
+  const fmt = n => Math.round(n).toLocaleString('fr-FR');
+
+  // 1. Caps individuels par dispositif (capExcedents exposé par calculator.js)
+  if (det.capExcedents) {
+    const labels = {
+      sofica:       'SOFICA',
+      fcpi:         'FCPI classique',
+      fcpiJei:      'FCPI JEI',
+      fipCorse:     'FIP Corse',
+      irPme:        'IR-PME',
+      gfi:          'GFI',
+      malraux:      'Loi Malraux',
+      locAvantages: "Loc'Avantages",
+    };
+    for (const [disp, surplus] of Object.entries(det.capExcedents)) {
+      if (surplus > 0.5) {
+        warnings.push({
+          type: 'cap-indiv',
+          level: 'warning',
+          leverId: disp,
+          message: `${fmt(surplus)} € au-delà du plafond fiscal ${labels[disp] || disp}, ignorés dans le calcul.`,
+          amount: surplus,
+        });
+      }
+    }
+  }
+
+  // 2. Panier niches saturé — RI niche10/niche18 perdues
+  if ((det.nichesPerdues || 0) > 0.5) {
+    warnings.push({
+      type: 'panier-niches',
+      level: 'warning',
+      leverId: null,
+      message: `${fmt(det.nichesPerdues)} € de réductions perdues (panier niches 10k+8k saturé).`,
+      amount: det.nichesPerdues,
+    });
+  }
+
+  // 3. Surdimensionnement — RI L2 demandées dépassent l'impôt à effacer.
+  //    Heuristique : si totalReductions (somme RI saisies/calculées avant
+  //    plafonnement niches) > impôt avant L2, la fraction excédentaire est
+  //    perdue par effacement à zéro (≠ crédits qui sont remboursés).
+  const impotAvantReductions = (det.impotApresDecote || 0) + (det.irMobilier || 0);
+  const totalRiL2 = (det.totalReductions || 0)
+    + (det.fraisScol || 0) + (det.redEhpad || 0) + (det.redMalraux || 0);
+  if (impotAvantReductions > 0 && totalRiL2 > impotAvantReductions) {
+    const excedent = totalRiL2 - impotAvantReductions;
+    warnings.push({
+      type: 'surdimensionnement',
+      level: 'info',
+      leverId: null,
+      message: `${fmt(excedent)} € de réductions au-delà de l'impôt restant — ces € sont perdus (les réductions ne sont pas remboursables, contrairement aux crédits).`,
+      amount: excedent,
+    });
+  }
+
+  return warnings;
+}
+
 // Expose API globale
 if (typeof window !== 'undefined') {
   window.PRECONISATIONS = {
@@ -349,6 +427,7 @@ if (typeof window !== 'undefined') {
     appliquerPreconisations,
     avantageEstime,
     checkPlafond,
+    computeWarnings,
     addLever,
     removeLever,
     updateLever,
@@ -361,5 +440,11 @@ if (typeof window !== 'undefined') {
 
 // Export Node pour tests
 if (typeof module !== 'undefined') {
-  module.exports = { LEVIERS_CATALOGUE, appliquerPreconisations, avantageEstime, checkPlafond };
+  module.exports = {
+    LEVIERS_CATALOGUE,
+    appliquerPreconisations,
+    avantageEstime,
+    checkPlafond,
+    computeWarnings,
+  };
 }
