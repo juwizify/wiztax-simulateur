@@ -751,60 +751,81 @@ function refreshPreconisationsCalculs() {
   document.getElementById('cmp-tmi-pro').textContent = fmtPct(detApres.tmi);
 }
 
-// Affiche en haut de chaque section les dispositifs déjà saisis dans le
-// Simulateur (input > 0), avec leur effet IR estimé. Format compact en vert.
-// L'utilisateur voit que ces leviers sont DÉJÀ pris en compte sans avoir
-// besoin de les ré-ajouter en préconisation.
+// Affiche dans chaque section les dispositifs déjà saisis dans le Simulateur
+// (input > 0), comme des lignes read-only au-dessus du bloc préconisations.
+// Cette fonction reconstruit les tbody "existing" à chaque refresh — pas
+// d'interaction utilisateur sur ces lignes donc pas de souci de focus.
 function renderExistingByLevier(inputAvant, detAvant) {
   if (typeof window.PRECONISATIONS === 'undefined') return;
-  const P = window.PRECONISATIONS;
-  const boxes = {
+  const tbodies = {
     1: document.getElementById('precoExistingL1'),
     2: document.getElementById('precoExistingL2'),
     3: document.getElementById('precoExistingL3'),
   };
-  if (!boxes[1] || !boxes[2] || !boxes[3]) return;
-  Object.values(boxes).forEach(b => { b.innerHTML = ''; });
+  if (!tbodies[1] || !tbodies[2] || !tbodies[3]) return;
+  Object.values(tbodies).forEach(t => { t.innerHTML = ''; });
 
-  // Liste des dispositifs avec leur valeur d'input + estimation effet IR
-  // L'effet d'un dispositif déjà saisi = (det.redXXX OU det.creditXXX OU ...)
+  // Description des dispositifs : libellé, levier, clé d'input, effet IR
+  // (cherché dans det après application des charges/réductions/crédits) et
+  // paramètre additionnel (palier Loc'Avantages, zone Malraux, etc.).
   const items = [
-    { id: 'per',        levier: 1, inputKey: 'per',                  label: 'PER',                effet: detAvant.per * detAvant.tmi },
-    { id: 'jeanbrun',   levier: 1, inputKey: 'jeanbrunAmort',        label: 'Amortissement Jeanbrun', effet: null },
-    { id: 'dons7UD',    levier: 2, inputKey: 'dons7UD',              label: 'Dons Coluche 75 %',  effet: null },
-    { id: 'dons7UF',    levier: 2, inputKey: 'dons',                 label: 'Dons 66 %',          effet: null },
-    { id: 'ehpad',      levier: 2, inputKey: 'ehpadFrais',           label: 'EHPAD',              effet: detAvant.redEhpad },
-    { id: 'malraux',    levier: 2, inputKey: 'malrauxTravaux',       label: 'Malraux',            effet: detAvant.redMalraux, fallback: 'malraux' },
-    { id: 'fcpiJei',    levier: 2, inputKey: 'fcpiJei',              label: 'FCPI JEI',           effet: detAvant.redFcpiJei },
-    { id: 'fipCorse',   levier: 2, inputKey: 'fipCorse',             label: 'FIP Corse',          effet: detAvant.redFipCorse },
-    { id: 'irPme',      levier: 2, inputKey: 'irPme',                label: 'IR-PME',             effet: detAvant.redIrPme },
-    { id: 'gfi',        levier: 2, inputKey: 'gfi',                  label: 'GFI',                effet: detAvant.redGfi },
-    { id: 'locAvantages',levier: 2, inputKey: 'locAvantagesDepenses',label: "Loc'Avantages",      effet: detAvant.redLocAvantages, fallback: 'locAvantages' },
-    { id: 'sofica',     levier: 2, inputKey: 'sofica',               label: 'SOFICA',             effet: detAvant.redSofica },
-    { id: 'girardinPD', levier: 2, inputKey: 'girardinPD',           label: 'Girardin PD',        effet: detAvant.redGirardinPD },
-    { id: 'girardinAG', levier: 2, inputKey: 'girardinAG',           label: 'Girardin AG',        effet: detAvant.redGirardinAG },
-    { id: 'emploiDom',  levier: 3, inputKey: 'emploiDomicile',       label: 'Emploi à domicile',  effet: detAvant.credDomicile },
-    { id: 'gardeEnf',   levier: 3, inputKey: 'gardeEnfants',         label: 'Garde enfants',      effet: detAvant.credGarde },
-    { id: 'syndic',     levier: 3, inputKey: 'cotSyndicales',        label: 'Cotisations syndicales', effet: detAvant.credSyndic },
+    { id: 'per',         levier: 1, inputKey: 'per',                  label: 'PER',                    effet: () => (detAvant.per || 0) * (detAvant.tmi || 0), param: null },
+    { id: 'jeanbrun',    levier: 1, inputKey: 'jeanbrunAmort',        label: 'Amortissement Jeanbrun', effet: () => null, param: () => inputAvant.jeanbrunCategorie },
+    { id: 'dons7UD',     levier: 2, inputKey: 'dons7UD',              label: 'Dons Coluche 75 %',     effet: () => null, param: null },
+    { id: 'dons7UF',     levier: 2, inputKey: 'dons',                 label: 'Dons 66 %',             effet: () => null, param: null },
+    { id: 'ehpad',       levier: 2, inputKey: 'ehpadFrais',           label: 'EHPAD',                 effet: () => detAvant.redEhpad, param: null },
+    { id: 'malraux',     levier: 2, inputKey: 'malrauxTravaux',       label: 'Malraux',               effet: () => detAvant.redMalraux, param: () => inputAvant.malrauxZone, fallback: 'malraux' },
+    { id: 'fcpiJei',     levier: 2, inputKey: 'fcpiJei',              label: 'FCPI JEI',              effet: () => detAvant.redFcpiJei, param: null },
+    { id: 'fipCorse',    levier: 2, inputKey: 'fipCorse',             label: 'FIP Corse',             effet: () => detAvant.redFipCorse, param: null },
+    { id: 'irPme',       levier: 2, inputKey: 'irPme',                label: 'IR-PME',                effet: () => detAvant.redIrPme, param: null },
+    { id: 'gfi',         levier: 2, inputKey: 'gfi',                  label: 'GFI',                   effet: () => detAvant.redGfi, param: null },
+    { id: 'locAvantages',levier: 2, inputKey: 'locAvantagesDepenses', label: "Loc'Avantages",         effet: () => detAvant.redLocAvantages, param: () => inputAvant.locAvantagesPalier, fallback: 'locAvantages' },
+    { id: 'sofica',      levier: 2, inputKey: 'sofica',               label: 'SOFICA',                effet: () => detAvant.redSofica, param: null },
+    { id: 'girardinPD',  levier: 2, inputKey: 'girardinPD',           label: 'Girardin PD',           effet: () => detAvant.redGirardinPD, param: null },
+    { id: 'girardinAG',  levier: 2, inputKey: 'girardinAG',           label: 'Girardin AG',           effet: () => detAvant.redGirardinAG, param: null },
+    { id: 'emploiDom',   levier: 3, inputKey: 'emploiDomicile',       label: 'Emploi à domicile',     effet: () => detAvant.credDomicile, param: null },
+    { id: 'gardeEnf',    levier: 3, inputKey: 'gardeEnfants',         label: 'Garde enfants',         effet: () => detAvant.credGarde, param: null },
+    { id: 'syndic',      levier: 3, inputKey: 'cotSyndicales',        label: 'Cotisations syndicales',effet: () => detAvant.credSyndic, param: null },
   ];
 
   items.forEach(it => {
     const val = (inputAvant[it.inputKey] || 0)
       || (it.fallback ? (inputAvant[it.fallback] || 0) : 0);
     if (val <= 0) return;
-    const chip = document.createElement('span');
-    chip.className = 'preco-existing-chip';
-    const eff = it.effet;
-    const effTxt = (eff !== null && eff !== undefined && eff > 0)
-      ? ` → −${fmt(eff)} €`
-      : '';
-    chip.textContent = `✓ ${it.label} : ${fmt(val)} €${effTxt}`;
-    boxes[it.levier].appendChild(chip);
+    const tr = document.createElement('tr');
+    tr.className = 'preco-row-existing';
+
+    const tdLab = document.createElement('td');
+    tdLab.innerHTML = `<span class="preco-existing-marker">✓ déjà saisi</span> ${it.label}`;
+    tr.appendChild(tdLab);
+
+    const tdMt = document.createElement('td');
+    tdMt.textContent = fmt(val);
+    tr.appendChild(tdMt);
+
+    const tdParam = document.createElement('td');
+    const paramVal = it.param ? it.param() : null;
+    tdParam.textContent = paramVal || '—';
+    tr.appendChild(tdParam);
+
+    const tdEff = document.createElement('td');
+    const eff = it.effet ? it.effet() : null;
+    tdEff.textContent = (eff !== null && eff !== undefined && eff > 0) ? '− ' + fmt(eff) : '—';
+    tr.appendChild(tdEff);
+
+    const tdPl = document.createElement('td');
+    tdPl.innerHTML = '<span class="preco-plafond-existing">déjà pris en compte</span>';
+    tr.appendChild(tdPl);
+
+    const tdEmpty = document.createElement('td');
+    tr.appendChild(tdEmpty);
+
+    tbodies[it.levier].appendChild(tr);
   });
 
-  // Si une section est vide, on cache son conteneur pour ne pas occuper d'espace
-  Object.entries(boxes).forEach(([_, box]) => {
-    box.style.display = box.children.length ? '' : 'none';
+  // Cacher les tbody vides pour ne pas générer de bordures inutiles
+  Object.values(tbodies).forEach(tb => {
+    tb.style.display = tb.children.length ? '' : 'none';
   });
 }
 

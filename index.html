@@ -1109,9 +1109,9 @@
       <h3>Levier 1 — Réduire la base imposable</h3>
       <p class="preco-section-desc">Déduit du revenu imposable. Économie ≈ versement × TMI.</p>
     </div>
-    <div class="preco-existing" id="precoExistingL1"></div>
     <table class="preco-table preco-table-section">
       <thead><tr><th>Dispositif</th><th>Montant</th><th>Paramètre</th><th>Économie</th><th>Plafond</th><th></th></tr></thead>
+      <tbody id="precoExistingL1" class="preco-tbody-existing"></tbody>
       <tbody id="precoRowsL1"></tbody>
     </table>
     <div class="preco-section-warnings" id="precoWarningsL1"></div>
@@ -1124,21 +1124,9 @@
       <h3>Levier 2 — Réductions d'impôt</h3>
       <p class="preco-section-desc">Perdues si IR = 0 (≠ crédits). 2 poches : 10 000 € commune + 8 000 € Girardin/SOFICA.</p>
     </div>
-    <div class="preco-niches-jauges preco-niches-jauges-compact">
-      <div class="preco-jauge-row">
-        <span class="preco-jauge-label">Poche 1 (10 k€)</span>
-        <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugePoche1Fill"></div></div>
-        <span class="preco-jauge-val" id="jaugePoche1Val">— / 10 000 €</span>
-      </div>
-      <div class="preco-jauge-row">
-        <span class="preco-jauge-label">Poche 2 (+8 k€)<small> Girardin/SOFICA</small></span>
-        <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugePoche2Fill"></div></div>
-        <span class="preco-jauge-val" id="jaugePoche2Val">— / 8 000 €</span>
-      </div>
-    </div>
-    <div class="preco-existing" id="precoExistingL2"></div>
     <table class="preco-table preco-table-section">
       <thead><tr><th>Dispositif</th><th>Montant</th><th>Paramètre</th><th>RI</th><th>Plafond</th><th></th></tr></thead>
+      <tbody id="precoExistingL2" class="preco-tbody-existing"></tbody>
       <tbody id="precoRowsL2"></tbody>
     </table>
     <div class="preco-section-warnings" id="precoWarningsL2"></div>
@@ -1151,9 +1139,9 @@
       <h3>Levier 3 — Crédits d'impôt</h3>
       <p class="preco-section-desc">Remboursés même si IR = 0 — un crédit n'est jamais perdu.</p>
     </div>
-    <div class="preco-existing" id="precoExistingL3"></div>
     <table class="preco-table preco-table-section">
       <thead><tr><th>Dispositif</th><th>Montant</th><th>Paramètre</th><th>Crédit</th><th>Plafond</th><th></th></tr></thead>
+      <tbody id="precoExistingL3" class="preco-tbody-existing"></tbody>
       <tbody id="precoRowsL3"></tbody>
     </table>
     <div class="preco-section-warnings" id="precoWarningsL3"></div>
@@ -1224,6 +1212,16 @@
       <span class="recap-jauge-label">Dons (20 % RNI)</span>
       <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugeDonsFill"></div></div>
       <span class="recap-jauge-val" id="jaugeDonsVal">— / —</span>
+    </div>
+    <div class="recap-jauge">
+      <span class="recap-jauge-label">Niche poche 1 (10 k€)</span>
+      <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugePoche1Fill"></div></div>
+      <span class="recap-jauge-val" id="jaugePoche1Val">— / 10 000 €</span>
+    </div>
+    <div class="recap-jauge">
+      <span class="recap-jauge-label">Niche poche 2 (+8 k€ Gir/SOF)</span>
+      <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugePoche2Fill"></div></div>
+      <span class="recap-jauge-val" id="jaugePoche2Val">— / 8 000 €</span>
     </div>
   </aside>
 

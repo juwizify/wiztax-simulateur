@@ -1094,72 +1094,29 @@ header span {
   margin-top: 6px;
 }
 
-/* ─── Jauges 2 poches dans la section L2 — version compacte sobre ─── */
-.preco-niches-jauges-compact {
-  margin: 8px 0 10px;
-  padding: 8px 10px;
+/* ─── Lignes "déjà saisies" en tête des tableaux préco ─── */
+.preco-tbody-existing tr {
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-}
-.preco-niches-jauges-compact .preco-jauge-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1 1 240px;
-  padding: 0;
-}
-.preco-niches-jauges-compact .preco-jauge-label {
-  flex: 0 0 auto;
-  font-size: 0.78em;
   color: #475569;
-  white-space: nowrap;
-  font-weight: 500;
+  font-size: 0.88em;
 }
-.preco-niches-jauges-compact .preco-jauge-label small {
-  color: #94a3b8;
-  font-weight: 400;
-  margin-left: 2px;
+.preco-tbody-existing td {
+  padding: 6px 10px;
+  border-bottom: 1px dashed #e2e8f0;
 }
-.preco-niches-jauges-compact .preco-jauge-bar {
-  flex: 1 1 60px;
-  height: 6px;
-  background: #e2e8f0;
-  border-radius: 3px;
-  overflow: hidden;
-}
-.preco-niches-jauges-compact .preco-jauge-fill {
-  height: 100%;
-  background: var(--accent);
-  transition: width 0.2s ease, background 0.2s ease;
-}
-.preco-niches-jauges-compact .preco-jauge-val {
-  flex: 0 0 auto;
-  font-size: 0.78em;
-  font-variant-numeric: tabular-nums;
-  color: #475569;
-  white-space: nowrap;
-}
-
-/* ─── Pré-affichage des dispositifs déjà saisis ─── */
-.preco-existing {
-  margin: 6px 0 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.preco-existing-chip {
+.preco-existing-marker {
   display: inline-block;
-  padding: 2px 8px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
+  font-size: 0.72em;
+  color: #64748b;
+  font-weight: 500;
+  margin-right: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.preco-plafond-existing {
   font-size: 0.78em;
-  color: #475569;
-  font-variant-numeric: tabular-nums;
+  color: #94a3b8;
+  font-style: italic;
 }
 
 /* ─── Warnings inline ─── */
