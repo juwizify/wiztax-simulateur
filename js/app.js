@@ -891,6 +891,27 @@ function refreshPreconisationsCalculs() {
   // Pré-affichage des dispositifs déjà saisis dans le Simulateur, par section
   renderExistingByLevier(inputAvant, detAvant);
 
+  // Indicateur "Impôt à effacer" en haut à droite de la section Levier 2.
+  //   Y = impôt à effacer initialement (après L1, avant L2)
+  //   X = ce qu'il reste à effacer (après L1 + L2)
+  // La jauge montre la PORTION DÉJÀ EFFACÉE (fill = (Y−X)/Y).
+  const impotAEffacerInit = Math.max(0,
+    (detL1.impotApresDecote || 0) + (detL1.irMobilier || 0)
+  );
+  const impotEffaceParL2 = Math.min(impotAEffacerInit, detL12.reductionsAppliquees || 0);
+  const impotRestantApresL2 = Math.max(0, impotAEffacerInit - impotEffaceParL2);
+  const indicValEl = document.getElementById('indicL2Val');
+  const indicFillEl = document.getElementById('indicL2Fill');
+  if (indicValEl) {
+    indicValEl.textContent = fmt(impotRestantApresL2) + ' / ' + fmt(impotAEffacerInit);
+  }
+  if (indicFillEl) {
+    const pct = impotAEffacerInit > 0
+      ? Math.min(100, (impotEffaceParL2 / impotAEffacerInit) * 100)
+      : 0;
+    indicFillEl.style.width = pct + '%';
+  }
+
   // Jauges 2 poches niches dans la section L2
   setJauge('Poche1', detApres.poche1Utilisee || 0, 10000);
   setJauge('Poche2', detApres.poche2Utilisee || 0, 8000);

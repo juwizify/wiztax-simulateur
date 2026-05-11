@@ -1126,6 +1126,49 @@ header span {
   color: #64748b;
 }
 
+/* Variante header Levier 2 : grid 2 colonnes pour caler l'indicateur à droite */
+.preco-section-header-l2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+/* Indicateur "Impôt à effacer" en haut à droite — même rythme que les
+   jauges de la sidebar (label fin, barre 4px, valeur tabular). */
+.preco-section-indic {
+  flex: 0 0 auto;
+  min-width: 160px;
+  text-align: right;
+}
+.preco-section-indic-label {
+  display: block;
+  font-size: 0.72em;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #64748b;
+  margin-bottom: 3px;
+}
+.preco-section-indic-bar {
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.preco-section-indic-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.2s ease;
+}
+.preco-section-indic-val {
+  display: block;
+  font-size: 0.78em;
+  font-variant-numeric: tabular-nums;
+  color: #475569;
+  margin-top: 2px;
+}
+
 .preco-table-section {
   margin-top: 6px;
 }
