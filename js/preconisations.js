@@ -58,6 +58,12 @@ const LEVIERS_CATALOGUE = [
     info: 'Saisir le VERSEMENT VOLONTAIRE de l\'année sur le PER. Cash sortant pour le client (épargne bloquée jusqu\'à la retraite). Déduction du revenu imposable → économie ≈ versement × TMI. Plafond auto = 10 % des revenus pro (cap 37 680 €), par déclarant.',
   },
   {
+    id: 'deficitFoncier', label: 'Déficit foncier (travaux)',
+    levier: 1, cat: 'foncier', mode: 'deficit-foncier', inputKey: 'foncierReel',
+    nature: 'depenses-annuelles', budget: 'cash',
+    info: 'Saisir le MONTANT DES TRAVAUX FONCIERS de l\'année qui créent un déficit (travaux > loyers nets, ou en l\'absence de revenu foncier). Le déficit foncier s\'impute sur le REVENU GLOBAL, plafonné à 10 700 €/an (art. 156-I-3° CGI) — le surplus est reportable 10 ans sur les revenus fonciers ultérieurs (non simulé).\n\nÉconomie ≈ montant × (TMI + PS foncier 18,6 %).\n\nCash sortant pour le client (travaux à financer).',
+  },
+  {
     id: 'jeanbrun', label: 'Dispositif Jeanbrun (LF 2026)',
     levier: 1, cat: 'foncier', mode: 'jeanbrun', inputKey: 'jeanbrunAmort',
     paramKey: 'jeanbrunCategorie',
@@ -293,6 +299,11 @@ function appliquerPreconisations(input, precos) {
       // p.paramValue est un nombre décimal (1.10 = 110 %).
       const rendement = parseFloat(p.paramValue) || lev.rendementDefaut;
       out[lev.inputKey] = (out[lev.inputKey] || 0) + p.montant * rendement;
+    }
+    else if (lev.mode === 'deficit-foncier') {
+      // Les travaux saisis VIENNENT EN DÉFICIT (= foncier négatif). Le
+      // moteur cap déjà l'imputation sur le revenu global à -10 700 €/an.
+      out.foncierReel = (out.foncierReel || 0) - p.montant;
     }
     else if (lev.mode === 'jeanbrun') {
       // Mode legacy spécifique — sera unifié vers versement-direct + paramKey

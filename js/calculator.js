@@ -516,6 +516,8 @@ function calculerIR(input) {
   // Champs exposés (UI / debug / rétro-compat)
   det.poche1Utilisee   = poche1_10 + poche1_18;
   det.poche2Utilisee   = poche2_18;
+  det.ri10Panier       = ri10Panier;     // demandé niche10 (Pinel/FCPI/...)
+  det.ri18Panier       = ri18Panier;     // demandé niche18 (Girardin × qp + SOFICA)
   det.nichesUtilisees  = ri10Panier + ri18Panier;                 // total demandé
   det.nichesRetenues   = det.poche1Utilisee + det.poche2Utilisee;
   det.nichesPerdues    = surplus_10 + perdu_18;

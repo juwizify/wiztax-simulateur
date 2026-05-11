@@ -114,6 +114,10 @@ const TESTS = [
   // Si un engagement Pinel existant est saisi par l'utilisateur, c'est via
   // l'onglet Simulateur uniquement, pas via les préconisations.
 
+  // Déficit foncier : 5000 € de travaux → input.foncierReel = -5000
+  // (cap imputation RG à -10 700). Delta IR ≈ 5000 × TMI = 1500.
+  { id: 'deficitFoncier', montant: 5000, key: 'foncierReel', expected: -5000, delta: 5000 * baseR.tmi, deltaTol: 5 },
+
   // Jeanbrun : amortissement social 8000 (sous plafond 10k)
   // Pas un avantage IR direct → diminue revenus fonciers
   { id: 'jeanbrun', montant: 8000, paramValue: 'social', key: 'jeanbrunAmort', expected: 8000, delta: null },

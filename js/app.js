@@ -497,6 +497,11 @@ function computeMaxForLevier(lev, inputAvant, paramValue, detAvant, isCouple) {
     const cap = (detAvant.revenuNetImposable || 0) * 0.20;
     const dejaUtilise = (inputAvant.dons7UD || 0) + (inputAvant.dons || 0);
     maxIndiv = POS(cap - dejaUtilise);
+  } else if (lev.id === 'deficitFoncier') {
+    // Cap = 10 700 € d'imputation RG − déficit foncier déjà existant
+    // (valeur positive du déficit = −min(0, foncierReel)).
+    const deficitExistant = -Math.min(0, inputAvant.foncierReel || 0);
+    maxIndiv = POS(10000 + 700 - deficitExistant);
   } else if (lev.mode === 'jeanbrun') {
     const opt = lev.params[0].options.find(o => o.value === paramValue);
     const cap = opt ? opt.plafond : 8000;
@@ -516,21 +521,22 @@ function computeMaxForLevier(lev, inputAvant, paramValue, detAvant, isCouple) {
   }
 
   // ─── 2. Place restante dans le panier niches ─────────────────────────
-  // Pour convertir "panier disponible (€)" en "saisie max (€)", il faut
-  // diviser par le RATIO d'entrée dans le panier propre au dispositif :
-  //   - mode 'taux'         : ratio = lev.taux  (FCPI, FIP, IR-PME, GFI)
-  //   - mode 'taux-variable': ratio = opt.taux  (SOFICA)
-  //   - mode 'taux-libre'   : ratio = rendement × quote-part  (Girardin)
-  //   - mode 'versement-direct' : ratio = 1     (dons, EHPAD, emploi dom…)
-  // Sinon on surévalue le max et on génère du surdim sur Girardin.
+  // Calculer la VRAIE marge pour le dispositif :
+  //   - niche10 cap = 10 000 € − (niche10 déjà demandé) → les niche18 déjà
+  //     présents dans la poche 1 peuvent basculer en poche 2 pour libérer
+  //     la place. La contrainte est donc le total niche10, pas le total
+  //     panier 1.
+  //   - niche18 cap = 18 000 € − (niche10 + niche18 demandés) → bornée par
+  //     la somme du panier total (poche 1 + poche 2 = 18 000).
+  // Ratio saisie→panier (selon mode) appliqué pour convertir en max saisi.
   let maxNiches = Infinity;
-  const poche1Reste = POS(10000 - (detAvant.poche1Utilisee || 0));
-  const poche2Reste = POS(8000  - (detAvant.poche2Utilisee || 0));
   if (lev.cat === 'niche10' || lev.cat === 'niche18') {
     const ratio = panierRatioParInput(lev, paramValue);
-    const panierDispo = lev.cat === 'niche10'
-      ? poche1Reste                  // niche10 reste cantonné à la poche 1
-      : (poche1Reste + poche2Reste); // niche18 peut déborder en poche 2
+    const ri10 = detAvant.ri10Panier || 0;
+    const ri18 = detAvant.ri18Panier || 0;
+    const panierDispo = (lev.cat === 'niche10')
+      ? POS(10000 - ri10)            // marge propre niche10
+      : POS(18000 - ri10 - ri18);    // marge totale niche18 (panier 1+2)
     maxNiches = ratio > 0 ? panierDispo / ratio : panierDispo;
   }
   // cat 'hors' / 'foncier' : pas de cap niches → reste Infinity.
@@ -953,9 +959,14 @@ function refreshPreconisationsCalculs() {
     indicFillEl.style.width = pct + '%';
   }
 
-  // Jauges 2 poches niches dans la section L2
-  setJauge('Poche1', detApres.poche1Utilisee || 0, 10000);
-  setJauge('Poche2', detApres.poche2Utilisee || 0, 8000);
+  // Jauges des contraintes panier niches (sémantique fiscale réelle) :
+  //   "Niches communes (cap 10 k€)"  = somme RI cat. niche10 demandées
+  //   "Total panier (cap 18 k€)"      = niche10 + niche18 demandés
+  // Plus parlant que "poche 1 / poche 2" qui mélangeait niche10 et niche18
+  // dans la poche 1 et empêchait de voir qu'on pouvait encore ajouter du
+  // niche10 (les niche18 basculent automatiquement en poche 2).
+  setJauge('Poche1', detApres.ri10Panier || 0, 10000);
+  setJauge('Poche2', (detApres.ri10Panier || 0) + (detApres.ri18Panier || 0), 18000);
 
   // Update des cellules computed dans chaque ligne (toutes sections confondues).
   // Pour chaque préconisation, on calcule un "delta isolé" = effet de cette préco
@@ -1065,6 +1076,12 @@ function renderExistingByLevier(inputAvant, detAvant) {
   const items = [
     { id: 'per',         levier: 1, inputKey: 'per',                  label: 'PER',                    effet: () => (detAvant.per || 0) * (detAvant.tmi || 0), param: null },
     { id: 'jeanbrun',    levier: 1, inputKey: 'jeanbrunAmort',        label: 'Amortissement Jeanbrun', effet: () => null, param: () => inputAvant.jeanbrunCategorie },
+    // Déficit foncier : input.foncierReel < 0 (montant affiché en valeur absolue)
+    { id: 'deficitFoncier', levier: 1, inputKey: '__deficitFoncierVirtuel',
+      label: 'Déficit foncier',
+      // On force val > 0 si foncier négatif
+      effet: () => null, param: null,
+      isDeficit: true },
     { id: 'dons7UD',     levier: 2, inputKey: 'dons7UD',              label: 'Dons Coluche 75 %',     effet: () => {
       const v = inputAvant.dons7UD || 0;
       return Math.min(v, 2000) * 0.75 + Math.max(0, v - 2000) * 0.66;
@@ -1086,8 +1103,16 @@ function renderExistingByLevier(inputAvant, detAvant) {
   ];
 
   items.forEach(it => {
-    const val = (inputAvant[it.inputKey] || 0)
-      || (it.fallback ? (inputAvant[it.fallback] || 0) : 0);
+    // Cas particulier déficit foncier : il vit comme un foncierReel < 0.
+    // On l'affiche en valeur positive si présent.
+    let val;
+    if (it.isDeficit) {
+      const fr = inputAvant.foncierReel || 0;
+      val = fr < 0 ? -fr : 0;
+    } else {
+      val = (inputAvant[it.inputKey] || 0)
+        || (it.fallback ? (inputAvant[it.fallback] || 0) : 0);
+    }
     if (val <= 0) return;
     const tr = document.createElement('tr');
     tr.className = 'preco-row-existing';
