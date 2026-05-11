@@ -147,28 +147,24 @@ function updateResults(d) {
   set('res-ir-mob',      fmt(d.irMobilier));
   set('res-ps',          fmt(d.psRole));
   set('res-cehr',        fmt(d.cehr));
-  set('res-reductions',  fmt(d.totalReductions));
-  set('res-credits',     fmt(d.totalCredits));
+  // Totaux RETENUS (effectivement déduits de l'impôt), pas les bruts.
+  set('res-reductions',  fmt(d.reductionsAppliquees));
+  set('res-credits',     fmt(d.creditsAppliques));
   // Plafond PER live (sous le champ de saisie)
   set('per-cap-live',    fmt(d.perCap));
 
-  // Niches : 2 poches avec mini-jauges
-  // P1 : 10 000 €, accessible à tous (niche10 + niche18)
-  // P2 :  8 000 €, RÉSERVÉE aux niche18 (Girardin × qp + SOFICA)
-  const nichesEl = document.getElementById('res-niches');
-  if (nichesEl) {
-    const gauge = (used, cap) => {
-      const filled = cap > 0 ? Math.round(Math.min(used, cap) / cap * 10) : 0;
-      return '█'.repeat(filled) + '░'.repeat(10 - filled);
-    };
-    const p1 = d.poche1Utilisee || 0;
-    const p2 = d.poche2Utilisee || 0;
-    const perdues = d.nichesPerdues || 0;
-    nichesEl.innerHTML =
-      `P1 ${gauge(p1, 10000)} ${fmt(p1)}/10 000 €  ·  ` +
-      `P2 ${gauge(p2, 8000)} ${fmt(p2)}/8 000 €` +
-      (perdues > 0 ? `<br><span class="warning">⚠ ${fmt(perdues)} € perdus (au-delà des poches)</span>` : '');
-    nichesEl.classList.toggle('warning', perdues > 0);
+  // Niches : 2 lignes claires (poche commune + supplément majorée)
+  set('res-poche1', fmt(d.poche1Utilisee || 0) + ' / 10 000 €');
+  set('res-poche2', fmt(d.poche2Utilisee || 0) + ' / 8 000 €');
+  // Ligne "niches perdues" affichée seulement si > 0
+  const perduesRow = document.getElementById('res-niches-perdues-row');
+  if (perduesRow) {
+    if ((d.nichesPerdues || 0) > 0) {
+      perduesRow.style.display = '';
+      set('res-niches-perdues', '− ' + fmt(d.nichesPerdues) + ' €');
+    } else {
+      perduesRow.style.display = 'none';
+    }
   }
 
   const impotNetEl = document.getElementById('res-impot-net');
