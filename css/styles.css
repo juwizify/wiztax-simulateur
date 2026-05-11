@@ -1197,6 +1197,27 @@ header span {
   font-style: italic;
 }
 
+/* ─── Pastille catégorie (Niche 10k / 18k / Hors / Foncier) ─── */
+.preco-cat-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #f1f5f9;
+  font-size: 0.66em;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  margin-left: 6px;
+  vertical-align: middle;
+  white-space: nowrap;
+  color: #64748b;
+}
+/* Différenciation discrète par couleur de texte uniquement, fond identique */
+.preco-cat-niche10 { color: #1e40af; }
+.preco-cat-niche18 { color: #92400e; }
+.preco-cat-hors    { color: #475569; }
+.preco-cat-foncier { color: #166534; }
+
 /* ─── Warnings inline ─── */
 .preco-section-warnings {
   margin: 12px 0 4px;

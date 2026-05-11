@@ -436,6 +436,21 @@ document.addEventListener('DOMContentLoaded', () => {
 // ─────────────────────────────────────────────
 // PRÉCONISATIONS — bridge UI/moteur
 // ─────────────────────────────────────────────
+// Petite pastille indiquant la catégorie d'un dispositif (Niche 10k /
+// Niche 18k / Hors niches / Foncier). Texte coloré subtilement, fond
+// uniforme gris clair — discret pour ne pas surcharger.
+function renderCatBadge(cat) {
+  const labels = {
+    niche10: 'Niche 10k',
+    niche18: 'Niche 18k',
+    hors:    'Hors niches',
+    foncier: 'Foncier',
+  };
+  const label = labels[cat];
+  if (!label) return '';
+  return ` <span class="preco-cat-badge preco-cat-${cat}">${label}</span>`;
+}
+
 // Quel pourcentage d'1 € saisi dans la ligne préco entre dans le panier
 // niches ? Dépend du mode du levier :
 //   - 'taux'         : lev.taux       (FCPI 30 %, IR-PME 25 %, etc.)
@@ -710,6 +725,10 @@ function renderPreconisations() {
       }
       tip.setAttribute('data-tip', tipText);
       tdLev.appendChild(tip);
+      // Pastille catégorie (Niche 10k / 18k / Hors / Foncier)
+      const badge = document.createElement('span');
+      badge.innerHTML = renderCatBadge(levSelected.cat);
+      tdLev.appendChild(badge.firstChild || document.createTextNode(''));
     }
     tr.appendChild(tdLev);
 
@@ -1062,6 +1081,7 @@ function refreshPreconisationsCalculs() {
 // d'interaction utilisateur sur ces lignes donc pas de souci de focus.
 function renderExistingByLevier(inputAvant, detAvant) {
   if (typeof window.PRECONISATIONS === 'undefined') return;
+  const P = window.PRECONISATIONS;
   const tbodies = {
     1: document.getElementById('precoExistingL1'),
     2: document.getElementById('precoExistingL2'),
@@ -1118,7 +1138,9 @@ function renderExistingByLevier(inputAvant, detAvant) {
     tr.className = 'preco-row-existing';
 
     const tdLab = document.createElement('td');
-    tdLab.innerHTML = `<span class="preco-existing-marker">✓ déjà saisi</span> ${it.label}`;
+    const catLev = P.LEVIERS_CATALOGUE.find(l => l.id === it.id);
+    const catBadge = catLev ? renderCatBadge(catLev.cat) : '';
+    tdLab.innerHTML = `<span class="preco-existing-marker">✓ déjà saisi</span> ${it.label}${catBadge}`;
     tr.appendChild(tdLab);
 
     const tdMt = document.createElement('td');
