@@ -1143,10 +1143,9 @@ header span {
 }
 .preco-section-indic-label {
   display: block;
-  font-size: 0.72em;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+  font-size: 0.78em;
   color: #64748b;
+  font-weight: 500;
   margin-bottom: 3px;
 }
 .preco-section-indic-bar {

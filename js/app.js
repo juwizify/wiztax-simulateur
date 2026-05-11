@@ -891,23 +891,23 @@ function refreshPreconisationsCalculs() {
   // Pré-affichage des dispositifs déjà saisis dans le Simulateur, par section
   renderExistingByLevier(inputAvant, detAvant);
 
-  // Indicateur "Impôt à effacer" en haut à droite de la section Levier 2.
-  //   Y = impôt à effacer initialement (après L1, avant L2)
-  //   X = ce qu'il reste à effacer (après L1 + L2)
-  // La jauge montre la PORTION DÉJÀ EFFACÉE (fill = (Y−X)/Y).
-  const impotAEffacerInit = Math.max(0,
+  // Indicateur "Impôt effacé" en haut à droite de la section Levier 2.
+  // Format identique aux autres jauges : numérateur = ce qui est déjà
+  // utilisé/effacé ; dénominateur = capacité totale.
+  //   total       = impôt à effacer initialement (après L1, avant L2)
+  //   effacéParL2 = ce que les RI L2 actives ont déduit (capé au total)
+  const totalAEffacer = Math.max(0,
     (detL1.impotApresDecote || 0) + (detL1.irMobilier || 0)
   );
-  const impotEffaceParL2 = Math.min(impotAEffacerInit, detL12.reductionsAppliquees || 0);
-  const impotRestantApresL2 = Math.max(0, impotAEffacerInit - impotEffaceParL2);
+  const effaceParL2 = Math.min(totalAEffacer, detL12.reductionsAppliquees || 0);
   const indicValEl = document.getElementById('indicL2Val');
   const indicFillEl = document.getElementById('indicL2Fill');
   if (indicValEl) {
-    indicValEl.textContent = fmt(impotRestantApresL2) + ' / ' + fmt(impotAEffacerInit);
+    indicValEl.textContent = fmt(effaceParL2) + ' / ' + fmt(totalAEffacer);
   }
   if (indicFillEl) {
-    const pct = impotAEffacerInit > 0
-      ? Math.min(100, (impotEffaceParL2 / impotAEffacerInit) * 100)
+    const pct = totalAEffacer > 0
+      ? Math.min(100, (effaceParL2 / totalAEffacer) * 100)
       : 0;
     indicFillEl.style.width = pct + '%';
   }
@@ -1024,8 +1024,11 @@ function renderExistingByLevier(inputAvant, detAvant) {
   const items = [
     { id: 'per',         levier: 1, inputKey: 'per',                  label: 'PER',                    effet: () => (detAvant.per || 0) * (detAvant.tmi || 0), param: null },
     { id: 'jeanbrun',    levier: 1, inputKey: 'jeanbrunAmort',        label: 'Amortissement Jeanbrun', effet: () => null, param: () => inputAvant.jeanbrunCategorie },
-    { id: 'dons7UD',     levier: 2, inputKey: 'dons7UD',              label: 'Dons Coluche 75 %',     effet: () => null, param: null },
-    { id: 'dons7UF',     levier: 2, inputKey: 'dons',                 label: 'Dons 66 %',             effet: () => null, param: null },
+    { id: 'dons7UD',     levier: 2, inputKey: 'dons7UD',              label: 'Dons Coluche 75 %',     effet: () => {
+      const v = inputAvant.dons7UD || 0;
+      return Math.min(v, 2000) * 0.75 + Math.max(0, v - 2000) * 0.66;
+    }, param: null },
+    { id: 'dons7UF',     levier: 2, inputKey: 'dons',                 label: 'Dons 66 %',             effet: () => (inputAvant.dons || 0) * 0.66, param: null },
     { id: 'ehpad',       levier: 2, inputKey: 'ehpadFrais',           label: 'EHPAD',                 effet: () => detAvant.redEhpad, param: null },
     { id: 'malraux',     levier: 2, inputKey: 'malrauxTravaux',       label: 'Malraux',               effet: () => detAvant.redMalraux, param: () => inputAvant.malrauxZone, fallback: 'malraux' },
     { id: 'fcpiJei',     levier: 2, inputKey: 'fcpiJei',              label: 'FCPI JEI',              effet: () => detAvant.redFcpiJei, param: null },
