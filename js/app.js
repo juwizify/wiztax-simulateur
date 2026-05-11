@@ -872,6 +872,20 @@ function refreshPreconisationsCalculs() {
   const eco = detAvant.impotNet - detApres.impotNet;
   setText('recapEco', eco > 0 ? '− ' + fmt(eco) : fmt(eco));
 
+  // Ligne "PS via avis IR" : s'affiche seulement si > 0. Permet de comprendre
+  // pourquoi le "Final" peut être moins négatif que la somme des crédits L3
+  // (les PS sur dividendes/intérêts/PV mob/foncier viennent en +).
+  const psRoleVal = detApres.psRole || 0;
+  const psRow = document.getElementById('recapPsRow');
+  if (psRow) {
+    if (psRoleVal > 0.5) {
+      psRow.style.display = '';
+      setText('recapPs', '+ ' + fmt(psRoleVal));
+    } else {
+      psRow.style.display = 'none';
+    }
+  }
+
   // Phrase de conclusion (impôt restant à payer / remboursé / effacé)
   const conclEl = document.getElementById('recapConclusion');
   if (conclEl) {
