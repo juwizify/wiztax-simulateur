@@ -408,44 +408,80 @@ function calculerIR(input) {
   det.credSyndic = det.cotSyndicalesBase * P.plafonds.cotSyndicalesTaux;
 
   // ============================================================
-  // ÉTAPE 10 : PLAFONNEMENT DES NICHES FISCALES
+  // ÉTAPE 10 : PLAFONNEMENT DES NICHES FISCALES — 2 POCHES
+  //
+  // Art. 200-0 A CGI :
+  //   • POCHE 1 (10 000 €)   — accessible à TOUS les dispositifs cat. niche10
+  //                            ET cat. niche18.
+  //   • POCHE 2 (+8 000 €)   — RÉSERVÉE aux dispositifs cat. niche18 (Girardin
+  //                            avec quote-part 44/34 % + SOFICA).
+  //
+  // Algo : on remplit d'abord la poche 1 (avec niche10 prioritaire par ordre
+  // d'apparition, puis le solde par niche18). Le surplus niche10 est PERDU.
+  // Le surplus niche18 peut s'écouler dans la poche 2 (max 8 000 €). Le
+  // surplus restant au-delà de la poche 2 est PERDU.
+  //
+  // Les valeurs manipulées ici sont les "valeurs panier" (= RI brute × quote-part
+  // pour les niche18, RI brute pour les niche10).
   // ============================================================
-  det.nichesUtilisees = det.redPinel
-    + det.redGirardinPD * P.niches.girardinPdQuotePart
-    + det.redGirardinAG * P.niches.girardinAgQuotePart
-    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
-    + det.redSofica + det.redAutres
-    + det.credDomicile + det.credGarde + det.credAutres;
 
-  const hasPlafondMajore = det.redGirardinPD > 0 || det.redGirardinAG > 0 || det.redSofica > 0;
-  det.plafondNiches = hasPlafondMajore ? P.niches.plafondMajore : P.niches.plafond;
-  det.depassementNiches = Math.max(0, det.nichesUtilisees - det.plafondNiches);
+  // RI panier par catégorie
+  const ri10Panier = det.redPinel
+    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme
+    + det.redLocAvantages + det.redAutres
+    + det.credDomicile + det.credGarde + det.credAutres;
+  const ri18Panier = det.redGirardinPD * P.niches.girardinPdQuotePart
+    + det.redGirardinAG * P.niches.girardinAgQuotePart
+    + det.redSofica;
+
+  // Algo 2 poches
+  const poche1_10  = Math.min(ri10Panier, P.niches.plafond);
+  const restePoche1 = P.niches.plafond - poche1_10;
+  const poche1_18  = Math.min(ri18Panier, restePoche1);
+  const surplus_10 = ri10Panier - poche1_10;
+  const surplus_18 = ri18Panier - poche1_18;
+  const poche2Cap  = P.niches.plafondMajore - P.niches.plafond;  // 8 000 €
+  const poche2_18  = Math.min(surplus_18, poche2Cap);
+  const perdu_18   = surplus_18 - poche2_18;
+
+  // Champs exposés (UI / debug / rétro-compat)
+  det.poche1Utilisee   = poche1_10 + poche1_18;
+  det.poche2Utilisee   = poche2_18;
+  det.nichesUtilisees  = ri10Panier + ri18Panier;                 // total demandé
+  det.nichesRetenues   = det.poche1Utilisee + det.poche2Utilisee;
+  det.nichesPerdues    = surplus_10 + perdu_18;
+  // Rétro-compat : "plafondNiches" reste le plafond global applicable (10 ou 18)
+  // utilisé par les libellés UI. depassementNiches reflète le total perdu.
+  det.plafondNiches    = ri18Panier > 0 ? P.niches.plafondMajore : P.niches.plafond;
+  det.depassementNiches = det.nichesPerdues;
+
+  // Facteurs proportionnels de rétention par catégorie.
+  // Si une catégorie est en surplus, on tronque proportionnellement tous ses
+  // dispositifs (règle classique du plafonnement proportionnel).
+  const facteur10 = ri10Panier > 0 ? poche1_10 / ri10Panier : 1;
+  const facteur18 = ri18Panier > 0 ? (poche1_18 + poche2_18) / ri18Panier : 1;
+  det.facteurNiche10 = facteur10;
+  det.facteurNiche18 = facteur18;
 
   // ============================================================
   // ÉTAPE 11 : IMPÔT NET FINAL (hors CEHR)
   // ============================================================
-  // Application des réductions avec plafonnement niches
-  const reductionsDansNiches = det.totalReductions - det.redDons;
-  let reductionsDansNichesEffectives;
-  if (det.depassementNiches > 0 && det.nichesUtilisees > 0) {
-    reductionsDansNichesEffectives = det.plafondNiches
-      * reductionsDansNiches / det.nichesUtilisees;
-  } else {
-    reductionsDansNichesEffectives = reductionsDansNiches;
-  }
+  // Application des réductions avec plafonnement niches par catégorie.
+  // Hors panier niches (toujours retenus) : dons, fraisScol, EHPAD, Malraux.
+  const redNiche10Retenue = (det.redPinel
+    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme
+    + det.redLocAvantages + det.redAutres) * facteur10;
+  const redNiche18Retenue = (det.redGirardinPD + det.redGirardinAG + det.redSofica) * facteur18;
+
   det.reductionsAppliquees = Math.min(
     det.impotApresDecote + det.irMobilier,
-    det.redDons + det.fraisScol + det.redEhpad + det.redMalraux + reductionsDansNichesEffectives
+    det.redDons + det.fraisScol + det.redEhpad + det.redMalraux
+    + redNiche10Retenue + redNiche18Retenue
   );
 
-  // Application des crédits avec plafonnement niches
-  let creditsEffectifs;
-  if (det.depassementNiches > 0 && det.nichesUtilisees > 0) {
-    creditsEffectifs = det.plafondNiches * det.totalCredits / det.nichesUtilisees;
-  } else {
-    creditsEffectifs = det.totalCredits;
-  }
-  det.creditsAppliques = creditsEffectifs;
+  // Crédits : tous cat. niche10 (emploi domicile, garde, autres crédits).
+  // Cot. syndicales : crédit hors plafond niches, géré séparément (det.credSyndic).
+  det.creditsAppliques = (det.credDomicile + det.credGarde + det.credAutres) * facteur10;
 
   // PFNL (acompte 2CK déjà versé à la source par la banque) : crédit d'impôt
   // sans plafond niches, imputé sur l'IR final. Si supérieur à l'impôt dû,

@@ -776,6 +776,63 @@ const CASES = [
     expected: { impotNet: 107757, revenuReference: 290445, tmi: 0.45 },
   },
 
+  // -------------------------------------------------------------------
+  // PLAFOND NICHES — Algo 2 poches (art. 200-0 A CGI)
+  //   Poche 1 (10 000 €) accessible à tous les dispositifs cat. niche10+niche18
+  //   Poche 2 (+8 000 €) RÉSERVÉE aux niche18 (Girardin × qp + SOFICA)
+  // Profil de base : célib 100k sal → impôt brut 20 701 €
+  // -------------------------------------------------------------------
+  {
+    name: 'Niches 2 poches — autresReductions 15k seul : poche1 saturée, 5k perdus',
+    input: makeInput({ sal1: 100000, autresReductions: 15000 }),
+    // niche10 panier = 15 000 → poche1 = 10 000, surplus 5 000 PERDU
+    // facteur10 = 10 000/15 000 = 2/3 → RI retenue = 10 000
+    // impôt net = 20 701 - 10 000 = 10 701
+    expected: { impotNet: 10701, revenuReference: 90000, nichesPerdues: 5000, tmi: 0.41 },
+  },
+  {
+    name: 'Niches 2 poches — autresReductions 8k + SOFICA 5k : mix poche1+poche2, 0 perdu',
+    input: makeInput({ sal1: 100000, autresReductions: 8000, sofica: 5000 }),
+    // ri10=8 000, ri18=5 000 (SOFICA quote-part = 1)
+    // poche1 = 8 000 niche10 + 2 000 niche18 = 10 000 ; poche2 = 3 000 niche18
+    // Tout passe → RI retenue = 13 000
+    // impôt net = 20 701 - 13 000 = 7 701
+    expected: { impotNet: 7701, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+  },
+  {
+    name: 'Niches 2 poches — autresReductions 12k + SOFICA 11k : poches saturées, 5k perdus',
+    input: makeInput({ sal1: 100000, autresReductions: 12000, sofica: 11000 }),
+    // ri10=12 000, ri18=11 000
+    // poche1 = 10 000 niche10 (saturée par niche10 seule) ; poche2 = 8 000 niche18
+    // surplus_10 = 2 000 PERDU ; surplus_18 = 11 000 - 0 = 11 000 → poche2 = 8 000, perdu_18 = 3 000
+    // Total perdu = 2 000 + 3 000 = 5 000
+    // facteur10 = 10 000/12 000 = 5/6 → RI niche10 retenue = 10 000
+    // facteur18 = 8 000/11 000 → RI niche18 retenue = 8 000
+    // impôt net = 20 701 - 18 000 = 2 701
+    expected: { impotNet: 2701, revenuReference: 90000, nichesPerdues: 5000, tmi: 0.41 },
+  },
+  {
+    name: 'Niches 2 poches — autresReductions 17k + SOFICA 1k (révèle l\'ancien bug)',
+    input: makeInput({ sal1: 100000, autresReductions: 17000, sofica: 1000 }),
+    // ANCIEN comportement : 1 € de SOFICA → plafondMajore 18k pour TOUT le panier
+    //   → nichesUtilisees = 18 000 → 0 dépassement → tout retenu → impôt = 2 701 (FAUX)
+    // NOUVEAU : niche10 cap à 10 000 indépendamment
+    //   poche1 = 10 000 niche10 + 0 niche18 ; poche2 = 1 000 SOFICA
+    //   surplus_10 = 7 000 PERDU
+    //   RI retenue = 10 000 + 1 000 = 11 000
+    //   impôt net = 20 701 - 11 000 = 9 701
+    expected: { impotNet: 9701, revenuReference: 90000, nichesPerdues: 7000, tmi: 0.41 },
+  },
+  {
+    name: 'Niches 2 poches — SOFICA 18k seul : maxe poche1 + poche2, 0 perdu',
+    input: makeInput({ sal1: 100000, sofica: 18000 }),
+    // ri10=0, ri18=18 000 (SOFICA quote-part = 1)
+    // poche1 = 10 000 ; poche2 = 8 000 ; perdu = 0
+    // facteur18 = 18 000/18 000 = 1 → RI retenue = 18 000
+    // impôt net = 20 701 - 18 000 = 2 701
+    expected: { impotNet: 2701, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+  },
+
   // Profil 10 : Cas remboursement — faible revenu + crédit garde enfants
   {
     name: 'Profil 10 — Célib 1 enfant + 15k sal + 6k garde enfants → remboursement',

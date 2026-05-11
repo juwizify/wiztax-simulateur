@@ -329,28 +329,42 @@ function oracleCalc(input) {
   const cotSynd = Math.min(i.cotSyndicales || 0, baseSyndMax);
   const credSynd = cotSynd * 0.66;
 
-  // --- Étape 10 : niches ---
-  const nichesUt = redPinel + redGirPD * 0.44 + redGirAG * 0.34
-    + redFCPI + redFcpiJei + redFipCorse + redGfi + redIrPme + redLocAv
-    + redSofica + redAutres + credDom + credGarde + credAutres;
+  // --- Étape 10 : niches — 2 POCHES (art. 200-0 A CGI) ---
+  // Poche 1 (10 000 €) : accessible à tous (niche10 + niche18)
+  // Poche 2 (+8 000 €) : RÉSERVÉE aux niche18 (Girardin × quote-part + SOFICA)
+  const ri10Panier = redPinel
+    + redFCPI + redFcpiJei + redFipCorse + redGfi + redIrPme
+    + redLocAv + redAutres
+    + credDom + credGarde + credAutres;
+  const ri18Panier = redGirPD * 0.44 + redGirAG * 0.34 + redSofica;
 
-  const hasMaj = redGirPD > 0 || redGirAG > 0 || redSofica > 0;
-  const plafNiches = hasMaj ? 18000 : 10000;
-  const depass = Math.max(0, nichesUt - plafNiches);
+  const poche1_10 = Math.min(ri10Panier, 10000);
+  const restePoche1 = 10000 - poche1_10;
+  const poche1_18 = Math.min(ri18Panier, restePoche1);
+  const surplus_10 = ri10Panier - poche1_10;
+  const surplus_18 = ri18Panier - poche1_18;
+  const poche2_18 = Math.min(surplus_18, 8000);
+  const perdu_18 = surplus_18 - poche2_18;
+
+  const nichesUt = ri10Panier + ri18Panier;
+  const plafNiches = ri18Panier > 0 ? 18000 : 10000;
+  const depass = surplus_10 + perdu_18;
+
+  const facteur10 = ri10Panier > 0 ? poche1_10 / ri10Panier : 1;
+  const facteur18 = ri18Panier > 0 ? (poche1_18 + poche2_18) / ri18Panier : 1;
 
   // --- Étape 11 : impôt net ---
-  const redInNiches = totalReductions - redDons;
-  const redNichesEff = (depass > 0 && nichesUt > 0)
-    ? plafNiches * redInNiches / nichesUt
-    : redInNiches;
+  const redNiche10Retenue = (redPinel + redFCPI + redFcpiJei + redFipCorse
+    + redGfi + redIrPme + redLocAv + redAutres) * facteur10;
+  const redNiche18Retenue = (redGirPD + redGirAG + redSofica) * facteur18;
+
   const redApp = Math.min(
     impotApresDecote + irMobilier,
-    redDons + fraisScol + redEhpad + redMalraux + redNichesEff
+    redDons + fraisScol + redEhpad + redMalraux
+    + redNiche10Retenue + redNiche18Retenue
   );
 
-  const credEff = (depass > 0 && nichesUt > 0)
-    ? plafNiches * totalCredits / nichesUt
-    : totalCredits;
+  const credEff = (credDom + credGarde + credAutres) * facteur10;
 
   const pfnl = i.pfnlVerse || 0;
 
