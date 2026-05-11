@@ -330,39 +330,94 @@ function avantageEstime(p, inputAvant) {
   return null;
 }
 
-// Vérifie le respect du plafond individuel d'un levier
-function checkPlafond(p, inputAvant) {
+// Vérifie le respect du plafond individuel d'un levier.
+// Signature : (p, inputAvant, detSeul?, inputSeul?)
+//   - p, inputAvant : minimum requis (rétro-compat).
+//   - detSeul, inputSeul (optionnels) : résultat d'un calculerIR appliqué à
+//     inputAvant + cette préco SEULE. Permet de détecter via le moteur les
+//     dépassements pour tous les dispositifs couverts par capExcedents et
+//     pour le PER (perCap calculé par le moteur).
+const fmtEur = (n) => Math.round(n).toLocaleString('fr-FR');
+function checkPlafond(p, inputAvant, detSeul, inputSeul) {
   const lev = LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
   if (!lev || !p.montant) return { ok: true, msg: '' };
 
-  // Cumul = existant Simulateur + préconisé
   const existant = inputAvant[lev.inputKey] || 0;
   const total = existant + p.montant;
 
+  // ─── Détection par capExcedents du moteur (Phase 2.3) ───
+  if (detSeul && detSeul.capExcedents) {
+    const key = lev.inputKey === 'malrauxTravaux' ? 'malraux'
+              : lev.inputKey === 'locAvantagesDepenses' ? 'locAvantages'
+              : lev.inputKey;
+    const exc = detSeul.capExcedents[key];
+    if (exc && exc > 0.5) {
+      return { ok: false, msg: `${fmtEur(exc)} € au-delà du plafond fiscal du dispositif` };
+    }
+  }
+
+  // ─── PER : plafond calculé dynamiquement par le moteur ───
+  if (lev.id === 'per' && detSeul && inputSeul) {
+    const perVerse = inputSeul.per || 0;
+    if (perVerse > detSeul.perCap + 0.5) {
+      const surplus = perVerse - detSeul.perCap;
+      return { ok: false, msg: `${fmtEur(surplus)} € au-delà du plafond PER ${fmtEur(detSeul.perCap)} €` };
+    }
+  }
+
+  // ─── Dons : plafond 20 % du RNI (cumul 7UD + 7UF) ───
+  if ((lev.id === 'dons7UD' || lev.id === 'dons7UF') && detSeul && inputSeul) {
+    const donsTotal = (inputSeul.dons || 0) + (inputSeul.dons7UD || 0);
+    const capRni = (detSeul.revenuNetImposable || 0) * 0.20;
+    if (donsTotal > capRni + 0.5) {
+      return { ok: false, msg: `Cumul dons > 20 % du RNI (${fmtEur(capRni)} €)` };
+    }
+  }
+
+  // ─── EHPAD : 10 000 € × nbPers ───
   if (lev.id === 'ehpad') {
     const nbPers = Math.max(1, inputAvant.ehpadNbPers || 1);
     const cap = 10000 * nbPers;
-    return total > cap
-      ? { ok: false, msg: `Cap ${cap.toLocaleString('fr-FR')} € (${nbPers} pers.)` }
-      : { ok: true, msg: '' };
+    if (total > cap) {
+      return { ok: false, msg: `Cap ${fmtEur(cap)} € (${nbPers} pers.)` };
+    }
   }
+
+  // ─── Emploi à domicile : 12 000 € (cumul existant + préco) ───
   if (lev.id === 'emploiDom') {
-    return p.montant > 12000 ? { ok: false, msg: 'Cap 12 000 €' } : { ok: true, msg: '' };
+    if (total > 12000) {
+      return { ok: false, msg: `Cap 12 000 € (déjà saisi : ${fmtEur(existant)} €)` };
+    }
   }
+
+  // ─── Garde d'enfants : 3 500 € × nbEnfants (cumul) ───
   if (lev.id === 'gardeEnf') {
     const nbEnf = Math.max(1, inputAvant.nbEnfants || 1);
     const cap = 3500 * nbEnf;
-    return p.montant > cap
-      ? { ok: false, msg: `Cap ${cap.toLocaleString('fr-FR')} € (${nbEnf} enf.)` }
-      : { ok: true, msg: '' };
+    if (total > cap) {
+      return { ok: false, msg: `Cap ${fmtEur(cap)} € (${nbEnf} enf., déjà saisi : ${fmtEur(existant)} €)` };
+    }
   }
+
+  // ─── Cotisations syndicales : 1 % des revenus ───
+  if (lev.id === 'syndic' && detSeul) {
+    const baseMax = ((inputAvant.sal1 || 0) + (inputAvant.sal2 || 0)
+      + (inputAvant.allocChomage1 || 0) + (inputAvant.allocChomage2 || 0)
+      + (inputAvant.pen1 || 0) + (inputAvant.pen2 || 0)) * 0.01;
+    if (total > baseMax + 0.5 && baseMax > 0) {
+      return { ok: false, msg: `Cap ${fmtEur(baseMax)} € (1 % des revenus)` };
+    }
+  }
+
+  // ─── Jeanbrun : plafond par catégorie ───
   if (lev.mode === 'jeanbrun') {
     const opt = lev.params[0].options.find(o => o.value === p.paramValue);
     const cap = opt ? opt.plafond : 8000;
-    return p.montant > cap
-      ? { ok: false, msg: `Cap ${cap.toLocaleString('fr-FR')} € (cat. ${p.paramValue})` }
-      : { ok: true, msg: '' };
+    if (p.montant > cap) {
+      return { ok: false, msg: `Cap ${fmtEur(cap)} € (cat. ${p.paramValue})` };
+    }
   }
+
   return { ok: true, msg: '' };
 }
 

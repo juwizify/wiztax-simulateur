@@ -666,7 +666,10 @@ function refreshPreconisationsCalculs() {
   setJauge('Poche1', detApres.poche1Utilisee || 0, 10000);
   setJauge('Poche2', detApres.poche2Utilisee || 0, 8000);
 
-  // Update des cellules computed dans chaque ligne (toutes sections confondues)
+  // Update des cellules computed dans chaque ligne (toutes sections confondues).
+  // Pour chaque préconisation, on calcule un "delta isolé" = effet de cette préco
+  // SEULE par rapport à l'input simulateur de base. C'est le gain MARGINAL réel
+  // (tient compte des plafonds qui peuvent tronquer le calcul théorique).
   state.preconisations.forEach(p => {
     const tbody = tbodies[p.assignedLevier || 2];
     if (!tbody) return;
@@ -674,12 +677,30 @@ function refreshPreconisationsCalculs() {
     if (!tr) return;
     const tdAv = tr.querySelector('td[data-col="avantage"]');
     const tdPl = tr.querySelector('td[data-col="plafond"]');
+
+    // Calcul isolé de cette préconisation seule, par-dessus l'input Simulateur
+    const lev = P.LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
+    let inputSeul = inputAvant;
+    let detSeul = detAvant;
+    if (lev && p.montant) {
+      inputSeul = P.appliquerPreconisations(inputAvant, [p]);
+      detSeul = calculerIR(inputSeul);
+    }
+    const gainMarginal = detAvant.impotNet - detSeul.impotNet;
+
     if (tdAv) {
-      const av = P.avantageEstime(p, inputAvant);
-      tdAv.textContent = av === null ? '—' : (av > 0 ? '−' + fmt(av) : fmt(0));
+      if (!lev || !p.montant) {
+        tdAv.textContent = '—';
+      } else {
+        // Gain réel : montant d'impôt en moins, en tenant compte des plafonds
+        // et de l'input existant déjà dans le Simulateur.
+        tdAv.textContent = gainMarginal > 0
+          ? '− ' + fmt(gainMarginal) + ' €'
+          : gainMarginal < 0 ? '+ ' + fmt(-gainMarginal) + ' €' : fmt(0) + ' €';
+      }
     }
     if (tdPl) {
-      const ck = P.checkPlafond(p, inputAvant);
+      const ck = P.checkPlafond(p, inputAvant, detSeul, inputSeul);
       tdPl.className = 'preco-plafond ' + (ck.ok ? 'preco-ok' : 'preco-warn');
       tdPl.textContent = ck.ok ? '✓' : '⚠ ' + ck.msg;
     }
