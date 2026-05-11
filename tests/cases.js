@@ -871,6 +871,26 @@ const CASES = [
     // 40 910 > impôt 20 701 → cap à 20 701 → impôt net = 0
     expected: { impotNet: 0, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
   },
+  {
+    name: 'Niches 2 poches — autresReductions 3k + Girardin PD 45 455 : niche18 déborde poche2, 5k perdus',
+    input: makeInput({ sal1: 100000, autresReductions: 3000, girardinPD: 45455 }),
+    // ri10 = 3 000 (autresReductions)
+    // ri18 panier = 45 455 × 0.44 ≈ 20 000 (Girardin PD)
+    // poche1 = 3 000 niche10 + 7 000 niche18 = 10 000 (saturée)
+    // poche2 = 8 000 niche18 (saturée), surplus_18 panier = 5 000 PERDU
+    // surplus_10 = 0
+    // RI retenue > impôt → impôt net = 0
+    expected: { impotNet: 0, revenuReference: 90000, nichesPerdues: 5000, tmi: 0.41 },
+  },
+  {
+    name: 'Niches 2 poches — Girardin PD 56 818 seul : niche18 dépasse poche1+poche2, 7k perdus',
+    input: makeInput({ sal1: 100000, girardinPD: 56818 }),
+    // ri10 = 0
+    // ri18 panier = 56 818 × 0.44 = 25 000 (Girardin PD seul)
+    // poche1 = 10 000 ; poche2 = 8 000 ; surplus = 7 000 PERDU
+    // RI retenue > impôt → impôt net = 0
+    expected: { impotNet: 0, revenuReference: 90000, nichesPerdues: 7000, tmi: 0.41 },
+  },
 
   // -------------------------------------------------------------------
   // CAPS INDIVIDUELS — vérifient le plafonnement par dispositif
