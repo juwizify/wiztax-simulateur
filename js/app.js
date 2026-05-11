@@ -509,13 +509,17 @@ function computeMaxForLevier(lev, inputAvant, paramValue, detAvant, isCouple) {
   // cat 'hors' / 'foncier' : pas de cap niches → reste Infinity.
 
   // ─── 3. Impôt restant à effacer (Levier 2 uniquement) ────────────────
-  // Pour les dispositifs L2 dans le panier niches : limiter à l'impôt
-  // restant pour éviter le surdimensionnement (RI perdue ou reportable
-  // selon dispositif). Hors panier niches (dons / EHPAD / Malraux /
-  // syndic) : pas concerné par la poche, mais idem pour l'impôt restant.
+  // L'impôt restant = impôt après application des RI déjà actives dans le
+  // contexte (autres préco L2 + existant Simulateur). Le bouton max ne
+  // propose jamais une valeur qui ferait basculer en surdimensionnement
+  // (RI perdue ou reportable).
   let maxUtile = Infinity;
   if (lev.levier === 2) {
-    const impotRestant = POS((detAvant.impotApresDecote || 0) + (detAvant.irMobilier || 0));
+    const impotRestant = POS(
+      (detAvant.impotApresDecote || 0)
+      + (detAvant.irMobilier || 0)
+      - (detAvant.reductionsAppliquees || 0)
+    );
     // Taux applicable selon le mode du levier (pour convertir impôt → saisie)
     let tauxRi = null;
     if (lev.mode === 'taux') {
@@ -701,9 +705,15 @@ function renderPreconisations() {
       btnMax.title = 'Remplir avec le maximum disponible (plafond − déjà saisi)';
       btnMax.addEventListener('click', () => {
         const ipAv = getInputs();
-        const dtAv = calculerIR(ipAv);
         const isC  = ipAv.situation === 'marie-pacse';
-        const m = computeMaxForLevier(levSel, ipAv, p.paramValue, dtAv, isC);
+        // Contexte = inputs Simulateur + TOUTES les autres préco actives
+        // (sauf la ligne en cours). Permet au max de tenir compte de ce qui
+        // est déjà saisi ailleurs (panier niches, impôt déjà effacé, etc.).
+        const stateCur = P.getState();
+        const autres = stateCur.preconisations.filter(pp => pp.id !== p.id);
+        const ipCtx = P.appliquerPreconisations(ipAv, autres);
+        const dtCtx = calculerIR(ipCtx);
+        const m = computeMaxForLevier(levSel, ipCtx, p.paramValue, dtCtx, isC);
         if (m !== null && m > 0) {
           const rounded = Math.floor(m);
           inMt.value = rounded;
