@@ -68,6 +68,7 @@ function calcParts(situation, nbEnfants, gardeAlternee, parentIsole, demiPartSup
 function calculerIR(input) {
   const P = PARAMS;
   const det = {}; // détail du calcul (pour l'onglet calcul détaillé)
+  const isCouple = input.situation === 'marie-pacse';
 
   // ============================================================
   // ÉTAPE 1 : REVENU BRUT GLOBAL
@@ -144,6 +145,7 @@ function calculerIR(input) {
   // Meublé
   det.meubleClasseNet = input.meubleClasse * (1 - P.abat.meubleClasse.taux);
   det.meubleNonClasseNet = input.meubleNonClasse * (1 - P.abat.meubleNonClasse.taux);
+  det.autresMeublesNet = (input.autresMeubles || 0) * (1 - P.abat.autresMeubles.taux);
 
   // Mobilier selon option
   const isPFU = input.optionPFU === 'pfu';
@@ -157,7 +159,7 @@ function calculerIR(input) {
 
   det.revenuBrutGlobal = det.salaireNet + det.pensionNet + det.bncMicroNet + det.bncReel
     + det.microFoncierNet + det.foncierReel
-    + det.meubleClasseNet + det.meubleNonClasseNet
+    + det.meubleClasseNet + det.meubleNonClasseNet + det.autresMeublesNet
     + det.dividendesBareme + det.interetsBareme + det.pvBareme
     + det.autresRevenus;
 
@@ -165,20 +167,32 @@ function calculerIR(input) {
   // ÉTAPE 2 : REVENU NET IMPOSABLE
   // ============================================================
 
-  // PER — plafond = 10% des revenus professionnels, plancher 4 710 €, max 37 680 €
+  // PER — plafond = 10 % des revenus pro de CHAQUE déclarant, plancher 4 710 €
+  // individuel, max 37 680 €. Les plafonds individuels s'additionnent (mutualisation
+  // conjugale considérée par défaut, comme la déclaration en ligne).
+  // Art. 163 quatervicies CGI — assiette = revenus d'activité pro :
+  // salaires + chômage + heures sup exonérées + BNC micro + BNC réel.
   // On utilise les revenus N comme proxy des revenus N-1 (approximation raisonnable).
-  const revenuPro = input.sal1 + input.sal2
-    + input.bncMicro1 + input.bncMicro2
-    + input.bncReel1  + input.bncReel2;
+  const revenuPro1 = input.sal1
+    + (input.allocChomage1 || 0)
+    + (input.heuresSupExo1 || 0)
+    + input.bncMicro1 + input.bncReel1;
+  const revenuPro2 = input.sal2
+    + (input.allocChomage2 || 0)
+    + (input.heuresSupExo2 || 0)
+    + input.bncMicro2 + input.bncReel2;
+  const capForRevenu = r => Math.max(
+    P.plafonds.perPlancher,
+    Math.min(r * P.plafonds.perTaux, P.plafonds.perMaxSalarie)
+  );
+  const perCapAuto = capForRevenu(revenuPro1)
+    + (isCouple ? capForRevenu(revenuPro2) : 0);
+
   // Plafond manuel (cases 6PS/6PT) : si l'utilisateur saisit > 0, on l'utilise
   // au lieu du calcul auto (utile quand il a des reports de plafonds non utilisés
   // des 3 dernières années, non modélisés ici).
   const perCapManuel = input.perPlafondManuel || 0;
-  det.perCap = perCapManuel > 0
-    ? perCapManuel
-    : (revenuPro > 0
-        ? Math.max(P.plafonds.perPlancher, Math.min(revenuPro * P.plafonds.perTaux, P.plafonds.perMaxSalarie))
-        : P.plafonds.perPlancher);
+  det.perCap = perCapManuel > 0 ? perCapManuel : perCapAuto;
   det.per = Math.min(input.per, det.perCap);
 
   // Pensions alimentaires — plafond (art. 156-II CGI)
@@ -241,7 +255,6 @@ function calculerIR(input) {
   // ============================================================
   // ÉTAPE 5 : DÉCOTE
   // ============================================================
-  const isCouple = input.situation === 'marie-pacse';
   const seuilDecote = isCouple ? P.decote.seuilCouple : P.decote.seuilCelibataire;
   const plafondDecote = isCouple ? P.decote.plafondCouple : P.decote.plafondCelibataire;
 
@@ -288,25 +301,27 @@ function calculerIR(input) {
   // ÉTAPE 7 : PRÉLÈVEMENTS SOCIAUX
   //
   // Mode de recouvrement (source : service-public.gouv.fr / BOFiP) :
-  //   - Prélevés À LA SOURCE par le débiteur (banque/assureur), donc déjà
-  //     acquittés au moment du paiement du revenu, EXCLUS de l'impôt à payer :
-  //       • dividendes (PFU et barème)
-  //       • intérêts
+  //   - Prélevés à la source par l'assureur ET imputés automatiquement
+  //     par le simulateur officiel via l'abattement (cas spécifique
+  //     AV > 8 ans), donc EXCLUS de l'impôt à payer :
   //       • produits assurance-vie > 8 ans (av75, av128)
   //   - Recouvrés PAR VOIE DE RÔLE (avis IR), à payer en sus de l'IR :
+  //       • dividendes (le PFNL bancaire IR est imputé via 2CK, mais la
+  //         part PS, elle, reste due côté avis IR)
+  //       • intérêts (idem dividendes)
   //       • plus-values mobilières
   //       • revenus fonciers (nu, LMNP, micro-foncier)
   // ============================================================
-  // PS prélevés à la source (info uniquement, n'entrent pas dans l'impôt dû)
+  // PS recouvrés via avis (intégrés à l'impôt à payer)
   det.psDividendes = input.dividendes * P.ps.mobilier;
   det.psInterets   = (input.interets || 0) * P.ps.mobilier;
-  det.psAV         = avProduits * P.ps.foncier;
-  det.psSource     = det.psDividendes + det.psInterets + det.psAV;
-  // PS recouvrés via avis (intégrés à l'impôt à payer)
-  det.psPV = input.pv * P.ps.mobilier;
-  const revenusFonciersNets = det.microFoncierNet + det.foncierReel + det.meubleClasseNet + det.meubleNonClasseNet;
-  det.psFoncier = Math.max(0, revenusFonciersNets) * P.ps.foncier;
-  det.psRole    = det.psPV + det.psFoncier;
+  det.psPV         = input.pv * P.ps.mobilier;
+  const revenusFonciersNets = det.microFoncierNet + det.foncierReel + det.meubleClasseNet + det.meubleNonClasseNet + det.autresMeublesNet;
+  det.psFoncier    = Math.max(0, revenusFonciersNets) * P.ps.foncier;
+  det.psRole       = det.psDividendes + det.psInterets + det.psPV + det.psFoncier;
+  // PS prélevés à la source ET libératoires (info uniquement, exclus impôt dû)
+  det.psAV     = avProduits * P.ps.av;
+  det.psSource = det.psAV;
   // Conservé pour rétro-compat / affichage de la charge fiscale totale
   det.psMobilier = det.psDividendes + det.psInterets + det.psPV;
   det.totalPS    = det.psSource + det.psRole;
@@ -350,20 +365,89 @@ function calculerIR(input) {
 
   // Loi Malraux (7NX/7NY) — HORS plafond niches (art. 199 tervicies CGI)
   // L'utilisateur saisit le montant de la réduction (taux 22 % ou 30 % selon zone, déjà calculé).
-  det.redMalraux = input.malraux || 0;
+  // Caps individuels par dispositif (art. 199 ... CGI spécifiques).
+  // Règle : l'input utilisateur reste libre (il peut saisir 200 000 € de
+  // SOFICA s'il les a vraiment versés, fidélité à sa réalité patrimoniale),
+  // mais le moteur tronque la RI retenue au plafond fiscal applicable.
+  // Le surplus est exposé dans det.capExcedents pour affichage UI.
+  //
+  // Aujourd'hui l'input est la RI déjà calculée sans préciser le scénario,
+  // donc on prend le cap au TAUX MAXIMUM du dispositif (= scénario le plus
+  // avantageux). Phase 3 (refonte préco) basculera vers input versement +
+  // scénario explicite, ce qui permettra des caps plus précis.
+  const PD = P.plafondsDispositifs;
+  const versCouple = (d) => isCouple && d.versementMaxCouple !== undefined
+    ? d.versementMaxCouple : d.versementMax;
+  const tauxMax = (d) => Math.max(...Object.values(d.taux));
+  // SOFICA : double plafond — art. 199 unvicies CGI (BOI-IR-RICI-180-20 §140).
+  // Versement effectif = min(18 000 €, 25 % du revenu net global).
+  // Le wiztax utilise det.revenuNetImposable comme proxy du RNG (mêmes composantes
+  // après charges déductibles).
+  const versSoficaEffectif = Math.min(
+    PD.sofica.versementMax,
+    det.revenuNetImposable * 0.25
+  );
+  const capRiMax = {
+    sofica:       versSoficaEffectif * tauxMax(PD.sofica),                         // min(18k, 25%RNG) × 48 %
+    fcpi:         versCouple(PD.fcpi) * PD.fcpi.taux,                              // 12k/24k × 18 %
+    fcpiJei:      versCouple(PD.fcpiJei) * PD.fcpiJei.taux,                        // 12k/24k × 30 %
+    fipCorse:     versCouple(PD.fipCorse) * PD.fipCorse.taux,                      // 12k/24k × 30 %
+    irPme:        versCouple(PD.irPme) * PD.irPme.taux,                            // 50k/100k × 25 %
+    gfi:          versCouple(PD.gfi) * PD.gfi.taux,                                // 50k/100k × 18 %
+    malraux:      PD.malraux.depensesParAnMax * tauxMax(PD.malraux),               // 100 000 × 30 % = 30 000
+    locAvantages: PD.locAvantages.depensesMax * tauxMax(PD.locAvantages),          // 10 000 × 65 % = 6 500
+  };
+
+  // Malraux — 2 modes acceptés :
+  //   * NOUVEAU (Phase 2.5) : input.malrauxTravaux + input.malrauxZone
+  //     → RI = min(travaux, 100 000 €/an) × taux zone (22 % SPR sans PSMV / 30 % SPR-PSMV ou QAD).
+  //   * LEGACY : input.malraux directement (RI saisie), conservé pour rétro-compat.
+  if ((input.malrauxTravaux || 0) > 0) {
+    const zone = input.malrauxZone || PD.malraux.tauxDefaut;
+    const tauxZone = PD.malraux.taux[zone] || PD.malraux.taux[PD.malraux.tauxDefaut];
+    const travauxRetenus = Math.min(input.malrauxTravaux, PD.malraux.depensesParAnMax);
+    det.redMalraux = travauxRetenus * tauxZone;
+  } else {
+    det.redMalraux = Math.min(input.malraux || 0, capRiMax.malraux);
+  }
 
   // Réductions dans le plafond niches
-  det.redPinel       = input.pinel;
-  det.redGirardinPD  = input.girardinPD;
+  det.redPinel       = input.pinel;             // Pinel : retiré du périmètre (fermé fin 2024). Pas de cap V1.
+  det.redGirardinPD  = input.girardinPD;        // Girardin : pas de cap individuel, limité par panier majoré.
   det.redGirardinAG  = input.girardinAG;
-  det.redFCPI        = input.fcpi;
-  det.redFcpiJei     = input.fcpiJei || 0;
-  det.redFipCorse    = input.fipCorse || 0;
-  det.redGfi         = input.gfi || 0;
-  det.redIrPme       = input.irPme || 0;
-  det.redLocAvantages = input.locAvantages || 0;
-  det.redSofica      = input.sofica;
-  det.redAutres      = input.autresReductions;
+  det.redFCPI        = Math.min(input.fcpi || 0,         capRiMax.fcpi);
+  det.redFcpiJei     = Math.min(input.fcpiJei || 0,      capRiMax.fcpiJei);
+  det.redFipCorse    = Math.min(input.fipCorse || 0,     capRiMax.fipCorse);
+  det.redGfi         = Math.min(input.gfi || 0,          capRiMax.gfi);
+  det.redIrPme       = Math.min(input.irPme || 0,        capRiMax.irPme);
+  // Loc'Avantages — 2 modes acceptés :
+  //   * NOUVEAU (Phase 2.4) : input.locAvantagesDepenses + input.locAvantagesPalier
+  //     → moteur calcule la RI = min(dépenses, 10 000 €) × taux palier (15/35/65 %).
+  //   * LEGACY : input.locAvantages directement (RI saisie), conservé pour rétro-compat
+  //     des tests et de toute UI/intégration existante.
+  if ((input.locAvantagesDepenses || 0) > 0) {
+    const palier = input.locAvantagesPalier || PD.locAvantages.tauxDefaut;
+    const tauxPalier = PD.locAvantages.taux[palier]
+      || PD.locAvantages.taux[PD.locAvantages.tauxDefaut];
+    const depensesRetenues = Math.min(input.locAvantagesDepenses, PD.locAvantages.depensesMax);
+    det.redLocAvantages = depensesRetenues * tauxPalier;
+  } else {
+    det.redLocAvantages = Math.min(input.locAvantages || 0, capRiMax.locAvantages);
+  }
+  det.redSofica      = Math.min(input.sofica || 0,       capRiMax.sofica);
+  det.redAutres      = input.autresReductions;  // catch-all, pas de cap
+
+  // Surplus écrasés par les caps individuels (pour affichage UI)
+  det.capExcedents = {
+    sofica:       Math.max(0, (input.sofica || 0)       - det.redSofica),
+    fcpi:         Math.max(0, (input.fcpi || 0)         - det.redFCPI),
+    fcpiJei:      Math.max(0, (input.fcpiJei || 0)      - det.redFcpiJei),
+    fipCorse:     Math.max(0, (input.fipCorse || 0)     - det.redFipCorse),
+    irPme:        Math.max(0, (input.irPme || 0)        - det.redIrPme),
+    gfi:          Math.max(0, (input.gfi || 0)          - det.redGfi),
+    malraux:      Math.max(0, (input.malraux || 0)      - det.redMalraux),
+    locAvantages: Math.max(0, (input.locAvantages || 0) - det.redLocAvantages),
+  };
 
   det.totalReductions = det.redDons + det.redPinel + det.redGirardinPD + det.redGirardinAG
     + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
@@ -393,44 +477,82 @@ function calculerIR(input) {
   det.credSyndic = det.cotSyndicalesBase * P.plafonds.cotSyndicalesTaux;
 
   // ============================================================
-  // ÉTAPE 10 : PLAFONNEMENT DES NICHES FISCALES
+  // ÉTAPE 10 : PLAFONNEMENT DES NICHES FISCALES — 2 POCHES
+  //
+  // Art. 200-0 A CGI :
+  //   • POCHE 1 (10 000 €)   — accessible à TOUS les dispositifs cat. niche10
+  //                            ET cat. niche18.
+  //   • POCHE 2 (+8 000 €)   — RÉSERVÉE aux dispositifs cat. niche18 (Girardin
+  //                            avec quote-part 44/34 % + SOFICA).
+  //
+  // Algo : on remplit d'abord la poche 1 (avec niche10 prioritaire par ordre
+  // d'apparition, puis le solde par niche18). Le surplus niche10 est PERDU.
+  // Le surplus niche18 peut s'écouler dans la poche 2 (max 8 000 €). Le
+  // surplus restant au-delà de la poche 2 est PERDU.
+  //
+  // Les valeurs manipulées ici sont les "valeurs panier" (= RI brute × quote-part
+  // pour les niche18, RI brute pour les niche10).
   // ============================================================
-  det.nichesUtilisees = det.redPinel
-    + det.redGirardinPD * P.niches.girardinPdQuotePart
-    + det.redGirardinAG * P.niches.girardinAgQuotePart
-    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
-    + det.redSofica + det.redAutres
-    + det.credDomicile + det.credGarde + det.credAutres;
 
-  const hasPlafondMajore = det.redGirardinPD > 0 || det.redGirardinAG > 0 || det.redSofica > 0;
-  det.plafondNiches = hasPlafondMajore ? P.niches.plafondMajore : P.niches.plafond;
-  det.depassementNiches = Math.max(0, det.nichesUtilisees - det.plafondNiches);
+  // RI panier par catégorie
+  const ri10Panier = det.redPinel
+    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme
+    + det.redLocAvantages + det.redAutres
+    + det.credDomicile + det.credGarde + det.credAutres;
+  const ri18Panier = det.redGirardinPD * P.niches.girardinPdQuotePart
+    + det.redGirardinAG * P.niches.girardinAgQuotePart
+    + det.redSofica;
+
+  // Algo 2 poches
+  const poche1_10  = Math.min(ri10Panier, P.niches.plafond);
+  const restePoche1 = P.niches.plafond - poche1_10;
+  const poche1_18  = Math.min(ri18Panier, restePoche1);
+  const surplus_10 = ri10Panier - poche1_10;
+  const surplus_18 = ri18Panier - poche1_18;
+  const poche2Cap  = P.niches.plafondMajore - P.niches.plafond;  // 8 000 €
+  const poche2_18  = Math.min(surplus_18, poche2Cap);
+  const perdu_18   = surplus_18 - poche2_18;
+
+  // Champs exposés (UI / debug / rétro-compat)
+  det.poche1Utilisee   = poche1_10 + poche1_18;
+  det.poche2Utilisee   = poche2_18;
+  det.ri10Panier       = ri10Panier;     // demandé niche10 (Pinel/FCPI/...)
+  det.ri18Panier       = ri18Panier;     // demandé niche18 (Girardin × qp + SOFICA)
+  det.nichesUtilisees  = ri10Panier + ri18Panier;                 // total demandé
+  det.nichesRetenues   = det.poche1Utilisee + det.poche2Utilisee;
+  det.nichesPerdues    = surplus_10 + perdu_18;
+  // Rétro-compat : "plafondNiches" reste le plafond global applicable (10 ou 18)
+  // utilisé par les libellés UI. depassementNiches reflète le total perdu.
+  det.plafondNiches    = ri18Panier > 0 ? P.niches.plafondMajore : P.niches.plafond;
+  det.depassementNiches = det.nichesPerdues;
+
+  // Facteurs proportionnels de rétention par catégorie.
+  // Si une catégorie est en surplus, on tronque proportionnellement tous ses
+  // dispositifs (règle classique du plafonnement proportionnel).
+  const facteur10 = ri10Panier > 0 ? poche1_10 / ri10Panier : 1;
+  const facteur18 = ri18Panier > 0 ? (poche1_18 + poche2_18) / ri18Panier : 1;
+  det.facteurNiche10 = facteur10;
+  det.facteurNiche18 = facteur18;
 
   // ============================================================
   // ÉTAPE 11 : IMPÔT NET FINAL (hors CEHR)
   // ============================================================
-  // Application des réductions avec plafonnement niches
-  const reductionsDansNiches = det.totalReductions - det.redDons;
-  let reductionsDansNichesEffectives;
-  if (det.depassementNiches > 0 && det.nichesUtilisees > 0) {
-    reductionsDansNichesEffectives = det.plafondNiches
-      * reductionsDansNiches / det.nichesUtilisees;
-  } else {
-    reductionsDansNichesEffectives = reductionsDansNiches;
-  }
+  // Application des réductions avec plafonnement niches par catégorie.
+  // Hors panier niches (toujours retenus) : dons, fraisScol, EHPAD, Malraux.
+  const redNiche10Retenue = (det.redPinel
+    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme
+    + det.redLocAvantages + det.redAutres) * facteur10;
+  const redNiche18Retenue = (det.redGirardinPD + det.redGirardinAG + det.redSofica) * facteur18;
+
   det.reductionsAppliquees = Math.min(
     det.impotApresDecote + det.irMobilier,
-    det.redDons + det.fraisScol + det.redEhpad + det.redMalraux + reductionsDansNichesEffectives
+    det.redDons + det.fraisScol + det.redEhpad + det.redMalraux
+    + redNiche10Retenue + redNiche18Retenue
   );
 
-  // Application des crédits avec plafonnement niches
-  let creditsEffectifs;
-  if (det.depassementNiches > 0 && det.nichesUtilisees > 0) {
-    creditsEffectifs = det.plafondNiches * det.totalCredits / det.nichesUtilisees;
-  } else {
-    creditsEffectifs = det.totalCredits;
-  }
-  det.creditsAppliques = creditsEffectifs;
+  // Crédits : tous cat. niche10 (emploi domicile, garde, autres crédits).
+  // Cot. syndicales : crédit hors plafond niches, géré séparément (det.credSyndic).
+  det.creditsAppliques = (det.credDomicile + det.credGarde + det.credAutres) * facteur10;
 
   // PFNL (acompte 2CK déjà versé à la source par la banque) : crédit d'impôt
   // sans plafond niches, imputé sur l'IR final. Si supérieur à l'impôt dû,
@@ -443,26 +565,33 @@ function calculerIR(input) {
     det.impotApresDecote + det.irMobilier + det.irAV - det.reductionsAppliquees
   ) - det.creditsAppliques - det.credSyndic + det.psRole - det.pfnlVerse - det.pfnlAV;
 
-  // Revenu de référence = somme des revenus bruts déclarés (avant abattements) moins les charges
-  // C'est ce que l'administration utilise pour calculer le taux moyen affiché
-  // ⚠ Doit être calculé AVANT la CEHR (étape 12) qui l'utilise comme assiette
-  // Heures sup exonérées entrent intégralement dans le RFR (part exonérée comprise),
-  // alors que seul le surplus > 7 500 € est compté dans le revenu imposable.
+  // Revenu de référence — sert d'assiette à la CEHR (art. 223 sexies CGI) et
+  // au calcul du taux moyen affiché.
+  // Règles BOI-IR-DECLA-20-10 :
+  //   - Salaires et pensions retenus NETS d'abattement 10 % (ou frais réels).
+  //   - BNC / BIC / fonciers : montants nets effectivement imposables.
+  //   - Revenus mobiliers / AV : retenus en brut (les abattements ne s'imputent
+  //     que sur l'IR, pas sur le RFR).
+  //   - Heures sup exonérées entrent intégralement dans le RFR (part exonérée
+  //     comprise), alors que seul le surplus > 7 500 € est dans le revenu
+  //     imposable — donc la part exonérée doit être réajoutée ici.
+  //   - Charges déductibles (PER, pensions alim versées, CSG déductible,
+  //     autres) : NE RÉDUISENT PAS le RFR. Elles ne baissent que le revenu
+  //     imposable. Le simulateur officiel impots.gouv calcule le RFR comme
+  //     si ces déductions n'avaient pas eu lieu.
+  // ⚠ Doit être calculé AVANT la CEHR (étape 12) qui l'utilise comme assiette.
+  const hsExoRFR1 = Math.min(input.heuresSupExo1 || 0, P.plafonds.heuresSupExoPlafond);
+  const hsExoRFR2 = Math.min(input.heuresSupExo2 || 0, P.plafonds.heuresSupExoPlafond);
   det.revenuReference = Math.max(0,
-    input.sal1 + input.sal2
-    + (input.allocChomage1 || 0) + (input.allocChomage2 || 0)
-    + (input.heuresSupExo1 || 0) + (input.heuresSupExo2 || 0)
-    + input.pen1 + input.pen2
-    + (input.pensInvalidite1 || 0) + (input.pensInvalidite2 || 0)
-    + (input.pensAlimRecue1 || 0) + (input.pensAlimRecue2 || 0)
+    det.salaireNet + hsExoRFR1 + hsExoRFR2
+    + det.pensionNet
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1 + input.bncReel2
     + input.microFoncier + det.foncierReel
-    + input.meubleClasse + input.meubleNonClasse
+    + input.meubleClasse + input.meubleNonClasse + (input.autresMeubles || 0)
     + input.dividendes + (input.interets || 0) + input.pv
     + (input.avProduits75 || 0) + (input.avProduits128 || 0)
     + input.autresRevenus
-    - input.per - input.pensionsAlim - input.csgDeductible - input.autresCharges
   );
 
   det.tauxMoyen = det.revenuReference > 0

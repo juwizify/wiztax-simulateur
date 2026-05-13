@@ -230,6 +230,11 @@
      ONGLET 2 : SIMULATEUR COMPLET
 ═══════════════════════════════════════════════ -->
 <div id="simulateur" class="tab-pane">
+  <div class="dev-toolbar" role="toolbar" aria-label="Outils développeur — à retirer avant prod">
+    <span class="dev-toolbar-label">DEV</span>
+    <button type="button" id="btnLoadDemo" class="dev-btn">Charger cas démo</button>
+    <button type="button" id="btnResetInputs" class="dev-btn">Vider</button>
+  </div>
   <div class="sim-layout">
 
     <div class="inputs-col">
@@ -434,16 +439,24 @@
 
           <div class="form-row">
             <label for="meubleNonClasse">
-              Location meublée non classée micro-BIC
-              <i class="tip" data-tip="Location meublée ordinaire (non classée).&#10;Abattement 30% automatique.&#10;Plafond régime micro : 15 000 €/an.&#10;(Loi Le Meur 2025)">i</i>
+              Meublé de tourisme non classé micro-BIC (5NH)
+              <i class="tip" data-tip="Meublé de tourisme NON classé (Airbnb urbain courte durée, etc.).&#10;Abattement 30% automatique.&#10;Plafond régime micro : 15 000 €/an.&#10;Case 5NH de la déclaration.&#10;(Loi Le Meur 2025)">i</i>
             </label>
             <input type="number" id="meubleNonClasse" value="0" min="0">
           </div>
 
           <div class="form-row">
+            <label for="autresMeubles">
+              Autres locations meublées micro-BIC (5NI)
+              <i class="tip" data-tip="Location meublée hors tourisme (LMNP à l'année à un locataire principal, étudiant, résidence services, etc.).&#10;Abattement 50% automatique.&#10;Plafond régime micro : 77 700 €/an.&#10;Case 5NI de la déclaration.">i</i>
+            </label>
+            <input type="number" id="autresMeubles" value="0" min="0">
+          </div>
+
+          <div class="form-row">
             <label for="jeanbrunAmort">
               Amortissement Jeanbrun (LF 2026)
-              <i class="tip" data-tip="Dispositif Jeanbrun / Statut du bailleur privé — créé par la LF 2026 (en vigueur 21/02/2026), applicable aux acquisitions jusqu'au 31/12/2028.&#10;&#10;Amortissement DÉDUCTIBLE des revenus fonciers (≠ réduction d'impôt comme Pinel). Taux annuel selon le type de loyer choisi (3,5 % / 4,5 % / 5,5 %), plafonné selon catégorie ci-dessous.&#10;&#10;Saisir le MONTANT D'AMORTISSEMENT (= prix d'achat × taux). La déduction s'applique automatiquement sur ton « Foncier réel » saisi plus haut, avec respect du plafond catégorie.&#10;&#10;⚠ Le foncier réel ci-dessus doit être saisi AVANT cet amortissement (sinon double déduction).">i</i>
+              <i class="tip" data-tip="Dispositif Jeanbrun / Statut du bailleur privé — LF 2026 (en vigueur 21/02/2026), acquisitions jusqu'au 31/12/2028.&#10;&#10;⚠ FONCTIONNE DIFFÉREMMENT D'UNE RÉDUCTION D'IMPÔT.&#10;Jeanbrun déduit de l'ASSIETTE FONCIÈRE (≠ Pinel qui déduit de l'impôt).&#10;&#10;Mécanique :&#10;1. Tu saisis un amortissement (= prix d'achat × taux 3,5 / 4,5 / 5,5 %)&#10;2. Il vient en moins de ton « Foncier réel » saisi plus haut.&#10;3. Si le résultat est négatif → déficit foncier imputable sur le revenu global, plafonné à 10 700 €/an.&#10;4. Économie ≈ amortissement × (TMI + PS foncier 18,6 %).&#10;&#10;Exemple : 10 000 € amortissement, TMI 30 % → économie ≈ 10 000 × 48,6 % ≈ 4 860 €.&#10;&#10;Plafond catégorie : 8 / 10 / 12 k€ selon Intermédiaire / Social / Très social.">i</i>
             </label>
             <input type="number" id="jeanbrunAmort" value="0" min="0">
           </div>
@@ -799,33 +812,54 @@
           </div>
 
           <div class="form-row">
-            <label for="malraux">
-              Loi Malraux — restauration en SPR
-              <i class="tip" data-tip="Cases 7NX / 7NY de la déclaration (art. 199 tervicies CGI).&#10;Réduction d'impôt pour travaux de restauration sur immeubles situés en :&#10;· Site Patrimonial Remarquable (SPR) avec PSMV approuvé : taux 30 %&#10;· SPR avec PSMV non approuvé / QAD : taux 22 %&#10;&#10;Base : montant des travaux, plafonné à 400 000 € étalé sur 4 ans (100 000 € moyenne/an).&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.&#10;&#10;⚠ HORS plafond des niches fiscales — un atout majeur de ce dispositif.">i</i>
+            <label for="malrauxTravaux">
+              Loi Malraux — travaux de l'année
+              <i class="tip" data-tip="Cases 7NX / 7NY de la déclaration (art. 199 tervicies CGI).&#10;Restauration d'immeubles situés en Site Patrimonial Remarquable (SPR) ou QAD.&#10;&#10;Saisir le MONTANT DES TRAVAUX engagés dans l'année — pas la réduction.&#10;Le simulateur calcule la RI = min(travaux, 100 000 €/an) × taux zone.&#10;&#10;Plafond cumulé légal : 400 000 € de travaux sur 4 ans (= 100 000 €/an).&#10;⚠ Phase 2.5 : on ne suit pas le cumul multi-année — le cap 100 k€ est appliqué chaque année indépendamment.&#10;&#10;⚠ HORS plafond des niches fiscales (atout majeur du dispositif).">i</i>
             </label>
-            <input type="number" id="malraux" value="0" min="0">
+            <input type="number" id="malrauxTravaux" value="0" min="0">
             <div class="niche-cell">
               <span class="niche-marker niche-hors">hors plafond niches</span>
-              <span class="niche-plaf">22 % ou 30 % · base ≤ 400 k€ / 4 ans</span>
             </div>
           </div>
 
           <div class="form-row">
-            <label for="locAvantages">
-              Loc'Avantages — location à loyer modéré
-              <i class="tip" data-tip="Cases 7QO / 7QP / 7QR de la déclaration (art. 199 tricies CGI).&#10;Ex-dispositif Cosse « Louer abordable », réformé en 2022.&#10;Réduction d'impôt pour location d'un logement à un loyer décoté par rapport au marché :&#10;&#10;· Loc 1 (décote 15 %) : taux 15 %&#10;· Loc 2 (décote 30 %) : taux 35 %&#10;· Loc 3 (intermédiation locative IML, décote 45 %) : taux 65 %&#10;&#10;Plafond annuel de dépenses retenues : 10 000 €.&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.&#10;Plafond global niches : 10 000 €.">i</i>
+            <label for="malrauxZone">
+              ↳ Zone Malraux
+              <i class="tip tip-down" data-tip="Détermine le taux de réduction :&#10;· SPR avec PSMV approuvé / QAD : 30 %&#10;· SPR sans PSMV approuvé : 22 %">i</i>
             </label>
-            <input type="number" id="locAvantages" value="0" min="0">
+            <select id="malrauxZone">
+              <option value="spr-non">SPR sans PSMV — taux 22 %</option>
+              <option value="spr-oui">SPR avec PSMV ou QAD — taux 30 %</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label for="locAvantagesDepenses">
+              Loc'Avantages — dépenses annuelles
+              <i class="tip" data-tip="Cases 7QO / 7QP / 7QR de la déclaration (art. 199 tricies CGI).&#10;Ex-dispositif Cosse « Louer abordable », réformé en 2022.&#10;&#10;Saisir le MONTANT DES DÉPENSES annuelles (loyer décoté brut) — pas la réduction.&#10;Le simulateur calcule la RI = min(dépenses, 10 000 €) × taux du palier.&#10;&#10;Paliers (choisir ci-dessous) :&#10;· Loc 1 (décote 15 %) : taux 15 %&#10;· Loc 2 (décote 30 %) : taux 35 %&#10;· Loc 3 (intermédiation locative IML, décote 45 %) : taux 65 %&#10;&#10;Plafond de dépenses retenues : 10 000 €/an.&#10;Plafond global niches : 10 000 €.">i</i>
+            </label>
+            <input type="number" id="locAvantagesDepenses" value="0" min="0">
             <div class="niche-cell">
               <span class="niche-marker niche-10k">niche 10 000 €</span>
-              <span class="niche-plaf">15 / 35 / 65 % selon décote loyer</span>
             </div>
+          </div>
+
+          <div class="form-row">
+            <label for="locAvantagesPalier">
+              ↳ Palier de décote Loc'Avantages
+              <i class="tip tip-down" data-tip="Détermine le taux de réduction appliqué aux dépenses :&#10;· Loc 1 — décote loyer 15 % → RI 15 %&#10;· Loc 2 — décote 30 % → RI 35 %&#10;· Loc 3 — intermédiation locative (IML), décote 45 % → RI 65 %">i</i>
+            </label>
+            <select id="locAvantagesPalier">
+              <option value="loc1">Loc 1 — décote 15 % (RI 15 %)</option>
+              <option value="loc2">Loc 2 — décote 30 % (RI 35 %)</option>
+              <option value="loc3">Loc 3 — IML décote 45 % (RI 65 %)</option>
+            </select>
           </div>
 
           <div class="form-row">
             <label for="sofica">
               Sofica
-              <i class="tip" data-tip="Réduction d'impôt (financement cinéma / audiovisuel).&#10;&#10;Saisir le montant de la réduction.&#10;Bénéficie du plafond majoré : 18 000 €.">i</i>
+              <i class="tip" data-tip="Réduction d'impôt (financement cinéma / audiovisuel).&#10;Art. 199 unvicies CGI · BOI-IR-RICI-180-20.&#10;&#10;Saisir le MONTANT DE LA RÉDUCTION annuelle (pas le versement).&#10;&#10;⚠ DOUBLE PLAFOND DU VERSEMENT :&#10;· 18 000 € absolu&#10;· 25 % du revenu net global&#10;Le plus restrictif des deux s'applique.&#10;&#10;Cap RI MAX (revenu net global ≥ 72 000 €) :&#10;· 30 % standard → RI max 5 400 €&#10;· 36 % engagement production → RI max 6 480 €&#10;· 48 % production indépendante + langue régionale → RI max 8 640 €&#10;&#10;Pour un revenu plus modeste, le cap 25 % RNG réduit ces maxima&#10;(ex : RNG 40 k€ → versement max 10 000 € → RI max 4 800 € à 48 %).&#10;&#10;Panier niches majoré : 18 000 € partagé avec Girardin (poche 2).">i</i>
             </label>
             <input type="number" id="sofica" value="0" min="0">
             <div class="niche-cell">
@@ -860,6 +894,7 @@
       <div class="results-list">
         <div class="res-row"><span class="res-label">Revenu brut global</span><span class="res-val" id="res-rbg">—</span></div>
         <div class="res-row"><span class="res-label">Revenu net imposable</span><span class="res-val" id="res-rni">—</span></div>
+        <div class="res-row"><span class="res-label">Revenu fiscal de référence</span><span class="res-val" id="res-rfr">—</span></div>
         <div class="res-row"><span class="res-label">Nombre de parts</span><span class="res-val" id="res-parts">—</span></div>
         <div class="res-row"><span class="res-label">Quotient familial (R/N)</span><span class="res-val" id="res-qf">—</span></div>
         <div class="res-row separator"></div>
@@ -873,9 +908,11 @@
         <div class="res-row"><span class="res-label">PS dus via avis IR</span><span class="res-val" id="res-ps">—</span></div>
         <div class="res-row"><span class="res-label">CEHR hauts revenus</span><span class="res-val" id="res-cehr">—</span></div>
         <div class="res-row separator"></div>
-        <div class="res-row"><span class="res-label">Total réductions</span><span class="res-val" id="res-reductions">—</span></div>
-        <div class="res-row"><span class="res-label">Total crédits</span><span class="res-val" id="res-credits">—</span></div>
-        <div class="res-row"><span class="res-label">Niches utilisées / plafond</span><span class="res-val" id="res-niches">—</span></div>
+        <div class="res-row"><span class="res-label">Niche 10 000 € (commune)</span><span class="res-val" id="res-poche1">—</span></div>
+        <div class="res-row"><span class="res-label">Supplément niche 18 000 € (Girardin / SOFICA)</span><span class="res-val" id="res-poche2">—</span></div>
+        <div class="res-row" id="res-niches-perdues-row" style="display:none"><span class="res-label">Niches perdues</span><span class="res-val warning" id="res-niches-perdues">—</span></div>
+        <div class="res-row"><span class="res-label">Total réductions retenues</span><span class="res-val" id="res-reductions">—</span></div>
+        <div class="res-row"><span class="res-label">Total crédits retenus</span><span class="res-val" id="res-credits">—</span></div>
         <div class="res-row separator"></div>
         <div class="res-row total-final">
           <span class="res-label">IMPÔT NET</span>
@@ -1021,11 +1058,13 @@
   </div>
 
   <div class="calc-section">
-    <h2>Étape 10 — Plafonnement des niches fiscales</h2>
+    <h2>Étape 10 — Plafonnement des niches fiscales (art. 200-0 A CGI)</h2>
     <table class="calc-table">
-      <tr><td class="td-label"><span class="td-label-inner">Niches utilisées (pondérées) <i class="tip" data-tip="Formule :&#10;Pinel + GirardinPD×44% + GirardinAG×34% + FCPI + Sofica + autres réductions + emploi domicile + garde enfants + autres crédits&#10;&#10;Les dons sont exclus (hors plafond).&#10;Les Girardin sont comptés à leur quote-part réelle dans le plafond.">i</i></span></td><td class="td-val" id="cd-nutil-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">Plafond applicable <i class="tip" data-tip="18 000 € si Girardin PD > 0 ou Girardin AG > 0 ou Sofica > 0&#10;10 000 € sinon">i</i></span></td><td class="td-val" id="cd-nplaf-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">Dépassement du plafond (avantage perdu) <i class="tip" data-tip="Formule : max(0, niches utilisées − plafond)&#10;&#10;Si > 0, une partie des avantages fiscaux est perdue.&#10;Le dépassement est réparti proportionnellement entre réductions et crédits.">i</i></span></td><td class="td-val warn-val" id="cd-ndep-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Niches demandées (panier total) <i class="tip" data-tip="Somme des montants entrant dans le panier niches :&#10;Pinel + GirardinPD×44% + GirardinAG×34% + FCPI + Sofica + autres réductions + emploi domicile + garde enfants + autres crédits&#10;&#10;Hors panier (toujours retenus) : dons, frais scolarité, EHPAD, Malraux, cotisations syndicales.&#10;Les Girardin sont comptés à leur quote-part dans le panier (rétrocession 56/66 % au tiers).">i</i></span></td><td class="td-val" id="cd-nutil-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">↳ Retenu poche 1 (10 000 €) <i class="tip" data-tip="POCHE 1 — 10 000 € accessibles à tous les dispositifs.&#10;Les niches normales (Pinel, FCPI, IR-PME, emploi domicile, etc.) ne peuvent passer QUE par cette poche.&#10;Si la poche 1 sature, le surplus de ces dispositifs est PERDU.">i</i></span></td><td class="td-val" id="cd-npoche1-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">↳ Retenu poche 2 (+8 000 € majoration) <i class="tip" data-tip="POCHE 2 — 8 000 € supplémentaires RÉSERVÉS aux dispositifs Outre-mer / SOFICA.&#10;S'active uniquement quand la poche 1 est saturée.&#10;Alimente : Girardin PD (×44 %), Girardin AG (×34 %), SOFICA (×100 %).">i</i></span></td><td class="td-val" id="cd-npoche2-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Plafond global applicable <i class="tip" data-tip="18 000 € si au moins un dispositif niche18 (Girardin / SOFICA) est utilisé.&#10;10 000 € sinon.">i</i></span></td><td class="td-val" id="cd-nplaf-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Niches perdues (avantage non récupérable) <i class="tip" data-tip="Surplus qui ne tient ni dans la poche 1 ni dans la poche 2.&#10;Cas typique : trop de niches normales (Pinel, FCPI, etc.) sans dispositif Outre-mer/SOFICA pour ouvrir la poche 2.">i</i></span></td><td class="td-val warn-val" id="cd-ndep-val">—</td></tr>
     </table>
   </div>
 
@@ -1066,63 +1105,61 @@
     <span class="preco-budget-suffix">€</span>
   </div>
 
-  <div class="preco-table-wrap">
-    <table class="preco-table">
-      <thead>
-        <tr>
-          <th>Levier</th>
-          <th>Montant à investir / verser</th>
-          <th>Paramètre</th>
-          <th>Avantage estimé</th>
-          <th>Plafond</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="precoRows">
-        <!-- lignes injectées dynamiquement -->
-      </tbody>
+  <div class="preco-layout">
+  <div class="preco-main">
+
+  <!-- ─── LEVIER 1 — Réduire la base imposable ─── -->
+  <div class="preco-section preco-section-l1">
+    <div class="preco-section-header">
+      <h3>Levier 1 — Réduire la base imposable</h3>
+      <p class="preco-section-desc">Déduit du revenu imposable. Économie ≈ versement × TMI.</p>
+    </div>
+    <table class="preco-table preco-table-section">
+      <thead><tr><th>Dispositif</th><th>Montant</th><th>Paramètre</th><th>Économie</th><th>Plafond individuel</th><th></th></tr></thead>
+      <tbody id="precoExistingL1" class="preco-tbody-existing"></tbody>
+      <tbody id="precoRowsL1"></tbody>
     </table>
-    <button type="button" id="precoAddBtn" class="preco-add-btn">+ Ajouter un levier</button>
+    <div class="preco-section-warnings" id="precoWarningsL1"></div>
+    <button type="button" class="preco-add-btn" data-add-levier="1">+ Ajouter un dispositif Levier 1</button>
   </div>
 
-  <div class="preco-jauges">
-    <h3>Indicateurs</h3>
-    <div class="preco-jauge-row">
-      <div class="preco-jauge-label">Budget alloué</div>
-      <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugeBudgetFill"></div></div>
-      <div class="preco-jauge-val" id="jaugeBudgetVal">— / —</div>
-    </div>
-    <div class="preco-jauge-row">
-      <div class="preco-jauge-label">
-        Plafond niches global
-        <i class="tip tip-down" data-tip="Plafond global des niches fiscales (art. 200-0 A CGI) :&#10;&#10;· DROIT COMMUN : 10 000 €/an pour TOUS les dispositifs (Pinel, FCPI, IR-PME, GFI, emploi domicile, garde enfants, etc.)&#10;&#10;· PLAFOND MAJORÉ : +8 000 € supplémentaires (= 18 000 €) si le foyer a au moins un dispositif Outre-mer (Girardin) ou SOFICA. La tranche 10–18 k€ est en théorie réservée à ces dispositifs majorés.&#10;&#10;⚠ Limitation du simulateur : dès qu'un dispositif Girardin/SOFICA est présent, TOUTES les niches bénéficient du plafond 18 k€ (simplification). En théorie strict, un Pinel/FCPI > 10 k€ ne devrait pas profiter du bonus 8 k€ réservé OM/SOFICA. Sur-estimation rare en pratique.">i</i>
+  <!-- ─── LEVIER 2 — Réductions d'impôt ─── -->
+  <div class="preco-section preco-section-l2">
+    <div class="preco-section-header preco-section-header-l2">
+      <div>
+        <h3>Levier 2 — Réductions d'impôt</h3>
+        <p class="preco-section-desc">Perdues si IR = 0 (≠ crédits). 2 poches : 10 000 € commune + 8 000 € Girardin/SOFICA.</p>
       </div>
-      <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugeNichesFill"></div></div>
-      <div class="preco-jauge-val" id="jaugeNichesVal">— / —</div>
-    </div>
-    <div class="preco-jauge-row preco-jauge-bonus" id="jaugeBonusRow" style="display:none">
-      <div class="preco-jauge-label preco-jauge-bonus-label">
-        🎁 Bonus +8 000 € OM/SOFICA actif
-      </div>
-      <div class="preco-jauge-bonus-detail" id="jaugeBonusDetail">
-        Plafond porté à 18 000 € grâce à la présence d'un dispositif Girardin ou SOFICA.
+      <div class="preco-section-indic" aria-label="Impôt à effacer côté Levier 2">
+        <span class="preco-section-indic-label">Impôt effacé</span>
+        <div class="preco-section-indic-bar"><div class="preco-section-indic-fill" id="indicL2Fill"></div></div>
+        <span class="preco-section-indic-val" id="indicL2Val">— / —</span>
       </div>
     </div>
-    <div class="preco-jauge-row">
-      <div class="preco-jauge-label">Plafond PER</div>
-      <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugePerFill"></div></div>
-      <div class="preco-jauge-val" id="jaugePerVal">— / —</div>
-    </div>
-    <div class="preco-jauge-row">
-      <div class="preco-jauge-label">Plafond dons (20 % RNI)</div>
-      <div class="preco-jauge-bar"><div class="preco-jauge-fill" id="jaugeDonsFill"></div></div>
-      <div class="preco-jauge-val" id="jaugeDonsVal">— / —</div>
-    </div>
-    <div class="preco-jauge-row preco-jauge-economie">
-      <div class="preco-jauge-label">Économie d'impôt totale</div>
-      <div class="preco-jauge-economie-val" id="jaugeEconomieVal">—</div>
-    </div>
+    <table class="preco-table preco-table-section">
+      <thead><tr><th>Dispositif</th><th>Montant</th><th>Paramètre</th><th>RI</th><th>Plafond individuel</th><th></th></tr></thead>
+      <tbody id="precoExistingL2" class="preco-tbody-existing"></tbody>
+      <tbody id="precoRowsL2"></tbody>
+    </table>
+    <div class="preco-section-warnings" id="precoWarningsL2"></div>
+    <button type="button" class="preco-add-btn" data-add-levier="2">+ Ajouter une réduction d'impôt</button>
   </div>
+
+  <!-- ─── LEVIER 3 — Crédits d'impôt ─── -->
+  <div class="preco-section preco-section-l3">
+    <div class="preco-section-header">
+      <h3>Levier 3 — Crédits d'impôt</h3>
+      <p class="preco-section-desc">Remboursés même si IR = 0 — un crédit n'est jamais perdu.</p>
+    </div>
+    <table class="preco-table preco-table-section">
+      <thead><tr><th>Dispositif</th><th>Montant</th><th>Paramètre</th><th>Crédit</th><th>Plafond individuel</th><th></th></tr></thead>
+      <tbody id="precoExistingL3" class="preco-tbody-existing"></tbody>
+      <tbody id="precoRowsL3"></tbody>
+    </table>
+    <div class="preco-section-warnings" id="precoWarningsL3"></div>
+    <button type="button" class="preco-add-btn" data-add-levier="3">+ Ajouter un crédit d'impôt</button>
+  </div>
+
 
   <div class="preco-comparison">
     <h3>Comparaison Actuelle / Projetée</h3>
@@ -1146,6 +1183,66 @@
       </tbody>
     </table>
   </div>
+
+  </div><!-- /.preco-main -->
+
+  <aside class="preco-sidebar" id="precoSidebar" aria-label="Récapitulatif d'évolution de l'impôt">
+    <h4>Évolution de l'impôt</h4>
+    <div class="recap-line">
+      <span class="recap-label">Actuel</span>
+      <span class="recap-val" id="recapInit">—</span>
+    </div>
+    <div class="recap-line">
+      <span class="recap-label">après L1</span>
+      <span class="recap-val" id="recapL1">—</span>
+    </div>
+    <div class="recap-line">
+      <span class="recap-label">après L2</span>
+      <span class="recap-val" id="recapL2">—</span>
+    </div>
+    <div class="recap-line" id="recapPsRow" style="display:none">
+      <span class="recap-label">+ Prélèvements sociaux</span>
+      <span class="recap-val" id="recapPs">—</span>
+    </div>
+    <div class="recap-line recap-final">
+      <span class="recap-label">Final</span>
+      <span class="recap-val" id="recapFinal">—</span>
+    </div>
+    <div class="recap-line recap-eco">
+      <span class="recap-label">Économie</span>
+      <span class="recap-val" id="recapEco">—</span>
+    </div>
+    <p class="recap-conclusion" id="recapConclusion">—</p>
+
+    <h4 class="recap-divider">Indicateurs</h4>
+    <div class="recap-jauge">
+      <span class="recap-jauge-label">Budget alloué</span>
+      <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugeBudgetFill"></div></div>
+      <span class="recap-jauge-val" id="jaugeBudgetVal">— / —</span>
+    </div>
+    <div class="recap-jauge">
+      <span class="recap-jauge-label">Plafond PER</span>
+      <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugePerFill"></div></div>
+      <span class="recap-jauge-val" id="jaugePerVal">— / —</span>
+    </div>
+    <div class="recap-jauge">
+      <span class="recap-jauge-label">Dons (20 % RNI)</span>
+      <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugeDonsFill"></div></div>
+      <span class="recap-jauge-val" id="jaugeDonsVal">— / —</span>
+    </div>
+    <div class="recap-jauge" title="Cap 10 000 € — toutes les réductions et crédits dans le panier niches (hors Girardin et SOFICA qui ouvrent une 2e poche).&#10;Comprend : Pinel, FCPI, FIP, IR-PME, GFI, Loc'Avantages, emploi à domicile, garde enfants, autres réductions et crédits.&#10;Exclus : dons, EHPAD, Malraux, cotisations syndicales (hors plafond niches).">
+      <span class="recap-jauge-label">Plafond niches normales</span>
+      <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugePoche1Fill"></div></div>
+      <span class="recap-jauge-val" id="jaugePoche1Val">— / 10 000 €</span>
+    </div>
+    <div class="recap-jauge" title="Cap 18 000 € — total du panier majoré.&#10;Le supplément de 8 000 € (au-dessus de 10 000 €) est RÉSERVÉ aux dispositifs Outre-mer (Girardin, quote-part 44/34 %) et SOFICA.&#10;Permet de cumuler jusqu'à 18 000 € si on combine niches normales + Girardin/SOFICA.">
+      <span class="recap-jauge-label">Plafond majoré (avec Girardin/SOFICA)</span>
+      <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugePoche2Fill"></div></div>
+      <span class="recap-jauge-val" id="jaugePoche2Val">— / 18 000 €</span>
+    </div>
+  </aside>
+
+  </div><!-- /.preco-layout -->
 
 </div>
 

@@ -59,6 +59,7 @@ function getInputs() {
     foncierReel:  v('foncierReel'),
     meubleClasse: v('meubleClasse'),
     meubleNonClasse: v('meubleNonClasse'),
+    autresMeubles: v('autresMeubles'),
     jeanbrunAmort:    v('jeanbrunAmort'),
     jeanbrunCategorie: v('jeanbrunCategorie'),
     dividendes:   v('dividendes'),
@@ -97,8 +98,12 @@ function getInputs() {
     fipCorse:        v('fipCorse'),
     gfi:             v('gfi'),
     irPme:           v('irPme'),
-    malraux:         v('malraux'),
-    locAvantages:    v('locAvantages'),
+    malraux:          v('malraux'),  // legacy (RI directe) — UI n'expose plus ce champ
+    malrauxTravaux:   v('malrauxTravaux'),
+    malrauxZone:      document.getElementById('malrauxZone')?.value || 'spr-non',
+    locAvantages:    v('locAvantages'),  // legacy (RI directe) — UI n'expose plus ce champ, conservé pour rétro-compat
+    locAvantagesDepenses: v('locAvantagesDepenses'),
+    locAvantagesPalier:   document.getElementById('locAvantagesPalier')?.value || 'loc1',
     sofica:          v('sofica'),
     autresReductions: v('autresReductions'),
     autresCredits:   v('autresCredits'),
@@ -135,6 +140,7 @@ function updateResults(d) {
 
   set('res-rbg',         fmt(d.revenuBrutGlobal));
   set('res-rni',         fmt(d.revenuNetImposable));
+  set('res-rfr',         fmt(d.revenuReference));
   set('res-parts',       fmtParts(d.parts));
   set('res-qf',          fmt(d.quotientFamilial));
   set('res-impot-brut',  fmt(d.impotBrut));
@@ -145,16 +151,24 @@ function updateResults(d) {
   set('res-ir-mob',      fmt(d.irMobilier));
   set('res-ps',          fmt(d.psRole));
   set('res-cehr',        fmt(d.cehr));
-  set('res-reductions',  fmt(d.totalReductions));
-  set('res-credits',     fmt(d.totalCredits));
+  // Totaux RETENUS (effectivement déduits de l'impôt), pas les bruts.
+  set('res-reductions',  fmt(d.reductionsAppliquees));
+  set('res-credits',     fmt(d.creditsAppliques));
   // Plafond PER live (sous le champ de saisie)
   set('per-cap-live',    fmt(d.perCap));
 
-  // Niches : affichage "X € / Y €"
-  const nichesEl = document.getElementById('res-niches');
-  if (nichesEl) {
-    nichesEl.textContent = fmt(d.nichesUtilisees) + ' / ' + fmt(d.plafondNiches);
-    nichesEl.classList.toggle('warning', d.depassementNiches > 0);
+  // Niches : 2 lignes claires (poche commune + supplément majorée)
+  set('res-poche1', fmt(d.poche1Utilisee || 0) + ' / 10 000 €');
+  set('res-poche2', fmt(d.poche2Utilisee || 0) + ' / 8 000 €');
+  // Ligne "niches perdues" affichée seulement si > 0
+  const perduesRow = document.getElementById('res-niches-perdues-row');
+  if (perduesRow) {
+    if ((d.nichesPerdues || 0) > 0) {
+      perduesRow.style.display = '';
+      set('res-niches-perdues', '− ' + fmt(d.nichesPerdues));
+    } else {
+      perduesRow.style.display = 'none';
+    }
   }
 
   const impotNetEl = document.getElementById('res-impot-net');
@@ -180,8 +194,9 @@ function updateCalcDetaille(d) {
     ['cd-bncr',    'BNC réel',                                   d.bncReel,           ''],
     ['cd-mfon',    'Micro-foncier (après abat. 30%)',            d.microFoncierNet,   ''],
     ['cd-fon',     'Foncier réel (après Jeanbrun et plafond déficit)', d.foncierReel, ''],
-    ['cd-mbc',     'Meublé classé (après abat. 50%)',            d.meubleClasseNet,   ''],
-    ['cd-mbnc',    'Meublé non classé (après abat. 30%)',        d.meubleNonClasseNet,''],
+    ['cd-mbc',     'Meublé tourisme classé / chambres d\'hôtes (après abat. 50%)', d.meubleClasseNet,    ''],
+    ['cd-mbnc',    'Meublé tourisme non classé (après abat. 30%)',                 d.meubleNonClasseNet, ''],
+    ['cd-mbau',    'Autres locations meublées (après abat. 50%)',                  d.autresMeublesNet,   ''],
     ['cd-div',     'Dividendes intégrés au barème',              d.dividendesBareme,  'Abat. 40% si barème · 0 si PFU'],
     ['cd-int',     'Intérêts (2TR) intégrés au barème',          d.interetsBareme,    'Sans abat. si barème · 0 si PFU'],
     ['cd-pv',      'Plus-values intégrées au barème',            d.pvBareme,          ''],
@@ -217,13 +232,13 @@ function updateCalcDetaille(d) {
     ['cd-irav',    '▶ IR sur produits AV (7,5 % et 12,8 %)',     d.irAV,              'total'],
     ['cd-pfnlav',  '− PFNL prélevé à la source par la banque',   d.pfnlAV,            'av75 × 7,5% + av128 × 12,8% (crédit auto)'],
     // Étape 7 — PS
-    ['cd-psdiv',   'PS dividendes (18,6 %) — prélevés source',   d.psDividendes,      'Acquittés par la banque, exclus de l\'avis IR'],
-    ['cd-psint',   'PS intérêts (18,6 %) — prélevés source',     d.psInterets,        'Acquittés par la banque, exclus de l\'avis IR'],
-    ['cd-psav',    'PS sur produits AV (17,2 %) — prélevés source', d.psAV,           'Acquittés par l\'assureur, exclus de l\'avis IR'],
-    ['cd-pssrc',   '▶ Sous-total PS prélevés à la source',       d.psSource,          'INFO — n\'entre pas dans l\'impôt à payer'],
+    ['cd-psdiv',   'PS dividendes (18,6 %) — voie de rôle',      d.psDividendes,      'Le PFNL bancaire (2CK) ne couvre que l\'IR, pas les PS'],
+    ['cd-psint',   'PS intérêts (18,6 %) — voie de rôle',        d.psInterets,        'Le PFNL bancaire (2CK) ne couvre que l\'IR, pas les PS'],
     ['cd-pspv',    'PS plus-values mobilières (18,6 %) — voie de rôle', d.psPV,       'À payer via avis IR'],
-    ['cd-psfon',   'PS foncier (17,2 %) — voie de rôle',         d.psFoncier,         'À payer via avis IR'],
+    ['cd-psfon',   'PS foncier (18,6 %) — voie de rôle',         d.psFoncier,         'À payer via avis IR'],
     ['cd-psrol',   '▶ Sous-total PS dus via avis IR',            d.psRole,            'total'],
+    ['cd-psav',    'PS sur produits AV (17,2 %) — prélevés source', d.psAV,           'Libératoires : auto-imputés par le simulateur officiel'],
+    ['cd-pssrc',   '▶ Sous-total PS prélevés à la source',       d.psSource,          'INFO — n\'entre pas dans l\'impôt à payer'],
     ['cd-tps',     '▶ TOTAL PS (charge fiscale globale)',        d.totalPS,           'source + avis'],
     // Étape 8 — Réductions
     ['cd-rdons',     'Dons 7UD/7UF (75 % puis 66 %) — HORS NICHE', d.redDons,         ''],
@@ -249,9 +264,11 @@ function updateCalcDetaille(d) {
     ['cd-csynd',   'Cotisations syndicales 7AC (66 %) — HORS NICHE', d.credSyndic,    ''],
     ['cd-tcrd',    '▶ TOTAL CRÉDITS',                             d.totalCredits + (d.credSyndic||0), 'total'],
     // Étape 10
-    ['cd-nutil',   'Niches utilisées (pondérées)',                d.nichesUtilisees,   'GirPD ×44%, GirAG ×34%'],
-    ['cd-nplaf',   'Plafond applicable',                          d.plafondNiches,     d.depassementNiches > 0 ? '⚠ DÉPASSÉ' : 'OK'],
-    ['cd-ndep',    'Dépassement du plafond',                     d.depassementNiches, ''],
+    ['cd-nutil',   'Niches demandées (panier total)',             d.nichesUtilisees,   'GirPD ×44%, GirAG ×34%, SOFICA ×1'],
+    ['cd-npoche1', '↳ Retenu poche 1 (10 000 € — tous)',          d.poche1Utilisee,    ''],
+    ['cd-npoche2', '↳ Retenu poche 2 (+8 000 € — Girardin/SOFICA)', d.poche2Utilisee,  ''],
+    ['cd-nplaf',   'Plafond global applicable',                   d.plafondNiches,     ''],
+    ['cd-ndep',    'Niches perdues (au-delà des poches)',         d.nichesPerdues,     d.nichesPerdues > 0 ? '⚠ avantage non récupérable' : ''],
     // Étape 11
     ['cd-apd',     'Impôt après décote',                         d.impotApresDecote,  ''],
     ['cd-irm2',    '+ IR mobilier (PFU sur div/intérêts/PV)',     d.irMobilier,        ''],
@@ -259,7 +276,7 @@ function updateCalcDetaille(d) {
     ['cd-rapp',    '− Réductions appliquées',                     d.reductionsAppliquees, 'plafonnées à l\'impôt et aux niches'],
     ['cd-capp',    '− Crédits appliqués (niches)',                d.creditsAppliques,  ''],
     ['cd-csynd2',  '− Crédit cotisations syndicales (hors niches)', d.credSyndic,      ''],
-    ['cd-ps2',     '+ PS dus via avis IR (PV mob + foncier)',     d.psRole,            'PS source exclus, déjà acquittés'],
+    ['cd-ps2',     '+ PS dus via avis IR (RCM + PV mob + foncier)', d.psRole,         'PS AV exclus (libératoires), 2CK ne couvre que l\'IR'],
     ['cd-pfnl2',   '− PFNL déjà versé (acompte 2CK)',             d.pfnlVerse,         'crédit hors niches, remboursable'],
     ['cd-pfnlav2', '− PFNL AV prélevé à la source',               d.pfnlAV,            'crédit auto sur produits 2CH/2VV/2WW'],
     ['cd-cehr2',   '+ CEHR (contribution hauts revenus)',         d.cehr,              d.cehr > 0 ? 'art. 223 sexies CGI' : '—'],
@@ -295,7 +312,7 @@ function getInputsSimple() {
     bncMicro2:    0,
     bncReel1:     0, bncReel2:       0,
     microFoncier: 0, foncierReel:    0,
-    meubleClasse: 0, meubleNonClasse: 0,
+    meubleClasse: 0, meubleNonClasse: 0, autresMeubles: 0,
     dividendes:   v('s-dividendes'),
     pv:           0,
     autresRevenus: 0,
@@ -408,6 +425,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Préconisations : init + listeners
   initPreconisations();
 
+  // Dev toolbar : bouton "Charger cas démo" + "Vider" — temporaire, à retirer.
+  initDevToolbar();
+
   // Premiers calculs
   recalculer();
   recalculerSimple();
@@ -416,6 +436,253 @@ document.addEventListener('DOMContentLoaded', () => {
 // ─────────────────────────────────────────────
 // PRÉCONISATIONS — bridge UI/moteur
 // ─────────────────────────────────────────────
+// Petite pastille indiquant la catégorie d'un dispositif (Niche 10k /
+// Niche 18k / Hors niches / Foncier). Texte coloré subtilement, fond
+// uniforme gris clair — discret pour ne pas surcharger.
+function renderCatBadge(cat) {
+  const labels = {
+    niche10: 'Niche 10k',
+    niche18: 'Niche 18k',
+    hors:    'Hors niches',
+    foncier: 'Foncier',
+  };
+  const label = labels[cat];
+  if (!label) return '';
+  return ` <span class="preco-cat-badge preco-cat-${cat}">${label}</span>`;
+}
+
+// Pastille indiquant le sort de l'EXCÉDENT (= ce qui dépasse l'impôt ou le
+// plafond) pour ce dispositif : perdu ? reportable N années ? remboursé ?
+// Affichée à côté du badge de catégorie sur chaque ligne.
+function renderNaturePastille(lev) {
+  if (!lev) return '';
+  const reportables = {
+    per:           'Reportable 3 ans',
+    deficitFoncier:'Reportable 10 ans (foncier)',
+    girardinPD:    'Reportable 5 ans',
+    girardinAG:    'Reportable 5 ans',
+    irPme:         'Reportable 4 ans',
+    dons7UD:       'Reportable 5 ans',
+    dons7UF:       'Reportable 5 ans',
+  };
+  if (reportables[lev.id]) {
+    return ` <span class="preco-cat-badge preco-nat-rep">${reportables[lev.id]}</span>`;
+  }
+  if (lev.levier === 2) {
+    return ` <span class="preco-cat-badge preco-nat-perdu">Perdu si dépassement</span>`;
+  }
+  if (lev.levier === 3) {
+    return ` <span class="preco-cat-badge preco-nat-rembours">Remboursable</span>`;
+  }
+  return '';
+}
+
+// Quel pourcentage d'1 € saisi dans la ligne préco entre dans le panier
+// niches ? Dépend du mode du levier :
+//   - 'taux'         : lev.taux       (FCPI 30 %, IR-PME 25 %, etc.)
+//   - 'taux-variable': option.taux    (SOFICA 30/36/48 %, Loc'Av legacy…)
+//   - 'taux-libre'   : rendement × quote-part   (Girardin PD/AG)
+//   - 'versement-direct' avec quote-part 1 : ratio = 1
+// Utilisé par computeMaxForLevier pour ne pas surévaluer le max.
+function panierRatioParInput(lev, paramValue) {
+  if (lev.id === 'girardinPD') {
+    const r = parseFloat(paramValue) || lev.rendementDefaut || 1.10;
+    return r * 0.44;
+  }
+  if (lev.id === 'girardinAG') {
+    const r = parseFloat(paramValue) || lev.rendementDefaut || 1.08;
+    return r * 0.34;
+  }
+  if (lev.mode === 'taux') return lev.taux || 1;
+  if (lev.mode === 'taux-variable' && lev.params && paramValue) {
+    const opt = lev.params[0].options.find(o => o.value === paramValue);
+    if (opt && opt.taux) return opt.taux;
+  }
+  return 1; // mode versement-direct : la saisie est = à la valeur de panier
+}
+
+// Calcule le maximum saisissable pour un dispositif sur une ligne préco,
+// en combinant TROIS plafonds (on retient le plus restrictif) :
+//   1. Plafond individuel propre au dispositif (et cumul avec l'existant
+//      déjà saisi dans le Simulateur)
+//   2. Place encore disponible dans le panier niches (poche 1 + poche 2
+//      pour les cat. niche10/niche18). Pour Girardin sans cap individuel,
+//      c'est SOUVENT cette contrainte qui domine.
+//   3. Impôt restant à effacer côté Levier 2 : au-delà la réduction est
+//      perdue (Pinel/FCPI/SOFICA/Malraux) ou reportable (Girardin/IR-PME/
+//      dons > 20 % RNI) selon le dispositif.
+// Retourne null si l'algo ne peut absolument rien chiffrer (devrait être
+// rare avec cette refonte — Girardin tombe désormais sur la poche niches).
+function computeMaxForLevier(lev, inputAvant, paramValue, detAvant, isCouple) {
+  const existant = inputAvant[lev.inputKey] || 0;
+  const POS = (v) => Math.max(0, v);
+
+  // ─── 1. Plafond individuel du dispositif ─────────────────────────────
+  let maxIndiv = Infinity;
+  if (lev.id === 'per') {
+    maxIndiv = POS((detAvant.perCap || 0) - existant);
+  } else if (lev.id === 'ehpad') {
+    maxIndiv = POS(10000 * Math.max(1, inputAvant.ehpadNbPers || 1) - existant);
+  } else if (lev.id === 'emploiDom') {
+    maxIndiv = POS(12000 - existant);
+  } else if (lev.id === 'gardeEnf') {
+    maxIndiv = POS(3500 * Math.max(1, inputAvant.nbEnfants || 1) - existant);
+  } else if (lev.id === 'syndic') {
+    const baseMax = ((inputAvant.sal1 || 0) + (inputAvant.sal2 || 0)
+      + (inputAvant.allocChomage1 || 0) + (inputAvant.allocChomage2 || 0)
+      + (inputAvant.pen1 || 0) + (inputAvant.pen2 || 0)) * 0.01;
+    maxIndiv = POS(baseMax - existant);
+  } else if (lev.id === 'dons7UD') {
+    maxIndiv = POS(2000 - existant);
+  } else if (lev.id === 'dons7UF') {
+    const cap = (detAvant.revenuNetImposable || 0) * 0.20;
+    const dejaUtilise = (inputAvant.dons7UD || 0) + (inputAvant.dons || 0);
+    maxIndiv = POS(cap - dejaUtilise);
+  } else if (lev.id === 'deficitFoncier') {
+    // Cap = 10 700 € d'imputation RG − déficit foncier déjà existant
+    // (valeur positive du déficit = −min(0, foncierReel)).
+    const deficitExistant = -Math.min(0, inputAvant.foncierReel || 0);
+    maxIndiv = POS(10000 + 700 - deficitExistant);
+  } else if (lev.mode === 'jeanbrun') {
+    const opt = lev.params[0].options.find(o => o.value === paramValue);
+    const cap = opt ? opt.plafond : 8000;
+    maxIndiv = POS(cap - existant);
+  } else if (typeof PARAMS !== 'undefined' && PARAMS.plafondsDispositifs && PARAMS.plafondsDispositifs[lev.id]) {
+    const cfg = PARAMS.plafondsDispositifs[lev.id];
+    if (cfg.versementMax !== undefined) {
+      const vMax = isCouple && cfg.versementMaxCouple !== undefined
+        ? cfg.versementMaxCouple : cfg.versementMax;
+      maxIndiv = POS(vMax - existant);
+    } else if (cfg.depensesMax !== undefined) {
+      maxIndiv = POS(cfg.depensesMax - existant);
+    } else if (cfg.depensesParAnMax !== undefined) {
+      maxIndiv = POS(cfg.depensesParAnMax - existant);
+    }
+    // Girardin : cfg n'a ni versementMax ni depensesMax → maxIndiv reste à Infinity
+  }
+
+  // ─── 2. Place restante dans le panier niches ─────────────────────────
+  // Calculer la VRAIE marge pour le dispositif :
+  //   - niche10 cap = 10 000 € − (niche10 déjà demandé) → les niche18 déjà
+  //     présents dans la poche 1 peuvent basculer en poche 2 pour libérer
+  //     la place. La contrainte est donc le total niche10, pas le total
+  //     panier 1.
+  //   - niche18 cap = 18 000 € − (niche10 + niche18 demandés) → bornée par
+  //     la somme du panier total (poche 1 + poche 2 = 18 000).
+  // Ratio saisie→panier (selon mode) appliqué pour convertir en max saisi.
+  let maxNiches = Infinity;
+  if (lev.cat === 'niche10' || lev.cat === 'niche18') {
+    const ratio = panierRatioParInput(lev, paramValue);
+    const ri10 = detAvant.ri10Panier || 0;
+    const ri18 = detAvant.ri18Panier || 0;
+    const panierDispo = (lev.cat === 'niche10')
+      ? POS(10000 - ri10)            // marge propre niche10
+      : POS(18000 - ri10 - ri18);    // marge totale niche18 (panier 1+2)
+    maxNiches = ratio > 0 ? panierDispo / ratio : panierDispo;
+  }
+  // cat 'hors' / 'foncier' : pas de cap niches → reste Infinity.
+
+  // ─── 3. Impôt restant à effacer (Levier 2 uniquement) ────────────────
+  // L'impôt restant = impôt après application des RI déjà actives dans le
+  // contexte (autres préco L2 + existant Simulateur). Le bouton max ne
+  // propose jamais une valeur qui ferait basculer en surdimensionnement
+  // (RI perdue ou reportable).
+  let maxUtile = Infinity;
+  if (lev.levier === 2) {
+    const impotRestant = POS(
+      (detAvant.impotApresDecote || 0)
+      + (detAvant.irMobilier || 0)
+      - (detAvant.reductionsAppliquees || 0)
+    );
+    // Taux applicable selon le mode du levier (pour convertir impôt → saisie)
+    let tauxRi = null;
+    if (lev.mode === 'taux') {
+      tauxRi = lev.taux;
+    } else if (lev.mode === 'taux-variable' && lev.params && paramValue) {
+      const opt = lev.params[0].options.find(o => o.value === paramValue);
+      if (opt && opt.taux) tauxRi = opt.taux;
+    } else if (lev.mode === 'taux-libre') {
+      tauxRi = parseFloat(paramValue) || lev.rendementDefaut || 1.10;
+    } else {
+      // versement-direct : taux selon dispositif
+      const tauxMap = {
+        dons7UD: 0.75, dons7UF: 0.66, ehpad: 0.25,
+      };
+      tauxRi = tauxMap[lev.id] || null;
+      // Malraux et Loc'Avantages en mode versement-direct avec paramKey
+      if (lev.id === 'malraux' && paramValue) {
+        tauxRi = (paramValue === 'spr-oui') ? 0.30 : 0.22;
+      }
+      if (lev.id === 'locAvantages' && paramValue) {
+        const m = { loc1: 0.15, loc2: 0.35, loc3: 0.65 };
+        tauxRi = m[paramValue] || 0.15;
+      }
+    }
+    if (tauxRi !== null && tauxRi > 0) {
+      maxUtile = impotRestant / tauxRi;
+    }
+  }
+
+  const result = Math.min(maxIndiv, maxNiches, maxUtile);
+  return isFinite(result) ? result : null;
+}
+
+// ─────────────────────────────────────────────
+// DEV TOOLBAR — bouton "Charger cas démo" + "Vider"
+// Temporaire pour faciliter le test manuel. À retirer avant prod.
+// ─────────────────────────────────────────────
+const DEMO_CASE = {
+  // Foyer : couple marié 2 enfants
+  situation: 'marie-pacse',
+  nbEnfants: 2,
+  // Salaires
+  sal1: 150000,
+  sal2: 80000,
+  // Levier 1 — base imposable
+  per: 10000,
+  // Levier 2 — quelques réductions pour avoir de la matière
+  girardinPD: 3000,
+  sofica: 5000,
+  dons: 1000,
+  ehpadFrais: 4000,
+  // Levier 3 — crédits d'impôt
+  gardeEnfants: 6000,
+  emploiDomicile: 7000,
+  // Revenus mobiliers + foncier pour tester PS et niches
+  dividendes: 5000,
+  microFoncier: 3000,
+};
+
+function initDevToolbar() {
+  const btnLoad = document.getElementById('btnLoadDemo');
+  const btnReset = document.getElementById('btnResetInputs');
+  if (btnLoad) {
+    btnLoad.addEventListener('click', () => {
+      Object.entries(DEMO_CASE).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      });
+      recalculer();
+    });
+  }
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      // Reset = remettre tous les inputs numériques du Simulateur à 0
+      // et les selects à leur 1ère option.
+      document.querySelectorAll('#simulateur input[type="number"]').forEach(el => {
+        el.value = el.defaultValue || 0;
+      });
+      document.querySelectorAll('#simulateur select').forEach(el => {
+        if (el.options.length) el.selectedIndex = 0;
+      });
+      document.querySelectorAll('#simulateur input[type="checkbox"]').forEach(el => {
+        el.checked = false;
+      });
+      recalculer();
+    });
+  }
+}
+
 function initPreconisations() {
   if (typeof window.PRECONISATIONS === 'undefined') return;
   const budgetInput = document.getElementById('precoBudget');
@@ -425,36 +692,46 @@ function initPreconisations() {
       refreshPreconisationsCalculs();
     });
   }
-  const addBtn = document.getElementById('precoAddBtn');
-  if (addBtn) {
-    addBtn.addEventListener('click', () => {
-      window.PRECONISATIONS.addLever();
+  // 3 boutons "+ Ajouter" — un par levier (data-add-levier)
+  document.querySelectorAll('[data-add-levier]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lvl = parseInt(btn.dataset.addLevier, 10);
+      window.PRECONISATIONS.addLever({ assignedLevier: lvl });
       renderPreconisations();
     });
-  }
+  });
 }
 
-// Render structurel : recrée toutes les lignes du tableau.
+// Render structurel : recrée toutes les lignes des 3 sections.
 // Appelé seulement à add/remove/changement de levier (sinon perte du focus input).
 function renderPreconisations() {
   if (typeof window.PRECONISATIONS === 'undefined') return;
   const P = window.PRECONISATIONS;
-  const tbody = document.getElementById('precoRows');
-  if (!tbody) return;
+  // 3 tbody, un par levier
+  const tbodies = {
+    1: document.getElementById('precoRowsL1'),
+    2: document.getElementById('precoRowsL2'),
+    3: document.getElementById('precoRowsL3'),
+  };
+  if (!tbodies[1] || !tbodies[2] || !tbodies[3]) return;
+  Object.values(tbodies).forEach(t => { t.innerHTML = ''; });
 
   const state = P.getState();
-  tbody.innerHTML = '';
   state.preconisations.forEach(p => {
+    const sectionLevier = p.assignedLevier || 2;  // fallback L2 par défaut
+    const tbody = tbodies[sectionLevier];
+    if (!tbody) return;
     const tr = document.createElement('tr');
     tr.dataset.rowId = p.id;
 
-    // Levier select + tooltip info contextuel
+    // Levier select + tooltip info contextuel — FILTRÉ par section
     const tdLev = document.createElement('td');
     tdLev.className = 'preco-lever-cell';
     const sel = document.createElement('select');
     sel.className = 'preco-lever-select';
-    sel.innerHTML = '<option value="">— Choisir un levier —</option>'
-      + groupedLeviersOptions(P.LEVIERS_CATALOGUE);
+    const leviersFiltres = P.LEVIERS_CATALOGUE.filter(l => l.levier === sectionLevier);
+    sel.innerHTML = '<option value="">— Choisir un dispositif —</option>'
+      + leviersFiltres.map(l => `<option value="${l.id}">${l.label}</option>`).join('');
     sel.value = p.leverId;
     sel.addEventListener('change', () => {
       P.updateLever(p.id, 'leverId', sel.value);
@@ -474,11 +751,21 @@ function renderPreconisations() {
       }
       tip.setAttribute('data-tip', tipText);
       tdLev.appendChild(tip);
+      // Pastille catégorie uniquement (Niche 10k / 18k / Hors / Foncier).
+      // Les pastilles "nature" (perdu/reportable) ont été retirées : elles
+      // alourdissaient la lecture et pouvaient induire en erreur (ex :
+      // "Remboursable" sur Emploi à domicile, alors qu'au-delà de 12 000 €
+      // de dépenses le surplus est PERDU, pas remboursé).
+      const wrap = document.createElement('span');
+      wrap.innerHTML = renderCatBadge(levSelected.cat);
+      while (wrap.firstChild) tdLev.appendChild(wrap.firstChild);
     }
     tr.appendChild(tdLev);
 
-    // Montant
+    // Montant + bouton "max" (si calculable)
     const tdMt = document.createElement('td');
+    const wrapMt = document.createElement('div');
+    wrapMt.className = 'preco-montant-wrap';
     const inMt = document.createElement('input');
     inMt.type = 'number';
     inMt.min = 0;
@@ -486,15 +773,94 @@ function renderPreconisations() {
     inMt.className = 'preco-montant-input';
     inMt.addEventListener('input', () => {
       P.updateLever(p.id, 'montant', inMt.value);
-      refreshPreconisationsCalculs();   // Update partiel — préserve le focus de l'input
+      refreshPreconisationsCalculs();
     });
-    tdMt.appendChild(inMt);
+    wrapMt.appendChild(inMt);
+    // Bouton max — visible uniquement si un levier est sélectionné ET qu'on
+    // peut calculer un max (pas applicable à Girardin qui n'a pas de cap propre).
+    const levSel = P.LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
+    if (levSel) {
+      const btnMax = document.createElement('button');
+      btnMax.type = 'button';
+      btnMax.className = 'preco-max-btn';
+      btnMax.textContent = 'max';
+      btnMax.title = 'Remplir avec le maximum disponible (plafond − déjà saisi)';
+      btnMax.addEventListener('click', () => {
+        const ipAv = getInputs();
+        const isC  = ipAv.situation === 'marie-pacse';
+        // Contexte = inputs Simulateur + TOUTES les autres préco actives
+        // (sauf la ligne en cours). Permet au max de tenir compte de ce qui
+        // est déjà saisi ailleurs (panier niches, impôt déjà effacé, etc.).
+        const stateCur = P.getState();
+        const autres = stateCur.preconisations.filter(pp => pp.id !== p.id);
+        const ipCtx = P.appliquerPreconisations(ipAv, autres);
+        const dtCtx = calculerIR(ipCtx);
+        const m = computeMaxForLevier(levSel, ipCtx, p.paramValue, dtCtx, isC);
+        if (m !== null && m > 0) {
+          const rounded = Math.floor(m);
+          inMt.value = rounded;
+          P.updateLever(p.id, 'montant', rounded);
+          refreshPreconisationsCalculs();
+        } else if (m !== null) {
+          // max = 0 → plafond déjà atteint
+          btnMax.textContent = 'atteint';
+          setTimeout(() => { btnMax.textContent = 'max'; }, 1500);
+        } else {
+          // Pas de cap calculable (Girardin)
+          btnMax.textContent = 'n/a';
+          setTimeout(() => { btnMax.textContent = 'max'; }, 1500);
+        }
+      });
+      wrapMt.appendChild(btnMax);
+    }
+    tdMt.appendChild(wrapMt);
     tr.appendChild(tdMt);
 
     // Param additionnel (taux-variable / jeanbrun)
     const tdParam = document.createElement('td');
     const lev = P.LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
-    if (lev && lev.params) {
+    if (lev && lev.mode === 'taux-libre') {
+      // Girardin PD/AG : input numérique de rendement avec boutons ± 0,5 %
+      const wrap = document.createElement('div');
+      wrap.className = 'preco-rendement-wrap';
+      const minus = document.createElement('button');
+      minus.type = 'button';
+      minus.className = 'preco-rendement-btn';
+      minus.textContent = '−';
+      minus.title = `− ${(lev.rendementStep * 100).toFixed(1)} %`;
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.className = 'preco-rendement-input';
+      input.min = (lev.rendementMin * 100).toFixed(1);
+      input.max = (lev.rendementMax * 100).toFixed(1);
+      input.step = (lev.rendementStep * 100).toFixed(1);
+      const cur = (p.paramValue || lev.rendementDefaut) * 100;
+      input.value = cur.toFixed(1);
+      const plus = document.createElement('button');
+      plus.type = 'button';
+      plus.className = 'preco-rendement-btn';
+      plus.textContent = '+';
+      plus.title = `+ ${(lev.rendementStep * 100).toFixed(1)} %`;
+      const suffix = document.createElement('span');
+      suffix.className = 'preco-rendement-suffix';
+      suffix.textContent = '%';
+
+      const apply = (newPct) => {
+        const clamped = Math.max(lev.rendementMin * 100, Math.min(lev.rendementMax * 100, newPct));
+        input.value = clamped.toFixed(1);
+        P.updateLever(p.id, 'paramValue', clamped / 100);
+        refreshPreconisationsCalculs();
+      };
+      minus.addEventListener('click', () => apply(parseFloat(input.value) - lev.rendementStep * 100));
+      plus.addEventListener('click',  () => apply(parseFloat(input.value) + lev.rendementStep * 100));
+      input.addEventListener('input', () => apply(parseFloat(input.value) || (lev.rendementDefaut * 100)));
+
+      wrap.appendChild(minus);
+      wrap.appendChild(input);
+      wrap.appendChild(suffix);
+      wrap.appendChild(plus);
+      tdParam.appendChild(wrap);
+    } else if (lev && lev.params) {
       const psel = document.createElement('select');
       psel.className = 'preco-param-select';
       psel.innerHTML = lev.params[0].options
@@ -546,33 +912,212 @@ function renderPreconisations() {
 function refreshPreconisationsCalculs() {
   if (typeof window.PRECONISATIONS === 'undefined') return;
   const P = window.PRECONISATIONS;
-  const tbody = document.getElementById('precoRows');
-  if (!tbody) return;
+  // 3 tbody (un par levier)
+  const tbodies = {
+    1: document.getElementById('precoRowsL1'),
+    2: document.getElementById('precoRowsL2'),
+    3: document.getElementById('precoRowsL3'),
+  };
+  if (!tbodies[1] || !tbodies[2] || !tbodies[3]) return;
 
   const inputAvant = getInputs();
   const detAvant = calculerIR(inputAvant);
   const state = P.getState();
 
-  // Update des cellules computed dans chaque ligne
+  // Helper : levier (1/2/3) d'une preco via son leverId
+  const levOf = (p) => {
+    const lev = P.LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
+    return lev ? lev.levier : (p.assignedLevier || null);
+  };
+
+  // 4 calculs progressifs pour la barre synthèse :
+  //   detAvant : sans préconisations
+  //   detL1    : avec préco L1 uniquement (déductions revenu)
+  //   detL12   : avec préco L1 + L2 (réductions)
+  //   detApres : avec tout (incluant L3 crédits)
+  const precosL1   = state.preconisations.filter(p => levOf(p) === 1);
+  const precosL12  = state.preconisations.filter(p => levOf(p) <= 2);
+  const detL1    = calculerIR(P.appliquerPreconisations(inputAvant, precosL1));
+  const detL12   = calculerIR(P.appliquerPreconisations(inputAvant, precosL12));
+  const inputApres = P.appliquerPreconisations(inputAvant, state.preconisations);
+  const detApres = calculerIR(inputApres);
+
+  // Récap sticky (sidebar fixe en haut à droite)
+  const setText = (id, txt) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = txt;
+  };
+  setText('recapInit',  fmt(detAvant.impotNet));
+  setText('recapL1',    fmt(detL1.impotNet));
+  setText('recapL2',    fmt(detL12.impotNet));
+  setText('recapFinal', fmt(detApres.impotNet));
+  const eco = detAvant.impotNet - detApres.impotNet;
+  setText('recapEco', eco > 0 ? '− ' + fmt(eco) : fmt(eco));
+
+  // Ligne "PS via avis IR" : s'affiche seulement si > 0. Permet de comprendre
+  // pourquoi le "Final" peut être moins négatif que la somme des crédits L3
+  // (les PS sur dividendes/intérêts/PV mob/foncier viennent en +).
+  const psRoleVal = detApres.psRole || 0;
+  const psRow = document.getElementById('recapPsRow');
+  if (psRow) {
+    if (psRoleVal > 0.5) {
+      psRow.style.display = '';
+      setText('recapPs', '+ ' + fmt(psRoleVal));
+    } else {
+      psRow.style.display = 'none';
+    }
+  }
+
+  // Phrase de conclusion (impôt restant à payer / remboursé / effacé)
+  const conclEl = document.getElementById('recapConclusion');
+  if (conclEl) {
+    const final = detApres.impotNet;
+    if (final > 0.5) {
+      conclEl.textContent = `Il restera ${fmt(final)} à payer.`;
+      conclEl.className = 'recap-conclusion recap-conclusion-due';
+    } else if (final < -0.5) {
+      conclEl.textContent = `L'État vous remboursera ${fmt(-final)}.`;
+      conclEl.className = 'recap-conclusion recap-conclusion-remb';
+    } else {
+      conclEl.textContent = `Impôt entièrement effacé.`;
+      conclEl.className = 'recap-conclusion recap-conclusion-zero';
+    }
+  }
+
+  // Pré-affichage des dispositifs déjà saisis dans le Simulateur, par section
+  renderExistingByLevier(inputAvant, detAvant);
+
+  // Indicateur "Impôt effacé" en haut à droite de la section Levier 2.
+  // Format identique aux autres jauges : numérateur = ce qui est déjà
+  // utilisé/effacé ; dénominateur = capacité totale.
+  //   total       = impôt à effacer initialement (après L1, avant L2)
+  //   effacéParL2 = ce que les RI L2 actives ont déduit (capé au total)
+  const totalAEffacer = Math.max(0,
+    (detL1.impotApresDecote || 0) + (detL1.irMobilier || 0)
+  );
+  const effaceParL2 = Math.min(totalAEffacer, detL12.reductionsAppliquees || 0);
+  const indicValEl = document.getElementById('indicL2Val');
+  const indicFillEl = document.getElementById('indicL2Fill');
+  if (indicValEl) {
+    indicValEl.textContent = fmt(effaceParL2) + ' / ' + fmt(totalAEffacer);
+  }
+  if (indicFillEl) {
+    const pct = totalAEffacer > 0
+      ? Math.min(100, (effaceParL2 / totalAEffacer) * 100)
+      : 0;
+    indicFillEl.style.width = pct + '%';
+  }
+
+  // Jauges des contraintes panier niches (sémantique fiscale réelle) :
+  //   "Niches communes (cap 10 k€)"  = somme RI cat. niche10 demandées
+  //   "Total panier (cap 18 k€)"      = niche10 + niche18 demandés
+  // Plus parlant que "poche 1 / poche 2" qui mélangeait niche10 et niche18
+  // dans la poche 1 et empêchait de voir qu'on pouvait encore ajouter du
+  // niche10 (les niche18 basculent automatiquement en poche 2).
+  setJauge('Poche1', detApres.ri10Panier || 0, 10000);
+  setJauge('Poche2', (detApres.ri10Panier || 0) + (detApres.ri18Panier || 0), 18000);
+
+  // Update des cellules computed dans chaque ligne (toutes sections confondues).
+  // Pour chaque préconisation, on calcule un "delta isolé" = effet de cette préco
+  // SEULE par rapport à l'input simulateur de base. C'est le gain MARGINAL réel
+  // (tient compte des plafonds qui peuvent tronquer le calcul théorique).
   state.preconisations.forEach(p => {
+    const tbody = tbodies[p.assignedLevier || 2];
+    if (!tbody) return;
     const tr = tbody.querySelector(`tr[data-row-id="${p.id}"]`);
     if (!tr) return;
     const tdAv = tr.querySelector('td[data-col="avantage"]');
     const tdPl = tr.querySelector('td[data-col="plafond"]');
+
+    // Calcul isolé de cette préconisation seule, par-dessus l'input Simulateur
+    const lev = P.LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
+    let inputSeul = inputAvant;
+    let detSeul = detAvant;
+    if (lev && p.montant) {
+      inputSeul = P.appliquerPreconisations(inputAvant, [p]);
+      detSeul = calculerIR(inputSeul);
+    }
+    const gainMarginal = detAvant.impotNet - detSeul.impotNet;
+
     if (tdAv) {
-      const av = P.avantageEstime(p, inputAvant);
-      tdAv.textContent = av === null ? '—' : (av > 0 ? '−' + fmt(av) : fmt(0));
+      if (!lev || !p.montant) {
+        tdAv.textContent = '—';
+      } else {
+        // Gain réel : montant d'impôt en moins, en tenant compte des plafonds
+        // et de l'input existant déjà dans le Simulateur.
+        tdAv.textContent = gainMarginal > 0
+          ? '− ' + fmt(gainMarginal)
+          : gainMarginal < 0 ? '+ ' + fmt(-gainMarginal) : fmt(0);
+      }
     }
     if (tdPl) {
-      const ck = P.checkPlafond(p, inputAvant);
+      const ck = P.checkPlafond(p, inputAvant, detSeul, inputSeul);
       tdPl.className = 'preco-plafond ' + (ck.ok ? 'preco-ok' : 'preco-warn');
       tdPl.textContent = ck.ok ? '✓' : '⚠ ' + ck.msg;
     }
   });
 
-  // Recalcul projeté
-  const inputApres = P.appliquerPreconisations(inputAvant, state.preconisations);
-  const detApres = calculerIR(inputApres);
+  // Warnings — bandeaux par section
+  const warnings = P.computeWarnings(detApres);
+  ['L1', 'L2', 'L3'].forEach(s => {
+    const box = document.getElementById('precoWarnings' + s);
+    if (box) box.innerHTML = '';
+  });
+  const boxL2 = document.getElementById('precoWarningsL2');
+
+  warnings.forEach(w => {
+    if (!boxL2) return;
+    if (w.type === 'surdimensionnement') return; // rendu enrichi ci-dessous
+    const chip = document.createElement('div');
+    chip.className = 'preco-warning preco-warning-' + w.level;
+    chip.textContent = (w.level === 'info' ? 'ℹ ' : '⚠ ') + w.message;
+    boxL2.appendChild(chip);
+  });
+
+  // Box "surdimensionnement" enrichie : liste les dispositifs L2 actifs
+  // avec leur statut (perdu / reportable N ans). Source de vérité unique
+  // pour le sort de l'excédent, à la place des pastilles par ligne.
+  const surdim = warnings.find(w => w.type === 'surdimensionnement');
+  if (surdim && boxL2) {
+    const statusByLev = {
+      girardinPD: 'Reportable 5 ans',
+      girardinAG: 'Reportable 5 ans',
+      irPme:      'Reportable 4 ans',
+      dons7UD:    'Reportable 5 ans',
+      dons7UF:    'Reportable 5 ans',
+    };
+    // Récupère les dispositifs L2 actifs (préco + existant Simulateur).
+    const activesIds = new Set();
+    state.preconisations.forEach(p => {
+      const l = P.LEVIERS_CATALOGUE.find(x => x.id === p.leverId);
+      if (l && l.levier === 2 && p.montant > 0) activesIds.add(l.id);
+    });
+    // Existants Simulateur : on regarde tous les L2 avec valeur > 0
+    P.LEVIERS_CATALOGUE.forEach(l => {
+      if (l.levier !== 2) return;
+      const v = (inputAvant[l.inputKey] || 0)
+        || (l.id === 'malraux' ? (inputAvant.malraux || 0) : 0)
+        || (l.id === 'locAvantages' ? (inputAvant.locAvantages || 0) : 0);
+      if (v > 0) activesIds.add(l.id);
+    });
+    const items = [...activesIds].map(id => {
+      const l = P.LEVIERS_CATALOGUE.find(x => x.id === id);
+      return { label: l.label, status: statusByLev[id] || 'Perdu' };
+    });
+    const box = document.createElement('div');
+    box.className = 'preco-warning preco-warning-info preco-warning-surdim';
+    let html = `<div class="surdim-head">ℹ ${surdim.message}</div>`;
+    if (items.length) {
+      html += '<ul class="surdim-list">';
+      items.forEach(it => {
+        const cls = it.status.startsWith('Reportable') ? 'surdim-rep' : 'surdim-perdu';
+        html += `<li><span class="${cls}">${it.status}</span> · ${it.label}</li>`;
+      });
+      html += '</ul>';
+    }
+    box.innerHTML = html;
+    boxL2.appendChild(box);
+  }
 
   // Jauges
   // Budget alloué : ne compte QUE les leviers à cash sortant réel (budget: 'cash').
@@ -584,35 +1129,9 @@ function refreshPreconisationsCalculs() {
     return s + (p.montant || 0);
   }, 0);
   setJauge('Budget', totalAlloue, state.budgetDispo);
-  setJauge('Niches', detApres.nichesUtilisees, detApres.plafondNiches);
-
-  // Affichage conditionnel du bonus 8 k€ OM/SOFICA
-  const bonusRow = document.getElementById('jaugeBonusRow');
-  const bonusDetail = document.getElementById('jaugeBonusDetail');
-  const hasMajore = (inputApres.girardinPD || 0) > 0 || (inputApres.girardinAG || 0) > 0 || (inputApres.sofica || 0) > 0;
-  if (bonusRow) {
-    bonusRow.style.display = hasMajore ? '' : 'none';
-    if (hasMajore && bonusDetail) {
-      const causes = [];
-      if ((inputApres.girardinPD || 0) > 0) causes.push('Girardin Plein Droit');
-      if ((inputApres.girardinAG || 0) > 0) causes.push('Girardin Agrément');
-      if ((inputApres.sofica || 0) > 0) causes.push('SOFICA');
-      bonusDetail.textContent = `Plafond porté à 18 000 € grâce à : ${causes.join(', ')}.`;
-    }
-  }
-  const perTotal = inputApres.per || 0;
-  setJauge('Per', perTotal, detApres.perCap);
+  setJauge('Per', inputApres.per || 0, detApres.perCap);
   const donsTotal = (inputApres.dons7UD || 0) + (inputApres.dons || 0);
-  const donsCap = detApres.revenuNetImposable * 0.20;
-  setJauge('Dons', donsTotal, donsCap);
-
-  // Économie totale
-  const economie = detAvant.impotNet - detApres.impotNet;
-  const ecoEl = document.getElementById('jaugeEconomieVal');
-  if (ecoEl) {
-    ecoEl.textContent = economie > 0 ? '−' + fmt(economie) : fmt(economie);
-    ecoEl.className = 'preco-jauge-economie-val ' + (economie > 0 ? 'preco-economie-pos' : '');
-  }
+  setJauge('Dons', donsTotal, detApres.revenuNetImposable * 0.20);
 
   // Tableau comparatif
   setCmp('rni',   detAvant.revenuNetImposable, detApres.revenuNetImposable);
@@ -630,6 +1149,105 @@ function refreshPreconisationsCalculs() {
   document.getElementById('cmp-tm-pro').textContent = fmtPct(detApres.tauxMoyen);
   document.getElementById('cmp-tmi-act').textContent = fmtPct(detAvant.tmi);
   document.getElementById('cmp-tmi-pro').textContent = fmtPct(detApres.tmi);
+}
+
+// Affiche dans chaque section les dispositifs déjà saisis dans le Simulateur
+// (input > 0), comme des lignes read-only au-dessus du bloc préconisations.
+// Cette fonction reconstruit les tbody "existing" à chaque refresh — pas
+// d'interaction utilisateur sur ces lignes donc pas de souci de focus.
+function renderExistingByLevier(inputAvant, detAvant) {
+  if (typeof window.PRECONISATIONS === 'undefined') return;
+  const P = window.PRECONISATIONS;
+  const tbodies = {
+    1: document.getElementById('precoExistingL1'),
+    2: document.getElementById('precoExistingL2'),
+    3: document.getElementById('precoExistingL3'),
+  };
+  if (!tbodies[1] || !tbodies[2] || !tbodies[3]) return;
+  Object.values(tbodies).forEach(t => { t.innerHTML = ''; });
+
+  // Description des dispositifs : libellé, levier, clé d'input, effet IR
+  // (cherché dans det après application des charges/réductions/crédits) et
+  // paramètre additionnel (palier Loc'Avantages, zone Malraux, etc.).
+  const items = [
+    { id: 'per',         levier: 1, inputKey: 'per',                  label: 'PER',                    effet: () => (detAvant.per || 0) * (detAvant.tmi || 0), param: null },
+    { id: 'jeanbrun',    levier: 1, inputKey: 'jeanbrunAmort',        label: 'Amortissement Jeanbrun', effet: () => null, param: () => inputAvant.jeanbrunCategorie },
+    // Déficit foncier : input.foncierReel < 0 (montant affiché en valeur absolue)
+    { id: 'deficitFoncier', levier: 1, inputKey: '__deficitFoncierVirtuel',
+      label: 'Déficit foncier',
+      // On force val > 0 si foncier négatif
+      effet: () => null, param: null,
+      isDeficit: true },
+    { id: 'dons7UD',     levier: 2, inputKey: 'dons7UD',              label: 'Dons Coluche 75 %',     effet: () => {
+      const v = inputAvant.dons7UD || 0;
+      return Math.min(v, 2000) * 0.75 + Math.max(0, v - 2000) * 0.66;
+    }, param: null },
+    { id: 'dons7UF',     levier: 2, inputKey: 'dons',                 label: 'Dons 66 %',             effet: () => (inputAvant.dons || 0) * 0.66, param: null },
+    { id: 'ehpad',       levier: 2, inputKey: 'ehpadFrais',           label: 'EHPAD',                 effet: () => detAvant.redEhpad, param: null },
+    { id: 'malraux',     levier: 2, inputKey: 'malrauxTravaux',       label: 'Malraux',               effet: () => detAvant.redMalraux, param: () => inputAvant.malrauxZone, fallback: 'malraux' },
+    { id: 'fcpiJei',     levier: 2, inputKey: 'fcpiJei',              label: 'FCPI JEI',              effet: () => detAvant.redFcpiJei, param: null },
+    { id: 'fipCorse',    levier: 2, inputKey: 'fipCorse',             label: 'FIP Corse',             effet: () => detAvant.redFipCorse, param: null },
+    { id: 'irPme',       levier: 2, inputKey: 'irPme',                label: 'IR-PME',                effet: () => detAvant.redIrPme, param: null },
+    { id: 'gfi',         levier: 2, inputKey: 'gfi',                  label: 'GFI',                   effet: () => detAvant.redGfi, param: null },
+    { id: 'locAvantages',levier: 2, inputKey: 'locAvantagesDepenses', label: "Loc'Avantages",         effet: () => detAvant.redLocAvantages, param: () => inputAvant.locAvantagesPalier, fallback: 'locAvantages' },
+    { id: 'sofica',      levier: 2, inputKey: 'sofica',               label: 'SOFICA',                effet: () => detAvant.redSofica, param: null },
+    { id: 'girardinPD',  levier: 2, inputKey: 'girardinPD',           label: 'Girardin PD',           effet: () => detAvant.redGirardinPD, param: null },
+    { id: 'girardinAG',  levier: 2, inputKey: 'girardinAG',           label: 'Girardin AG',           effet: () => detAvant.redGirardinAG, param: null },
+    { id: 'emploiDom',   levier: 3, inputKey: 'emploiDomicile',       label: 'Emploi à domicile',     effet: () => detAvant.credDomicile, param: null },
+    { id: 'gardeEnf',    levier: 3, inputKey: 'gardeEnfants',         label: 'Garde enfants',         effet: () => detAvant.credGarde, param: null },
+    { id: 'syndic',      levier: 3, inputKey: 'cotSyndicales',        label: 'Cotisations syndicales',effet: () => detAvant.credSyndic, param: null },
+  ];
+
+  items.forEach(it => {
+    // Cas particulier déficit foncier : il vit comme un foncierReel < 0.
+    // On l'affiche en valeur positive si présent.
+    let val;
+    if (it.isDeficit) {
+      const fr = inputAvant.foncierReel || 0;
+      val = fr < 0 ? -fr : 0;
+    } else {
+      val = (inputAvant[it.inputKey] || 0)
+        || (it.fallback ? (inputAvant[it.fallback] || 0) : 0);
+    }
+    if (val <= 0) return;
+    const tr = document.createElement('tr');
+    tr.className = 'preco-row-existing';
+
+    const tdLab = document.createElement('td');
+    const catLev = P.LEVIERS_CATALOGUE.find(l => l.id === it.id);
+    const badges = catLev ? renderCatBadge(catLev.cat) : '';
+    tdLab.innerHTML = `<span class="preco-existing-marker">✓ déjà saisi</span> ${it.label}${badges}`;
+    tr.appendChild(tdLab);
+
+    const tdMt = document.createElement('td');
+    tdMt.textContent = fmt(val);
+    tr.appendChild(tdMt);
+
+    const tdParam = document.createElement('td');
+    const paramVal = it.param ? it.param() : null;
+    tdParam.textContent = paramVal || '—';
+    tr.appendChild(tdParam);
+
+    const tdEff = document.createElement('td');
+    const eff = it.effet ? it.effet() : null;
+    tdEff.textContent = (eff !== null && eff !== undefined && eff > 0) ? '− ' + fmt(eff) : '—';
+    tr.appendChild(tdEff);
+
+    const tdPl = document.createElement('td');
+    tdPl.className = 'preco-plafond preco-ok';
+    tdPl.textContent = '✓';
+    tr.appendChild(tdPl);
+
+    const tdEmpty = document.createElement('td');
+    tr.appendChild(tdEmpty);
+
+    tbodies[it.levier].appendChild(tr);
+  });
+
+  // Cacher les tbody vides pour ne pas générer de bordures inutiles
+  Object.values(tbodies).forEach(tb => {
+    tb.style.display = tb.children.length ? '' : 'none';
+  });
 }
 
 function setCmp(key, valAct, valPro, isNeg) {

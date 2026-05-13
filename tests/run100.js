@@ -58,7 +58,7 @@ function makeInput(o = {}) {
     pensAlimRecue1: 0, pensAlimRecue2: 0,
     bncMicro1: 0, bncMicro2: 0, bncReel1: 0, bncReel2: 0,
     microFoncier: 0, foncierReel: 0,
-    meubleClasse: 0, meubleNonClasse: 0,
+    meubleClasse: 0, meubleNonClasse: 0, autresMeubles: 0,
     jeanbrunAmort: 0, jeanbrunCategorie: 'intermediaire',
     dividendes: 0, interets: 0, pv: 0,
     avProduits75: 0, avProduits128: 0, pfnlVerse: 0,
@@ -174,6 +174,7 @@ function oracleCalc(input) {
 
   const meuClNet = i.meubleClasse * 0.50;
   const meuNcNet = i.meubleNonClasse * 0.70;
+  const autMeuNet = (i.autresMeubles || 0) * 0.50;
 
   const isPFU = i.optionPFU === 'pfu';
   const divNet = isPFU ? 0 : i.dividendes * 0.60;
@@ -182,15 +183,21 @@ function oracleCalc(input) {
 
   const rbg = salNet + penNet + bncMicroNet + bncReelNet
             + microFoncierNet + foncierReelNet
-            + meuClNet + meuNcNet
+            + meuClNet + meuNcNet + autMeuNet
             + divNet + intNet + pvNet
             + i.autresRevenus;
 
   // --- Étape 2 : revenu net imposable ---
-  const revPro = i.sal1 + i.sal2 + i.bncMicro1 + i.bncMicro2 + i.bncReel1 + i.bncReel2;
-  const perCap = (i.perPlafondManuel || 0) > 0
-    ? i.perPlafondManuel
-    : (revPro > 0 ? Math.max(4710, Math.min(revPro * 0.10, 37680)) : 4710);
+  // PER : plafond INDIVIDUEL par déclarant (art. 163 quatervicies CGI),
+  // plancher 4 710 € chacun, plafonds additionnés en mutualisation.
+  const isCoupleForPER = i.situation === 'marie-pacse';
+  const revPro1 = i.sal1 + (i.allocChomage1 || 0) + (i.heuresSupExo1 || 0)
+                + i.bncMicro1 + i.bncReel1;
+  const revPro2 = i.sal2 + (i.allocChomage2 || 0) + (i.heuresSupExo2 || 0)
+                + i.bncMicro2 + i.bncReel2;
+  const perCapOf = r => Math.max(4710, Math.min(r * 0.10, 37680));
+  const perCapAuto = perCapOf(revPro1) + (isCoupleForPER ? perCapOf(revPro2) : 0);
+  const perCap = (i.perPlafondManuel || 0) > 0 ? i.perPlafondManuel : perCapAuto;
   const perDed = Math.min(i.per, perCap);
 
   const paCap = i.nbBeneficiairesPA > 0
@@ -257,16 +264,19 @@ function oracleCalc(input) {
   const avProduits = av75 + av128;
 
   // --- Étape 7 : PS ---
-  // PS prélevés à la source (info, exclus de l'impôt à payer)
+  // PS recouvrés via avis (intégrés à l'impôt à payer).
+  // Pour les RCM (dividendes/intérêts), le PFNL bancaire (2CK) ne couvre
+  // que la part IR — la part PS reste donc due côté avis IR.
   const psDividendes = i.dividendes * 0.186;
   const psInterets   = (i.interets || 0) * 0.186;
-  const psAV         = avProduits * 0.172;
-  const psSource     = psDividendes + psInterets + psAV;
-  // PS recouvrés via avis (intégrés à l'impôt à payer)
   const psPV         = i.pv * 0.186;
-  const fonciersNets = microFoncierNet + foncierReelNet + meuClNet + meuNcNet;
-  const psFoncier    = Math.max(0, fonciersNets) * 0.172;
-  const psRole       = psPV + psFoncier;
+  const fonciersNets = microFoncierNet + foncierReelNet + meuClNet + meuNcNet + autMeuNet;
+  const psFoncier    = Math.max(0, fonciersNets) * 0.186;
+  const psRole       = psDividendes + psInterets + psPV + psFoncier;
+  // PS prélevés à la source ET libératoires (info, exclus de l'impôt à payer)
+  // AV reste à 17,2 % — non concernée par la CFA LFSS 2026.
+  const psAV         = avProduits * 0.172;
+  const psSource     = psAV;
   const totalPS      = psSource + psRole;
 
   // --- Étape 8 : réductions ---
@@ -287,18 +297,51 @@ function oracleCalc(input) {
   const ehBase = Math.min(i.ehpadFrais || 0, 10000 * ehNbP);
   const redEhpad = ehBase * 0.25;
 
-  const redMalraux = i.malraux || 0;
+  // Caps individuels (aligné sur calculator.js — versementMax × tauxMax)
+  // Couple : SOFICA = 18 000 × 48 % = 8 640 (pas de différence single/couple).
+  const couple = i.situation === 'marie-pacse';
+  const cv = (single, c) => couple && c !== undefined ? c : single;
+  // SOFICA double plafond : min(18 000, 25 % RNG) × 48 %
+  const versSoficaEff = Math.min(18000, rni * 0.25);
+  const capSofica   = versSoficaEff * 0.48;
+  const capFCPI     = cv(12000, 24000) * 0.18;       // 2 160 / 4 320
+  const capFcpiJei  = cv(12000, 24000) * 0.30;       // 3 600 / 7 200
+  const capFipCorse = cv(12000, 24000) * 0.30;       // 3 600 / 7 200
+  const capIrPme    = cv(50000, 100000) * 0.25;      // 12 500 / 25 000
+  const capGfi      = cv(50000, 100000) * 0.18;      //  9 000 / 18 000
+  const capMalraux  = 100000 * 0.30;                 // 30 000
+  const capLocAv    = 10000 * 0.65;                  //  6 500
 
-  const redPinel = i.pinel;
-  const redGirPD = i.girardinPD;
+  // Malraux — mode "travaux + zone" prioritaire, sinon fallback legacy
+  let redMalraux;
+  if ((i.malrauxTravaux || 0) > 0) {
+    const tauxMalrauxZone = { 'spr-non': 0.22, 'spr-oui': 0.30 };
+    const zone = i.malrauxZone || 'spr-non';
+    const travRet = Math.min(i.malrauxTravaux, 100000);
+    redMalraux = travRet * (tauxMalrauxZone[zone] || tauxMalrauxZone['spr-non']);
+  } else {
+    redMalraux = Math.min(i.malraux || 0, capMalraux);
+  }
+
+  const redPinel = i.pinel;                                   // pas de cap V1
+  const redGirPD = i.girardinPD;                              // pas de cap (panier majoré)
   const redGirAG = i.girardinAG;
-  const redFCPI = i.fcpi;
-  const redFcpiJei = i.fcpiJei || 0;
-  const redFipCorse = i.fipCorse || 0;
-  const redGfi = i.gfi || 0;
-  const redIrPme = i.irPme || 0;
-  const redLocAv = i.locAvantages || 0;
-  const redSofica = i.sofica;
+  const redFCPI = Math.min(i.fcpi || 0,         capFCPI);
+  const redFcpiJei = Math.min(i.fcpiJei || 0,   capFcpiJei);
+  const redFipCorse = Math.min(i.fipCorse || 0, capFipCorse);
+  const redGfi = Math.min(i.gfi || 0,           capGfi);
+  const redIrPme = Math.min(i.irPme || 0,       capIrPme);
+  // Loc'Avantages — mode "dépenses + palier" prioritaire, sinon fallback legacy
+  let redLocAv;
+  if ((i.locAvantagesDepenses || 0) > 0) {
+    const tauxLocAv = { loc1: 0.15, loc2: 0.35, loc3: 0.65 };
+    const palier = i.locAvantagesPalier || 'loc1';
+    const depRet = Math.min(i.locAvantagesDepenses, 10000);
+    redLocAv = depRet * (tauxLocAv[palier] || tauxLocAv.loc1);
+  } else {
+    redLocAv = Math.min(i.locAvantages || 0, capLocAv);
+  }
+  const redSofica = Math.min(i.sofica || 0,     capSofica);
   const redAutres = i.autresReductions;
 
   const totalReductions = redDons + redPinel + redGirPD + redGirAG
@@ -319,28 +362,42 @@ function oracleCalc(input) {
   const cotSynd = Math.min(i.cotSyndicales || 0, baseSyndMax);
   const credSynd = cotSynd * 0.66;
 
-  // --- Étape 10 : niches ---
-  const nichesUt = redPinel + redGirPD * 0.44 + redGirAG * 0.34
-    + redFCPI + redFcpiJei + redFipCorse + redGfi + redIrPme + redLocAv
-    + redSofica + redAutres + credDom + credGarde + credAutres;
+  // --- Étape 10 : niches — 2 POCHES (art. 200-0 A CGI) ---
+  // Poche 1 (10 000 €) : accessible à tous (niche10 + niche18)
+  // Poche 2 (+8 000 €) : RÉSERVÉE aux niche18 (Girardin × quote-part + SOFICA)
+  const ri10Panier = redPinel
+    + redFCPI + redFcpiJei + redFipCorse + redGfi + redIrPme
+    + redLocAv + redAutres
+    + credDom + credGarde + credAutres;
+  const ri18Panier = redGirPD * 0.44 + redGirAG * 0.34 + redSofica;
 
-  const hasMaj = redGirPD > 0 || redGirAG > 0 || redSofica > 0;
-  const plafNiches = hasMaj ? 18000 : 10000;
-  const depass = Math.max(0, nichesUt - plafNiches);
+  const poche1_10 = Math.min(ri10Panier, 10000);
+  const restePoche1 = 10000 - poche1_10;
+  const poche1_18 = Math.min(ri18Panier, restePoche1);
+  const surplus_10 = ri10Panier - poche1_10;
+  const surplus_18 = ri18Panier - poche1_18;
+  const poche2_18 = Math.min(surplus_18, 8000);
+  const perdu_18 = surplus_18 - poche2_18;
+
+  const nichesUt = ri10Panier + ri18Panier;
+  const plafNiches = ri18Panier > 0 ? 18000 : 10000;
+  const depass = surplus_10 + perdu_18;
+
+  const facteur10 = ri10Panier > 0 ? poche1_10 / ri10Panier : 1;
+  const facteur18 = ri18Panier > 0 ? (poche1_18 + poche2_18) / ri18Panier : 1;
 
   // --- Étape 11 : impôt net ---
-  const redInNiches = totalReductions - redDons;
-  const redNichesEff = (depass > 0 && nichesUt > 0)
-    ? plafNiches * redInNiches / nichesUt
-    : redInNiches;
+  const redNiche10Retenue = (redPinel + redFCPI + redFcpiJei + redFipCorse
+    + redGfi + redIrPme + redLocAv + redAutres) * facteur10;
+  const redNiche18Retenue = (redGirPD + redGirAG + redSofica) * facteur18;
+
   const redApp = Math.min(
     impotApresDecote + irMobilier,
-    redDons + fraisScol + redEhpad + redMalraux + redNichesEff
+    redDons + fraisScol + redEhpad + redMalraux
+    + redNiche10Retenue + redNiche18Retenue
   );
 
-  const credEff = (depass > 0 && nichesUt > 0)
-    ? plafNiches * totalCredits / nichesUt
-    : totalCredits;
+  const credEff = (credDom + credGarde + credAutres) * facteur10;
 
   const pfnl = i.pfnlVerse || 0;
 
@@ -349,18 +406,20 @@ function oracleCalc(input) {
   ) - credEff - credSynd + psRole - pfnl - pfnlAV;
 
   // --- RFR / CEHR ---
+  // Salaires / pensions retenus NETS d'abattement 10 %. Heures sup exonérées
+  // (≤ 7 500 €) réintégrées explicitement. Les charges déductibles (PER,
+  // pensions alim, CSG déductible, autres) NE réduisent PAS le RFR.
+  const hsExoRFR1 = Math.min(i.heuresSupExo1 || 0, 7500);
+  const hsExoRFR2 = Math.min(i.heuresSupExo2 || 0, 7500);
   const rfr = Math.max(0,
-    i.sal1 + i.sal2 + (i.allocChomage1 || 0) + (i.allocChomage2 || 0)
-    + (i.heuresSupExo1 || 0) + (i.heuresSupExo2 || 0)
-    + i.pen1 + i.pen2 + (i.pensInvalidite1 || 0) + (i.pensInvalidite2 || 0)
-    + (i.pensAlimRecue1 || 0) + (i.pensAlimRecue2 || 0)
+    salNet + hsExoRFR1 + hsExoRFR2
+    + penNet
     + i.bncMicro1 + i.bncMicro2 + i.bncReel1 + i.bncReel2
     + i.microFoncier + foncierReelNet
-    + i.meubleClasse + i.meubleNonClasse
+    + i.meubleClasse + i.meubleNonClasse + (i.autresMeubles || 0)
     + i.dividendes + (i.interets || 0) + i.pv
     + (i.avProduits75 || 0) + (i.avProduits128 || 0)
     + i.autresRevenus
-    - i.per - i.pensionsAlim - i.csgDeductible - i.autresCharges
   );
 
   const cs1 = isCouple ? 500000 : 250000;
@@ -443,6 +502,7 @@ function generateProfile(idx) {
       }
       profile.meubleClasse = rand() < 0.3 ? randInt(5000, 50000) : 0;
       profile.meubleNonClasse = rand() < 0.3 ? randInt(2000, 14000) : 0;
+      profile.autresMeubles = rand() < 0.3 ? randInt(5000, 50000) : 0;
       break;
     case 'finance-heavy':
       profile.sal1 = randInt(40000, 120000);
@@ -653,7 +713,7 @@ function testPreconisations(baseInput, baseResult, idx) {
   const precoBatch = [
     { id: 1, leverId: 'per', montant: 3000 },                      // versement-direct
     { id: 2, leverId: 'fcpiJei', montant: 1000 },                  // taux 0.30 → +300 sur fcpiJei
-    { id: 3, leverId: 'girardinPD', montant: 2000, paramValue: '113' }, // taux-variable 1.13 → +2260
+    { id: 3, leverId: 'girardinPD', montant: 2000, paramValue: 1.13 }, // taux-libre 1.13 → +2260
     { id: 4, leverId: 'jeanbrun', montant: 6000, paramValue: 'social' }, // jeanbrun
   ];
   const merged = appliquerPreconisations(baseInput, precoBatch);

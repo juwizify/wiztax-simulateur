@@ -39,6 +39,7 @@ function makeInput(overrides = {}) {
     // Meublé
     meubleClasse: 0,
     meubleNonClasse: 0,
+    autresMeubles: 0,
     jeanbrunAmort: 0,
     jeanbrunCategorie: 'intermediaire',
 
@@ -109,7 +110,7 @@ const CASES = [
     //   RFR = 40000 (salaire brut, charges = 0)
     expected: {
       impotNet: 3904,
-      revenuReference: 40000,
+      revenuReference: 36000,
       tmi: 0.30,
     },
   },
@@ -123,7 +124,7 @@ const CASES = [
     input: makeInput({ situation: 'divorce-separe', sal1: 40000 }),
     expected: {
       impotNet: 3904,
-      revenuReference: 40000,
+      revenuReference: 36000,
       tmi: 0.30,
     },
   },
@@ -138,7 +139,7 @@ const CASES = [
     name: 'Demi-part supp cas L (plafond 1 079 €), célib 40 000 €',
     input: makeInput({ sal1: 40000, demiPartSupp: true, demiPartCas: 'L' }),
     // avantage QF = 1858, plafond = 1079, supplément = 779 → impôt = 2046 + 779 = 2825
-    expected: { impotNet: 2825, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 2825, revenuReference: 36000, tmi: 0.30 },
   },
 
   // Cas N/P/F/W/S — plafond standard 1 807 € (testé via P, identique pour les 4 autres)
@@ -146,7 +147,7 @@ const CASES = [
     name: 'Demi-part supp cas P (plafond 1 807 €), célib 40 000 €',
     input: makeInput({ sal1: 40000, demiPartSupp: true, demiPartCas: 'P' }),
     // avantage QF = 1858, plafond = 1807, supplément = 51 → impôt = 2046 + 51 = 2097
-    expected: { impotNet: 2097, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 2097, revenuReference: 36000, tmi: 0.30 },
   },
 
   // Cas G (veuve de guerre) — déplafonné
@@ -155,7 +156,7 @@ const CASES = [
     input: makeInput({ sal1: 40000, demiPartSupp: true, demiPartCas: 'G' }),
     // plafond = Infinity → supplément = 0 → impôt = 2046
     // TMI : pas de plafonnement actif → suit le QF réel = 24000 → tranche 11%
-    expected: { impotNet: 2046, revenuReference: 40000, tmi: 0.11 },
+    expected: { impotNet: 2046, revenuReference: 36000, tmi: 0.11 },
   },
 
   // -------------------------------------------------------------------
@@ -168,7 +169,7 @@ const CASES = [
     input: makeInput({ sal1: 30000, allocChomage1: 10000 }),
     // total déclarant 1 = 40 000 → abattement = 4 000 → net = 36 000
     // identique à un salarié 40 000 € pur (cas baseline)
-    expected: { impotNet: 3904, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 3904, revenuReference: 36000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -183,7 +184,7 @@ const CASES = [
     //       + tranche 2 : 17 979 × 0.11 = 1 977.69
     //       = 3 603.99 → arrondi 3 604
     // économie vs baseline : 300 € (= 1 000 € × 30% TMI)
-    expected: { impotNet: 3604, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 3604, revenuReference: 35000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -200,7 +201,7 @@ const CASES = [
     // tranche 3 : (31 500-29 579) × 0.30 = 576.30
     // impôt par part = 2 553.99 → 2 554
     // RFR = 35 000 + 5 000 = 40 000
-    expected: { impotNet: 2554, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 2554, revenuReference: 36500, tmi: 0.30 },
   },
   {
     name: '1GH au-dessus plafond : 35 000 € sal + 10 000 € HS (2 500 imposables)',
@@ -211,7 +212,7 @@ const CASES = [
     // tranche 3 : (33 750-29 579) × 0.30 = 1 251.30
     // impôt par part = 3 228.99 → 3 229
     // RFR = 35 000 + 10 000 = 45 000
-    expected: { impotNet: 3229, revenuReference: 45000, tmi: 0.30 },
+    expected: { impotNet: 3229, revenuReference: 41250, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -224,7 +225,7 @@ const CASES = [
     input: makeInput({ pen1: 20000, pensInvalidite1: 20000 }),
     // total déclarant 1 = 40 000 € → abat = 4 000 (sous plafond foyer 4 439)
     // → net = 36 000 → impôt = 3 904 (identique baseline 40 000 € sal)
-    expected: { impotNet: 3904, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 3904, revenuReference: 36000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -237,7 +238,7 @@ const CASES = [
     input: makeInput({ pen1: 30000, pensAlimRecue1: 10000 }),
     // total déclarant 1 = 40 000 → abat = 4 000 (sous plafond foyer 4 439)
     // → net = 36 000 → impôt = 3 904 (identique pen pure 40 000 €)
-    expected: { impotNet: 3904, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 3904, revenuReference: 36000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -250,10 +251,10 @@ const CASES = [
     input: makeInput({ sal1: 40000, interets: 1000, optionPFU: 'pfu' }),
     // baseline 40k → 3 904
     // + IR mob = 1 000 × 12,8 % = 128
-    // + PS = 1 000 × 18,6 % = 186
+    // + PS = 1 000 × 18,6 % = 186 (dus via avis IR : 2CK ne couvre que l'IR)
     // total = 3 904 + 128 + 186 = 4 218
     // RFR = 40 000 + 1 000 = 41 000
-    expected: { impotNet: 4032, revenuReference: 41000, tmi: 0.30 },
+    expected: { impotNet: 4218, revenuReference: 37000, tmi: 0.30 },
   },
   {
     name: '2TR barème : 40 000 € sal + 1 000 € intérêts au barème',
@@ -263,7 +264,7 @@ const CASES = [
     // impôt brut = 4 203.99 → 4 204
     // + PS 186 (toujours dus même au barème)
     // total = 4 204 + 186 = 4 390
-    expected: { impotNet: 4204, revenuReference: 41000, tmi: 0.30 },
+    expected: { impotNet: 4390, revenuReference: 37000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -275,10 +276,10 @@ const CASES = [
     input: makeInput({ sal1: 40000, dividendes: 1000, interets: 1000, pv: 1000, optionPFU: 'pfu' }),
     // baseline 40k → 3 904
     // IR mob = 3 000 × 12,8 % = 384
-    // PS = 3 000 × 18,6 % = 558
+    // PS = 3 000 × 18,6 % = 558 (PV + div + int tous dus côté avis IR)
     // total = 3 904 + 384 + 558 = 4 846
     // RFR = 40 000 + 3 000 = 43 000
-    expected: { impotNet: 4474, revenuReference: 43000, tmi: 0.30 },
+    expected: { impotNet: 4846, revenuReference: 39000, tmi: 0.30 },
   },
   {
     name: '2OP coché (barème) : 40k sal + 1k div + 1k intérêts + 1k PV',
@@ -291,7 +292,7 @@ const CASES = [
     // + PS 558 (toujours dus)
     // total = 4 684 + 558 = 5 242
     // PFU plus avantageux ici de 396 € à TMI 30 %
-    expected: { impotNet: 4870, revenuReference: 43000, tmi: 0.30 },
+    expected: { impotNet: 5242, revenuReference: 39000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -307,7 +308,7 @@ const CASES = [
     // PFNL prélevé à la source par la banque = 5 000 × 7,5 % = 375 (crédit d'impôt)
     // PS AV = 5 000 × 17,2 % = 860
     // total = 3 904 + 30 - 375 + 860 = 4 419
-    expected: { impotNet: 3559, revenuReference: 45000, tmi: 0.30 },
+    expected: { impotNet: 3559, revenuReference: 41000, tmi: 0.30 },
   },
   {
     name: 'AV > 8 ans : célib 40k sal + 3k produits 7,5 % (intégralement abattus)',
@@ -316,7 +317,7 @@ const CASES = [
     // PFNL prélevé à la source = 3 000 × 7,5 % = 225 (intégralement remboursé)
     // PS AV = 3 000 × 17,2 % = 516
     // total = 3 904 + 0 - 225 + 516 = 4 195
-    expected: { impotNet: 3679, revenuReference: 43000, tmi: 0.30 },
+    expected: { impotNet: 3679, revenuReference: 39000, tmi: 0.30 },
   },
   {
     name: 'AV > 8 ans : célib 40k sal + 10k produits 12,8 % (au-delà 150k primes)',
@@ -326,7 +327,7 @@ const CASES = [
     // PFNL prélevé à la source = 10 000 × 12,8 % = 1 280 (crédit d'impôt)
     // PS AV = 10 000 × 17,2 % = 1 720
     // total = 3 904 + 691,2 - 1 280 + 1 720 = 5 035
-    expected: { impotNet: 3315, revenuReference: 50000, tmi: 0.30 },
+    expected: { impotNet: 3315, revenuReference: 46000, tmi: 0.30 },
   },
   {
     name: 'AV > 8 ans MIXTE : célib 40k sal + 150k @ 7,5 % + 50k @ 12,8 %',
@@ -337,7 +338,7 @@ const CASES = [
     // PS AV = 200 000 × 17,2 % = 34 400
     // total = 3 904 + 17 061,2 - 17 650 + 34 400 = 37 715
     // RFR = 40 000 + 200 000 = 240 000 (sous seuil CEHR 250k célib)
-    expected: { impotNet: 3315, revenuReference: 240000, tmi: 0.30 },
+    expected: { impotNet: 3315, revenuReference: 236000, tmi: 0.30 },
   },
   // -------------------------------------------------------------------
   // Cas validé contre simulateur officiel impots.gouv.fr (2026-05-07)
@@ -355,7 +356,7 @@ const CASES = [
     //   PS AV = 10 000 × 17,2 % = 1 720 (prélevés à la source par l'assureur, EXCLUS)
     // impôt net "à payer" = 12 004 + 405 - 750 = 11 659
     // (= IR sans AV 12 004 - 345 € de bonus AV — match impots.gouv.fr)
-    expected: { impotNet: 11659, revenuReference: 80000, tmi: 0.30 },
+    expected: { impotNet: 11659, revenuReference: 73000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -367,19 +368,19 @@ const CASES = [
     name: '2CK : 40k sal + 1k div PFU avec PFNL 128 € déjà prélevé',
     input: makeInput({ sal1: 40000, dividendes: 1000, optionPFU: 'pfu', pfnlVerse: 128 }),
     // sans PFNL : 4 218 € (baseline 3 904 + 128 IR mob + 186 PS)
-    // - PFNL 128 € déjà versé = 4 090 €
-    expected: { impotNet: 3904, revenuReference: 41000, tmi: 0.30 },
+    // - PFNL 128 € déjà versé (couvre l'IR uniquement, pas les PS) = 4 090 €
+    expected: { impotNet: 4090, revenuReference: 37000, tmi: 0.30 },
   },
   {
     name: '2CK : PFNL > impôt dû → impôt net négatif (remboursement)',
     input: makeInput({ sal1: 0, interets: 100, optionPFU: 'pfu', pfnlVerse: 50 }),
     // pas de salaire → impôt barème = 0 (et < décote, mais base 0)
     // IR mobilier = 100 × 12,8 % = 12,8
-    // PS mobilier = 100 × 18,6 % = 18,6
+    // PS mobilier = 100 × 18,6 % = 18,6 (dus via avis IR)
     // total = 0 + 12,8 + 18,6 = 31,4 €
     // - PFNL 50 € déjà versé = -18,6 € → arrondi -19 €
     // (excédent remboursé par l'administration)
-    expected: { impotNet: -37, revenuReference: 100, tmi: 0 },
+    expected: { impotNet: -19, revenuReference: 100, tmi: 0 },
   },
 
   // -------------------------------------------------------------------
@@ -395,7 +396,7 @@ const CASES = [
     // impôt = 2 403.99 → 2 404
     // pas de PS (résultat foncier négatif)
     // RFR = 40 000 + 0 + (-5 000) = 35 000
-    expected: { impotNet: 2404, revenuReference: 35000, tmi: 0.30 },
+    expected: { impotNet: 2404, revenuReference: 31000, tmi: 0.30 },
   },
   {
     name: '4BC déficit plafonné : 60k sal + foncier réel -15 000 € (plafond 10 700)',
@@ -406,16 +407,33 @@ const CASES = [
     // QF=43 300 → tranches: 1 977.69 + (43 300-29 579)×0.30 = 6 093.99 → 6 094
     // pas de PS, pas de décote
     // RFR = 60 000 + (-10 700) = 49 300 (et non 45 000 si non plafonné)
-    expected: { impotNet: 6094, revenuReference: 49300, tmi: 0.30 },
+    expected: { impotNet: 6094, revenuReference: 43300, tmi: 0.30 },
   },
   {
     name: '4BA non-régression : 40k sal + foncier réel +5 000 € (revenu)',
     input: makeInput({ sal1: 40000, foncierReel: 5000 }),
     // sal net 36 000 + foncier 5 000 → RBG 41 000
     // QF=41 000 → 1 977.69 + (41 000-29 579)×0.30 = 5 403.99 → 5 404
-    // PS foncier = 5 000 × 17,2 % = 860
-    // total = 5 404 + 860 = 6 264
-    expected: { impotNet: 6264, revenuReference: 45000, tmi: 0.30 },
+    // PS foncier = 5 000 × 18,6 % = 930 (CFA LFSS 2026)
+    // total = 5 404 + 930 = 6 334
+    expected: { impotNet: 6334, revenuReference: 41000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 5NI — Autres locations meublées (LMNP année, locataire principal)
+  // Abattement 50 %, plafond 77 700 €. Distinct du tourisme classé (5NG)
+  // qui partage les mêmes paramètres mais correspond à une autre activité.
+  // -------------------------------------------------------------------
+  {
+    name: '5NI : 40k sal + 20k autres meubles (LMNP année, abat 50 %)',
+    input: makeInput({ sal1: 40000, autresMeubles: 20000 }),
+    // sal net 36 000 + LMNP net 10 000 (20k × 50%) = RBG 46 000
+    // QF=46k → 1 977.69 + (46-29.579)×0.30 = 6 903.99 → 6 904
+    // PS foncier = 10 000 × 18,6 % = 1 860 (calculé sur le NET côté wiztax —
+    //   à investiguer : impots.gouv calcule sur le BRUT 5NL)
+    // total = 6 904 + 1 860 = 8 764
+    // RFR = sal 40 000 + LMNP brut 20 000 = 60 000
+    expected: { impotNet: 8764, revenuReference: 56000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -433,7 +451,26 @@ const CASES = [
     //   → tranches : 1 977.69 + (70 000-29 579)×0.30 = 1 977.69 + 12 126.30
     //   → impôt = 14 103.99 → 14 104
     // Économie 3 000 € (= 10 000 × TMI 30 %)
-    expected: { impotNet: 14104, revenuReference: 80000, tmi: 0.30 },
+    // RFR = 100 000 - 10 000 (abat 10 %) = 90 000 (PER NE réduit pas le RFR)
+    expected: { impotNet: 14104, revenuReference: 90000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // 6NS/6NT — Plafond PER INDIVIDUEL par déclarant (art. 163 quatervicies CGI)
+  // Plancher 4 710 € chacun, plafonds additionnés en mutualisation conjugale.
+  // -------------------------------------------------------------------
+  {
+    name: 'PER plafond couple : 42k + 31k salaires, chacun au plancher 4 710',
+    input: makeInput({ situation: 'marie-pacse', sal1: 42000, sal2: 31000, per: 9000 }),
+    // revenuPro1 = 42 000 → 10 % = 4 200 < plancher 4 710 → perCap1 = 4 710
+    // revenuPro2 = 31 000 → 10 % = 3 100 < plancher 4 710 → perCap2 = 4 710
+    // perCap total = 9 420 €. PER versé 9 000 ≤ 9 420 → entièrement déduit.
+    // salNet1 = 42 000 - 4 200 = 37 800 ; salNet2 = 31 000 - 3 100 = 27 900
+    // salaireNet = 65 700 ; RNI = 65 700 - 9 000 = 56 700
+    // QF couple = 56 700 / 2 = 28 350 → tranche 2 (11 %) : (28 350-11 600) × 0,11 = 1 842,50
+    // impôt par part × 2 = 3 685 — pas de décote (> seuil 3 277), pas de QF supp
+    // RFR = salaireNet 65 700 (PER ne réduit pas le RFR)
+    expected: { impotNet: 3685, revenuReference: 65700, tmi: 0.11 },
   },
 
   // -------------------------------------------------------------------
@@ -446,7 +483,7 @@ const CASES = [
     input: makeInput({ sal1: 40000, dons7UD: 500 }),
     // 500 ≤ 2 000 → 500 × 75 % = 375 €
     // impôt = 3 904 - 375 = 3 529
-    expected: { impotNet: 3529, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 3529, revenuReference: 36000, tmi: 0.30 },
   },
   {
     name: '7UF pur : 40k sal + 2 000 € dons intérêt général',
@@ -455,7 +492,7 @@ const CASES = [
     // red = 2 000 × 66 % = 1 320 €
     // impôt = 3 904 - 1 320 = 2 584
     // (ancien comportement aurait donné 1 500 → 2 404, écart 180 €)
-    expected: { impotNet: 2584, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 2584, revenuReference: 36000, tmi: 0.30 },
   },
   {
     name: '7UD + 7UF mixte : 40k sal + 500 € Coluche + 1 500 € intérêt général',
@@ -463,7 +500,7 @@ const CASES = [
     // 7UD : 500 × 75 % = 375
     // 7UF : 1 500 × 66 % = 990
     // red = 1 365 → impôt = 3 904 - 1 365 = 2 539
-    expected: { impotNet: 2539, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 2539, revenuReference: 36000, tmi: 0.30 },
   },
   {
     name: '7UD au-delà 2 000 : 40k sal + 3 000 € Coluche (bascule sur 7UF)',
@@ -471,7 +508,7 @@ const CASES = [
     // 7UD : 2 000 × 75 % = 1 500
     // surplus 1 000 → bascule 7UF : 1 000 × 66 % = 660
     // red = 2 160 → impôt = 3 904 - 2 160 = 1 744
-    expected: { impotNet: 1744, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 1744, revenuReference: 36000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -483,7 +520,7 @@ const CASES = [
     // plafond 1 % × 40 000 = 400 → 200 ≤ 400 retenu intégralement
     // crédit 200 × 66 % = 132
     // impôt = 3 904 - 132 = 3 772
-    expected: { impotNet: 3772, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 3772, revenuReference: 36000, tmi: 0.30 },
   },
   {
     name: '7AC plafond atteint : 40k sal + 1 000 € cot (cap 400)',
@@ -491,7 +528,7 @@ const CASES = [
     // plafond 400, cot retenue = 400
     // crédit 400 × 66 % = 264
     // impôt = 3 904 - 264 = 3 640
-    expected: { impotNet: 3640, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 3640, revenuReference: 36000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -508,7 +545,7 @@ const CASES = [
     // impôt après QF 2 097 (pas de décote, > seuil 1 982)
     // - réduction 7EC 153 → impôt net 1 944
     // TMI : plafonnement actif → suit qfBase 36k → 30 %
-    expected: { impotNet: 1944, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 1944, revenuReference: 36000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -520,7 +557,7 @@ const CASES = [
     input: makeInput({ sal1: 40000, ehpadFrais: 8000 }),
     // base = min(8 000, 10 000) = 8 000 → réduction 8 000 × 25 % = 2 000
     // impôt = 3 904 - 2 000 = 1 904
-    expected: { impotNet: 1904, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 1904, revenuReference: 36000, tmi: 0.30 },
   },
   {
     name: '7CD : 40k sal + 25 000 € EHPAD pour 2 ascendants (cap 20 000)',
@@ -528,7 +565,7 @@ const CASES = [
     // plafond = 10 000 × 2 = 20 000 → base = min(25 000, 20 000) = 20 000
     // réduction 20 000 × 25 % = 5 000
     // impôt = 3 904 - 5 000 = max(0, -1 096) = 0 (réduction non remboursable, capée)
-    expected: { impotNet: 0, revenuReference: 40000, tmi: 0.30 },
+    expected: { impotNet: 0, revenuReference: 36000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -543,34 +580,71 @@ const CASES = [
     //   = 1 977.69 + 16 499.40 + 2 223.43 = 20 700.52 → 20 701 (tranche 41 % active)
     // total nouvelles réductions = 7 000 < niche 10 000 → appliquée intégralement
     // impôt net = 20 701 - 7 000 = 13 701, TMI = 41 %
-    expected: { impotNet: 13701, revenuReference: 100000, tmi: 0.41 },
+    expected: { impotNet: 13701, revenuReference: 90000, tmi: 0.41 },
   },
 
   // -------------------------------------------------------------------
   // 7NX / 7NY — Loi Malraux (réduction HORS plafond niches)
-  // L'utilisateur saisit le montant de la réduction calculée (22 % ou 30 %).
+  // 2 modes acceptés par le moteur :
+  //   * NOUVEAU (Phase 2.5) : malrauxTravaux + malrauxZone → RI calculée
+  //   * LEGACY : malraux (RI saisie directement)
   // -------------------------------------------------------------------
   {
-    name: 'Malraux : 60k sal + 5 000 € de réduction Malraux (hors niches)',
+    name: 'Malraux legacy : 60k sal + RI 5 000 € saisie directement',
     input: makeInput({ sal1: 60000, malraux: 5000 }),
     // sal net 54k → tranches 1 977.69 + (54k-29 579)×0.30 = 1 977.69 + 7 326.30
     //   = 9 303.99 → 9 304
     // - réduction Malraux 5 000 (hors niches, plafonnée à l'impôt dû)
     // impôt net = 9 304 - 5 000 = 4 304
-    expected: { impotNet: 4304, revenuReference: 60000, tmi: 0.30 },
+    expected: { impotNet: 4304, revenuReference: 54000, tmi: 0.30 },
+  },
+  {
+    name: 'Malraux mode travaux SPR-non 22 % : sal 500k + 50k travaux → RI 11 000 €',
+    input: makeInput({ sal1: 500000, malrauxTravaux: 50000, malrauxZone: 'spr-non' }),
+    // 50 000 < 100 000 plafond → travaux retenus = 50 000
+    // RI = 50 000 × 22 % = 11 000 €
+    // impôt brut 202 037 (sal 500k célib) - 11 000 = 191 037
+    expected: { impotNet: 191037, revenuReference: 485445, tmi: 0.45 },
+  },
+  {
+    name: 'Malraux mode travaux SPR-oui 30 % CAP : sal 500k + 200k travaux → RI 30 000 €',
+    input: makeInput({ sal1: 500000, malrauxTravaux: 200000, malrauxZone: 'spr-oui' }),
+    // 200 000 > 100 000 plafond annuel → travaux retenus = 100 000
+    // RI = 100 000 × 30 % = 30 000 € (= cap historique Phase 2.3)
+    // impôt brut 202 037 - 30 000 = 172 037
+    expected: { impotNet: 172037, revenuReference: 485445, tmi: 0.45 },
   },
 
   // -------------------------------------------------------------------
-  // 7QO/7QP/7QR — Loc'Avantages (réduction DANS plafond niches 10 000 €)
-  // L'utilisateur saisit le montant de la réduction (15/35/65 % selon décote).
+  // 7QO/7QP/7QR — Loc'Avantages
+  // 2 modes acceptés par le moteur :
+  //   * NOUVEAU (Phase 2.4) : locAvantagesDepenses + locAvantagesPalier → RI calculée
+  //   * LEGACY : locAvantages (RI saisie directement)
   // -------------------------------------------------------------------
   {
-    name: "Loc'Avantages : 60k sal + 3 000 € (Loc 2, sous niche)",
+    name: "Loc'Avantages legacy : 60k sal + RI 3 000 € saisie directement",
     input: makeInput({ sal1: 60000, locAvantages: 3000 }),
     // sal net 54k → impôt baseline 9 304
-    // total niches 3 000 < 10 000 → réduction appliquée intégralement
+    // RI 3 000 € directe (legacy), capée par capRiMax.locAvantages = 6 500
+    // 3 000 < 10 000 niche → réduction appliquée intégralement
     // impôt net = 9 304 - 3 000 = 6 304
-    expected: { impotNet: 6304, revenuReference: 60000, tmi: 0.30 },
+    expected: { impotNet: 6304, revenuReference: 54000, tmi: 0.30 },
+  },
+  {
+    name: "Loc'Avantages mode dépenses Loc 2 : 100k sal + 8k dépenses → RI 2 800 €",
+    input: makeInput({ sal1: 100000, locAvantagesDepenses: 8000, locAvantagesPalier: 'loc2' }),
+    // 8 000 < 10 000 plafond → dépenses retenues = 8 000
+    // RI = 8 000 × 35 % (palier Loc 2) = 2 800 €
+    // impôt net = 20 701 - 2 800 = 17 901
+    expected: { impotNet: 17901, revenuReference: 90000, tmi: 0.41 },
+  },
+  {
+    name: "Loc'Avantages mode dépenses Loc 3 (CAP 10k) : 100k sal + 20k dépenses → RI 6 500 €",
+    input: makeInput({ sal1: 100000, locAvantagesDepenses: 20000, locAvantagesPalier: 'loc3' }),
+    // 20 000 > 10 000 plafond → dépenses retenues = 10 000 (capées)
+    // RI = 10 000 × 65 % (palier Loc 3, IML) = 6 500 €
+    // impôt net = 20 701 - 6 500 = 14 201
+    expected: { impotNet: 14201, revenuReference: 90000, tmi: 0.41 },
   },
 
   // -------------------------------------------------------------------
@@ -584,10 +658,9 @@ const CASES = [
     // foncier final = 12 000 - 7 000 = 5 000
     // sal net 36k + 5k = RBG 41 000
     // QF=41k → 1 977.69 + (41-29.579)×0.30 = 5 403.99 → 5 404
-    // PS foncier = 5 000 × 17,2 % = 860
-    // total = 5 404 + 860 = 6 264
-    // (vs sans Jeanbrun : 9 568 → économie 3 304 € ≈ 7k×(30%+17,2%))
-    expected: { impotNet: 6264, revenuReference: 45000, tmi: 0.30 },
+    // PS foncier = 5 000 × 18,6 % = 930 (CFA LFSS 2026)
+    // total = 5 404 + 930 = 6 334
+    expected: { impotNet: 6334, revenuReference: 41000, tmi: 0.30 },
   },
   {
     name: 'Jeanbrun inter cap : 40k sal + 12k foncier - 10k amort. (cap 8k)',
@@ -596,9 +669,9 @@ const CASES = [
     // foncier final = 12 000 - 8 000 = 4 000
     // sal net 36k + 4k = RBG 40 000
     // QF=40k → 1 977.69 + (40-29.579)×0.30 = 5 103.99 → 5 104
-    // PS foncier = 4 000 × 17,2 % = 688
-    // total = 5 104 + 688 = 5 792
-    expected: { impotNet: 5792, revenuReference: 44000, tmi: 0.30 },
+    // PS foncier = 4 000 × 18,6 % = 744 (CFA LFSS 2026)
+    // total = 5 104 + 744 = 5 848
+    expected: { impotNet: 5848, revenuReference: 40000, tmi: 0.30 },
   },
   {
     name: 'Jeanbrun très-social transforme revenu en déficit : 40k sal + 5k foncier - 8k amort.',
@@ -608,7 +681,7 @@ const CASES = [
     // sal net 36k - 3k = RBG 33 000
     // QF=33k → 1 977.69 + (33-29.579)×0.30 = 1 026.30 → impôt = 3 003.99 → 3 004
     // PS foncier = max(0, -3 000) = 0 (pas de PS sur déficit)
-    expected: { impotNet: 3004, revenuReference: 37000, tmi: 0.30 },
+    expected: { impotNet: 3004, revenuReference: 33000, tmi: 0.30 },
   },
 
   // ===================================================================
@@ -622,7 +695,7 @@ const CASES = [
     // sal net 45k → tranches 1977.69 + (45-29.579)×0.30 = 6603.99 → 6604
     // dons 7UF : 1000 × 66% = 660
     // impôt net = 6604 - 660 = 5944
-    expected: { impotNet: 5944, revenuReference: 50000, tmi: 0.30 },
+    expected: { impotNet: 5944, revenuReference: 45000, tmi: 0.30 },
   },
 
   // Profil 2 : Couple marié monorevenu 2 enfants — illustre le plafonnement QF
@@ -637,7 +710,7 @@ const CASES = [
     // Pas de décote (6 894 > seuil couple 3 277)
     // Réduction frais scolarité 2 × 153 = 306 → impôt net = 6 894 - 306 = 6 588
     // TMI : plafonnement actif → suit qfBase 40 500 → tranche 30 %
-    expected: { impotNet: 6588, revenuReference: 90000, tmi: 0.30 },
+    expected: { impotNet: 6588, revenuReference: 81000, tmi: 0.30 },
   },
 
   // Profil 3 : Parent isolé recomposé + garde alternée → impôt à 0 par décote
@@ -649,7 +722,7 @@ const CASES = [
     // QF base 31500 → 2554. Avantage 1960. Plafond PI 4262 + (2.5-2)×1807 = 5165 → pas de supp
     // Décote célib seuil 1982 → 594 < seuil → décote = max(0, 897 - 594×0.4525) = 628
     // Impôt après décote = max(0, 594-628) = 0
-    expected: { impotNet: 0, revenuReference: 35000, tmi: 0.11 },
+    expected: { impotNet: 0, revenuReference: 31500, tmi: 0.11 },
   },
 
   // Profil 4 : Couple retraité avec rachat AV > 8 ans (dans abattement)
@@ -663,7 +736,7 @@ const CASES = [
     // PFNL prélevé à la source = 5000 × 7.5% = 375 (intégralement remboursé)
     // PS AV = 5000 × 17.2% = 860
     // Total = 562.12 + 0 - 375 + 860 = 1047.12 → 1047
-    expected: { impotNet: 187, revenuReference: 45000, tmi: 0.11 },
+    expected: { impotNet: 187, revenuReference: 41000, tmi: 0.11 },
   },
 
   // Profil 5 : Investisseur diversifié — sal + div PFU + intérêts + foncier
@@ -673,11 +746,11 @@ const CASES = [
     // sal net 72k + foncier 4k = RBG 76k
     // QF = 76k → 1977.69 + (76-29.579)×0.30 = 15903.99 → 15904
     // IR mob PFU = (3000+1500)×12.8% = 576
-    // PS mob = 4500 × 18.6% = 837
-    // PS foncier = 4000 × 17.2% = 688
-    // Total PS = 1525
-    // Total = 15904 + 576 + 1525 = 18005
-    expected: { impotNet: 17168, revenuReference: 88500, tmi: 0.30 },
+    // PS mob = 4500 × 18.6% = 837 (div + int dus via avis IR)
+    // PS foncier = 4000 × 18.6% = 744 (CFA LFSS 2026)
+    // Total PS = 1581
+    // Total = 15904 + 576 + 1581 = 18061
+    expected: { impotNet: 18061, revenuReference: 80500, tmi: 0.30 },
   },
 
   // Profil 6 : Cadre supérieur diversifié — PER + Pinel + dons mixtes
@@ -692,8 +765,8 @@ const CASES = [
     //   Pinel 4000 (sous niche 10k)
     //   Total = 5080
     // Impôt net = 28491 - 5080 = 23411 (PS=0, pas de mob/foncier)
-    // RFR = 130000 - 8000 = 122000
-    expected: { impotNet: 23411, revenuReference: 122000, tmi: 0.41 },
+    // RFR = 130000 - 13000 (abat 10 %) = 117000 (PER ne réduit pas le RFR)
+    expected: { impotNet: 23411, revenuReference: 117000, tmi: 0.41 },
   },
 
   // Profil 7 : Propriétaire en déficit foncier + EHPAD ascendant
@@ -706,7 +779,7 @@ const CASES = [
     // Pas de PS foncier (déficit)
     // Impôt net = 6904 - 1500 = 5404
     // RFR = 60000 + 0 + (-8000) = 52000
-    expected: { impotNet: 5404, revenuReference: 52000, tmi: 0.30 },
+    expected: { impotNet: 5404, revenuReference: 46000, tmi: 0.30 },
   },
 
   // Profil 8 : Veuf avec enfant + pension invalidité + demi-part supp invalidité (P)
@@ -722,7 +795,7 @@ const CASES = [
     // 1276 < 3614 → pas de supp
     // Décote célib seuil 1982 (veuf=pas couple) → 1184 < seuil → décote 361.24
     // Impôt après décote = 1184-361.24 = 822.76 → 823
-    expected: { impotNet: 823, revenuReference: 50000, tmi: 0.11 },
+    expected: { impotNet: 823, revenuReference: 45561, tmi: 0.11 },
   },
 
   // Profil 9 : Très haut revenu — déclenche CEHR
@@ -734,10 +807,130 @@ const CASES = [
     //   0+1977.69+16499.40+97340×0.41+(285445-181917)×0.45 = 1977.69+16499.40+39909.40+46587.60 = 104973.62 (round)
     //   en fait : Math.round(impotParPart*1) = round(104973.62) = 104974
     // IR mob PFU = 5000 × 12.8% = 640
-    // PS mob = 5000 × 18.6% = 930
+    // PS mob = 5000 × 18.6% = 930 (div dus via avis IR)
     // RFR = 305000 → CEHR : (305000-250000)×3% = 1650
     // Total = 104974 + 640 + 930 + 1650 = 108194
-    expected: { impotNet: 107264, revenuReference: 305000, tmi: 0.45 },
+    expected: { impotNet: 107757, revenuReference: 290445, tmi: 0.45 },
+  },
+
+  // -------------------------------------------------------------------
+  // PLAFOND NICHES — Algo 2 poches (art. 200-0 A CGI)
+  //   Poche 1 (10 000 €) accessible à tous les dispositifs cat. niche10+niche18
+  //   Poche 2 (+8 000 €) RÉSERVÉE aux niche18 (Girardin × qp + SOFICA)
+  // Profil de base : célib 100k sal → impôt brut 20 701 €
+  // -------------------------------------------------------------------
+  {
+    name: 'Niches 2 poches — autresReductions 15k seul : poche1 saturée, 5k perdus',
+    input: makeInput({ sal1: 100000, autresReductions: 15000 }),
+    // niche10 panier = 15 000 → poche1 = 10 000, surplus 5 000 PERDU
+    // facteur10 = 10 000/15 000 = 2/3 → RI retenue = 10 000
+    // impôt net = 20 701 - 10 000 = 10 701
+    expected: { impotNet: 10701, revenuReference: 90000, nichesPerdues: 5000, tmi: 0.41 },
+  },
+  {
+    name: 'Niches 2 poches — autresReductions 8k + SOFICA 5k : mix poche1+poche2, 0 perdu',
+    input: makeInput({ sal1: 100000, autresReductions: 8000, sofica: 5000 }),
+    // ri10=8 000, ri18=5 000 (SOFICA quote-part = 1)
+    // poche1 = 8 000 niche10 + 2 000 niche18 = 10 000 ; poche2 = 3 000 niche18
+    // Tout passe → RI retenue = 13 000
+    // impôt net = 20 701 - 13 000 = 7 701
+    expected: { impotNet: 7701, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+  },
+  {
+    name: 'Niches 2 poches — autresReductions 12k + Girardin PD 25k : poches saturées, 5k perdus (panier)',
+    input: makeInput({ sal1: 100000, autresReductions: 12000, girardinPD: 25000 }),
+    // ri10=12 000 (autresReductions, quote-part 1)
+    // ri18 panier = 25 000 × 0.44 = 11 000 (Girardin PD avec quote-part)
+    // poche1 = 10 000 (saturée par niche10 seule) ; poche2 = 8 000 (Girardin)
+    // surplus_10 = 2 000 PERDU ; surplus_18 panier = 11 000 - 0 = 11 000 → poche2 = 8 000, perdu_18 = 3 000
+    // Total perdu panier = 5 000
+    // RI niche10 retenue = 12 000 × (10 000/12 000) = 10 000
+    // RI niche18 retenue = 25 000 × (8 000/11 000) ≈ 18 182
+    // RI totale = 28 182 > impôt 20 701 → cap à 20 701 → impôt net = 0
+    expected: { impotNet: 0, revenuReference: 90000, nichesPerdues: 5000, tmi: 0.41 },
+  },
+  {
+    name: 'Niches 2 poches — autresReductions 17k + SOFICA 1k (révèle l\'ancien bug)',
+    input: makeInput({ sal1: 100000, autresReductions: 17000, sofica: 1000 }),
+    // ANCIEN comportement : 1 € de SOFICA → plafondMajore 18k pour TOUT le panier
+    //   → nichesUtilisees = 18 000 → 0 dépassement → tout retenu → impôt = 2 701 (FAUX)
+    // NOUVEAU : niche10 cap à 10 000 indépendamment
+    //   poche1 = 10 000 niche10 + 0 niche18 ; poche2 = 1 000 SOFICA
+    //   surplus_10 = 7 000 PERDU
+    //   RI retenue = 10 000 + 1 000 = 11 000
+    //   impôt net = 20 701 - 11 000 = 9 701
+    expected: { impotNet: 9701, revenuReference: 90000, nichesPerdues: 7000, tmi: 0.41 },
+  },
+  {
+    name: 'Niches 2 poches — Girardin PD 40 910 : maxe poche1 + poche2, 0 perdu',
+    input: makeInput({ sal1: 100000, girardinPD: 40910 }),
+    // ri10=0
+    // ri18 panier = 40 910 × 0.44 ≈ 18 000 (= plafond majoré)
+    // poche1 = 10 000 ; poche2 = 8 000 ; perdu = 0
+    // facteur18 = 18 000/18 000 = 1 → RI brute Girardin retenue = 40 910
+    // 40 910 > impôt 20 701 → cap à 20 701 → impôt net = 0
+    expected: { impotNet: 0, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+  },
+  {
+    name: 'Niches 2 poches — autresReductions 3k + Girardin PD 45 455 : niche18 déborde poche2, 5k perdus',
+    input: makeInput({ sal1: 100000, autresReductions: 3000, girardinPD: 45455 }),
+    // ri10 = 3 000 (autresReductions)
+    // ri18 panier = 45 455 × 0.44 ≈ 20 000 (Girardin PD)
+    // poche1 = 3 000 niche10 + 7 000 niche18 = 10 000 (saturée)
+    // poche2 = 8 000 niche18 (saturée), surplus_18 panier = 5 000 PERDU
+    // surplus_10 = 0
+    // RI retenue > impôt → impôt net = 0
+    expected: { impotNet: 0, revenuReference: 90000, nichesPerdues: 5000, tmi: 0.41 },
+  },
+  {
+    name: 'Niches 2 poches — Girardin PD 56 818 seul : niche18 dépasse poche1+poche2, 7k perdus',
+    input: makeInput({ sal1: 100000, girardinPD: 56818 }),
+    // ri10 = 0
+    // ri18 panier = 56 818 × 0.44 = 25 000 (Girardin PD seul)
+    // poche1 = 10 000 ; poche2 = 8 000 ; surplus = 7 000 PERDU
+    // RI retenue > impôt → impôt net = 0
+    expected: { impotNet: 0, revenuReference: 90000, nichesPerdues: 7000, tmi: 0.41 },
+  },
+
+  // -------------------------------------------------------------------
+  // CAPS INDIVIDUELS — vérifient le plafonnement par dispositif
+  // (Phase 2.3 : Math.min(input, versementMax × tauxMax))
+  // -------------------------------------------------------------------
+  {
+    name: 'Cap SOFICA — sal 100k + SOFICA 18k → cap absolu 18 000 € × 48 % = 8 640 €',
+    input: makeInput({ sal1: 100000, sofica: 18000 }),
+    // RNI 90 000 → 25 % = 22 500 > 18 000 → cap absolu domine, versement effectif = 18 000
+    // capRiMax.sofica = 18 000 × 48 % = 8 640 € (taux le plus permissif)
+    // ri18 panier = 8 640 → poche1 = 8 640, poche2 = 0
+    // impôt net = 20 701 - 8 640 = 12 061
+    expected: { impotNet: 12061, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+  },
+  {
+    name: 'Cap SOFICA — sal 50k + SOFICA 18k → cap 25 % RNG = 11 250, RI tronquée à 5 400 €',
+    input: makeInput({ sal1: 50000, sofica: 18000 }),
+    // RNI 45 000 → 25 % = 11 250 < 18 000 → CAP 25 % RNG domine
+    // Versement effectif SOFICA = min(18 000, 11 250) = 11 250
+    // capRiMax.sofica = 11 250 × 48 % = 5 400 €
+    // impôt brut (sal 50k célib) = 6 604 → moins 5 400 = 1 204
+    // Démontre que le cap relatif 25 % RNG (art. 199 unvicies CGI) est plus
+    // restrictif que le cap absolu 18 000 € pour les revenus modestes.
+    expected: { impotNet: 1204, revenuReference: 45000, tmi: 0.30 },
+  },
+  {
+    name: 'Cap individuel FCPI JEI single — saisie 10k de RI → tronqué à 3 600 € (12k × 30%)',
+    input: makeInput({ sal1: 100000, fcpiJei: 10000 }),
+    // capRiMax.fcpiJei (single) = 12 000 × 30 % = 3 600 €
+    // ri10 = 3 600 → poche1 = 3 600 ; impôt net = 20 701 - 3 600 = 17 101
+    expected: { impotNet: 17101, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+  },
+  {
+    name: 'Cap individuel Malraux — sal 500k + Malraux 200k → RI tronquée à 30 000 €',
+    input: makeInput({ sal1: 500000, malraux: 200000 }),
+    // Sal 500k → impôt brut 202 037 (hors plafond niches, Malraux est hors panier)
+    // capRiMax.malraux = 100 000 × 30 % = 30 000 €
+    // impôt net = 202 037 - 30 000 = 172 037
+    // Démontre que le cap individuel s'applique aussi aux dispositifs HORS panier.
+    expected: { impotNet: 172037, revenuReference: 485445, tmi: 0.45 },
   },
 
   // Profil 10 : Cas remboursement — faible revenu + crédit garde enfants
@@ -751,7 +944,7 @@ const CASES = [
     // Niches utilisées 1750 < 10000 → pas de plafonnement
     // Impôt net = max(0, 0+0-0) - 1750 + 0 PS = -1750 (= remboursement)
     // TMI : pas de plafonnement, qf 9000 < 11600 → tranche 0%
-    expected: { impotNet: -1750, revenuReference: 15000, tmi: 0 },
+    expected: { impotNet: -1750, revenuReference: 13500, tmi: 0 },
   },
 ];
 

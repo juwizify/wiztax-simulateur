@@ -70,10 +70,10 @@ const TESTS = [
   // Plafond = 100000 × 1% = 1000, OK
   { id: 'syndic', montant: 500, key: 'cotSyndicales', expected: 500, delta: 500 * 0.66, deltaTol: 1 },
 
-  // Malraux : taux variable, "spr-non" 22% → input.malraux = 10000 × 0.22 = 2200
-  { id: 'malraux', montant: 10000, paramValue: 'spr-non', key: 'malraux', expected: 2200, delta: 2200, deltaTol: 1 },
-  // Malraux SPR oui 30%
-  { id: 'malraux', montant: 10000, paramValue: 'spr-oui', key: 'malraux', expected: 3000, delta: 3000, deltaTol: 1 },
+  // Malraux mode versement-direct (Phase 2.5) : input.malrauxTravaux = montant
+  // Le moteur calcule la RI = min(travaux, 100k) × taux(zone). Delta IR = RI (Malraux hors plafond niches).
+  { id: 'malraux', montant: 10000, paramValue: 'spr-non', key: 'malrauxTravaux', expected: 10000, delta: 10000 * 0.22, deltaTol: 1 },
+  { id: 'malraux', montant: 10000, paramValue: 'spr-oui', key: 'malrauxTravaux', expected: 10000, delta: 10000 * 0.30, deltaTol: 1 },
 
   // EmploiDom : 10k → 5000 (50%)
   { id: 'emploiDom', montant: 10000, key: 'emploiDomicile', expected: 10000, delta: 5000, deltaTol: 1 },
@@ -93,27 +93,30 @@ const TESTS = [
   // GFI : 5000 × 18% = 900
   { id: 'gfi', montant: 5000, key: 'gfi', expected: 900, delta: 900, deltaTol: 1 },
 
-  // LocAvantages loc1 : 8000 × 15% = 1200
-  { id: 'locAvantages', montant: 8000, paramValue: 'loc1', key: 'locAvantages', expected: 1200, delta: 1200, deltaTol: 1 },
-  // LocAvantages loc2 : 8000 × 35% = 2800
-  { id: 'locAvantages', montant: 8000, paramValue: 'loc2', key: 'locAvantages', expected: 2800, delta: 2800, deltaTol: 1 },
-  // LocAvantages loc3 : 8000 × 65% = 5200 — mais cap niches 10k pourrait s'appliquer
-  { id: 'locAvantages', montant: 8000, paramValue: 'loc3', key: 'locAvantages', expected: 5200, delta: 5200, deltaTol: 1 },
+  // LocAvantages mode versement-direct (Phase 2.4) : input.locAvantagesDepenses = montant.
+  // Le moteur calcule la RI = min(dépenses, 10k) × taux(palier). Niche 10k (couple+1enf, sans autres niches).
+  { id: 'locAvantages', montant: 8000, paramValue: 'loc1', key: 'locAvantagesDepenses', expected: 8000, delta: 8000 * 0.15, deltaTol: 1 },
+  { id: 'locAvantages', montant: 8000, paramValue: 'loc2', key: 'locAvantagesDepenses', expected: 8000, delta: 8000 * 0.35, deltaTol: 1 },
+  { id: 'locAvantages', montant: 8000, paramValue: 'loc3', key: 'locAvantagesDepenses', expected: 8000, delta: 8000 * 0.65, deltaTol: 1 },
 
-  // SOFICA : 5000 × 30% = 1500
-  { id: 'sofica', montant: 5000, key: 'sofica', expected: 1500, delta: 1500, deltaTol: 1 },
+  // SOFICA taux-variable : 30 / 36 / 48 % selon scénario
+  { id: 'sofica', montant: 5000, paramValue: '30', key: 'sofica', expected: 1500, delta: 1500, deltaTol: 1 },
+  { id: 'sofica', montant: 5000, paramValue: '48', key: 'sofica', expected: 2400, delta: 2400, deltaTol: 1 },
 
-  // Girardin PD 113% : 5000 × 1.13 = 5650 input ; quote-part 44% dans niche 18k
-  // Avantage IR brut = 5650, mais à vérifier vs niche
-  { id: 'girardinPD', montant: 5000, paramValue: '113', key: 'girardinPD', expected: 5650, delta: 5650, deltaTol: 1 },
+  // Girardin PD mode taux-libre : rendement saisi en décimal (1.13 = 113 %)
+  //   versement 5 000 × rendement 1.13 = 5 650 € de RI brute Girardin.
+  //   Quote-part 44 % dans niche 18k.
+  { id: 'girardinPD', montant: 5000, paramValue: 1.13, key: 'girardinPD', expected: 5650, delta: 5650, deltaTol: 1 },
+  // Girardin AG 108 %
+  { id: 'girardinAG', montant: 5000, paramValue: 1.08, key: 'girardinAG', expected: 5400, delta: 5400, deltaTol: 1 },
 
-  // Girardin AG 108% : 5000 × 1.08 = 5400
-  { id: 'girardinAG', montant: 5000, paramValue: '108', key: 'girardinAG', expected: 5400, delta: 5400, deltaTol: 1 },
+  // Pinel : retiré du catalogue préco Phase 3.1 (dispositif fermé fin 2024).
+  // Si un engagement Pinel existant est saisi par l'utilisateur, c'est via
+  // l'onglet Simulateur uniquement, pas via les préconisations.
 
-  // Pinel 9 ans 18% : 100k × 0.18 = 18000 input
-  // ⚠ Bug connu : devrait être étalé sur 9 ans = 2000/an
-  // Avec niche 10k cap, delta sera ~10k (sans bug ce serait ~2k)
-  { id: 'pinel', montant: 100000, paramValue: '9', key: 'pinel', expected: 18000, delta: null, knownBug: 'Pinel non étalé' },
+  // Déficit foncier : 5000 € de travaux → input.foncierReel = -5000
+  // (cap imputation RG à -10 700). Delta IR ≈ 5000 × TMI = 1500.
+  { id: 'deficitFoncier', montant: 5000, key: 'foncierReel', expected: -5000, delta: 5000 * baseR.tmi, deltaTol: 5 },
 
   // Jeanbrun : amortissement social 8000 (sous plafond 10k)
   // Pas un avantage IR direct → diminue revenus fonciers

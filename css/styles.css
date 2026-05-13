@@ -1045,3 +1045,506 @@ header span {
   color: #dc2626;
   font-weight: 700;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PRÉCONISATIONS — refonte 3 leviers (Phase 3)
+═══════════════════════════════════════════════════════════ */
+
+/* ─── Dev toolbar (temporaire — à retirer avant prod) ─── */
+.dev-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin: 16px 40px -8px;
+  background: #fef3c7;
+  border: 1px dashed #d97706;
+  border-radius: 6px;
+  font-size: 0.82em;
+}
+.dev-toolbar-label {
+  font-size: 0.7em;
+  font-weight: 700;
+  color: #78350f;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  background: #fde68a;
+  border-radius: 3px;
+}
+.dev-btn {
+  padding: 4px 12px;
+  background: #fff;
+  border: 1px solid #d97706;
+  border-radius: 4px;
+  color: #78350f;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: 500;
+}
+.dev-btn:hover {
+  background: #fde68a;
+}
+
+/* ─── Layout 2 colonnes ─── */
+.preco-layout {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 20px;
+  align-items: start;
+  margin-top: 16px;
+}
+.preco-main { min-width: 0; }
+.preco-sidebar {
+  position: sticky;
+  top: 80px;
+  align-self: start;
+}
+
+/* ─── Sections par levier — palette sobre ─── */
+.preco-section {
+  margin: 12px 0;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+/* Différenciation des leviers : juste une étiquette discrète, plus de
+   border-left coloré ni de h3 coloré (trop bruyant) */
+.preco-section-header {
+  margin-bottom: 8px;
+}
+.preco-section-header h3 {
+  margin: 0 0 2px 0;
+  font-size: 1em;
+  font-weight: 600;
+  color: #0f172a;
+}
+.preco-section-desc {
+  margin: 0;
+  font-size: 0.82em;
+  color: #64748b;
+}
+
+/* Variante header Levier 2 : grid 2 colonnes pour caler l'indicateur à droite */
+.preco-section-header-l2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+/* Indicateur "Impôt à effacer" en haut à droite — même rythme que les
+   jauges de la sidebar (label fin, barre 4px, valeur tabular). */
+.preco-section-indic {
+  flex: 0 0 auto;
+  min-width: 160px;
+  text-align: right;
+}
+.preco-section-indic-label {
+  display: block;
+  font-size: 0.78em;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 3px;
+}
+.preco-section-indic-bar {
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.preco-section-indic-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.2s ease;
+}
+.preco-section-indic-val {
+  display: block;
+  font-size: 0.78em;
+  font-variant-numeric: tabular-nums;
+  color: #475569;
+  margin-top: 2px;
+}
+
+.preco-table-section {
+  margin-top: 6px;
+}
+
+/* ─── Lignes "déjà saisies" en tête des tableaux préco ─── */
+.preco-tbody-existing tr {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.88em;
+}
+.preco-tbody-existing td {
+  padding: 6px 10px;
+  border-bottom: 1px dashed #e2e8f0;
+}
+.preco-existing-marker {
+  display: inline-block;
+  font-size: 0.72em;
+  color: #64748b;
+  font-weight: 500;
+  margin-right: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.preco-plafond-existing {
+  font-size: 0.78em;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* ─── Pastille catégorie (Niche 10k / 18k / Hors / Foncier) ─── */
+.preco-cat-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #f1f5f9;
+  font-size: 0.72em;
+  font-weight: 500;
+  margin-left: 6px;
+  vertical-align: middle;
+  white-space: nowrap;
+  color: #64748b;
+}
+/* Différenciation discrète par couleur de texte uniquement, fond identique */
+.preco-cat-niche10 { color: #1e40af; }
+.preco-cat-niche18 { color: #92400e; }
+.preco-cat-hors    { color: #475569; }
+.preco-cat-foncier { color: #166534; }
+
+/* Pastille "nature" — retirée des lignes (cf. fix surdim) mais classes
+   conservées au cas où on l'utilise ailleurs (récap surdim ci-dessous). */
+.preco-nat-rep      { color: #075985; }
+.preco-nat-perdu    { color: #9a3412; }
+.preco-nat-rembours { color: #166534; }
+
+/* Colonne "Plafond individuel" centrée — la coche ✓ tombe au milieu */
+.preco-table-section th:nth-child(5),
+.preco-table-section td:nth-child(5) {
+  text-align: center;
+}
+
+/* Box récap "surdimensionnement" avec liste des dispositifs L2 actifs */
+.preco-warning-surdim .surdim-head {
+  margin-bottom: 6px;
+}
+.preco-warning-surdim .surdim-list {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+  font-size: 0.92em;
+  line-height: 1.55;
+}
+.preco-warning-surdim .surdim-rep   { color: #075985; font-weight: 500; }
+.preco-warning-surdim .surdim-perdu { color: #9a3412; font-weight: 500; }
+
+/* ─── Warnings inline ─── */
+.preco-section-warnings {
+  margin: 12px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.preco-warning {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.88em;
+  line-height: 1.4;
+  border-left: 3px solid transparent;
+}
+.preco-warning-info {
+  background: #eff6ff;
+  border-left-color: #2563eb;
+  color: #1e3a8a;
+}
+.preco-warning-warning {
+  background: #fffbeb;
+  border-left-color: #d97706;
+  color: #78350f;
+}
+.preco-warning-error {
+  background: #fef2f2;
+  border-left-color: #dc2626;
+  color: #7f1d1d;
+}
+
+/* ─── Boutons + Ajouter par section ─── */
+.preco-section .preco-add-btn {
+  margin-top: 12px;
+  display: inline-block;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.preco-section .preco-add-btn:hover {
+  border-style: solid;
+  border-color: #94a3b8;
+  background: #f8fafc;
+  color: #0f172a;
+}
+.preco-section-l1 .preco-add-btn:hover { border-color: #2E7D52; color: #2E7D52; }
+.preco-section-l2 .preco-add-btn:hover { border-color: #b45309; color: #b45309; }
+.preco-section-l3 .preco-add-btn:hover { border-color: #2563eb; color: #2563eb; }
+
+/* Section vide : message d'invite plus visible */
+.preco-section .preco-table-section tbody:empty + .preco-section-warnings + .preco-add-btn,
+.preco-section .preco-table-section tbody:empty ~ .preco-add-btn {
+  display: block;
+  margin: 0 auto;
+}
+
+/* ─── Sidebar récap (sticky dans le layout grid 2 colonnes) ─── */
+.preco-sidebar {
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9em;
+}
+.preco-sidebar h4 {
+  margin: 0 0 10px 0;
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #64748b;
+  font-weight: 600;
+}
+.preco-sidebar .recap-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 4px 0;
+  gap: 8px;
+}
+.preco-sidebar .recap-label {
+  font-size: 0.85em;
+  color: #64748b;
+}
+.preco-sidebar .recap-val {
+  font-size: 1em;
+  font-weight: 600;
+  color: #1e293b;
+  font-variant-numeric: tabular-nums;
+}
+.preco-sidebar .recap-final {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+.preco-sidebar .recap-final .recap-label {
+  color: #0f172a;
+  font-weight: 600;
+}
+.preco-sidebar .recap-final .recap-val {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: #0f172a;
+}
+.preco-sidebar .recap-eco {
+  margin-top: 2px;
+}
+.preco-sidebar .recap-conclusion {
+  margin: 8px 0 4px 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.86em;
+  line-height: 1.4;
+  text-align: center;
+}
+.preco-sidebar .recap-conclusion-due {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.preco-sidebar .recap-conclusion-zero {
+  background: #f8fafc;
+  color: #475569;
+  font-style: italic;
+}
+.preco-sidebar .recap-conclusion-remb {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 600;
+}
+.preco-sidebar .recap-eco .recap-label {
+  color: #475569;
+  font-weight: 500;
+}
+.preco-sidebar .recap-eco .recap-val {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* Séparateur Évolution / Indicateurs dans le sticky */
+.preco-sidebar .recap-divider {
+  margin: 14px 0 6px 0;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #64748b;
+  font-weight: 600;
+}
+.preco-sidebar .recap-jauge {
+  margin-bottom: 6px;
+}
+.preco-sidebar .recap-jauge-label {
+  display: block;
+  font-size: 0.78em;
+  color: #475569;
+  margin-bottom: 2px;
+}
+.preco-sidebar .recap-jauge-bar {
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.preco-sidebar .recap-jauge-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s ease, background 0.2s ease;
+}
+.preco-sidebar .recap-jauge-val {
+  font-size: 0.72em;
+  font-variant-numeric: tabular-nums;
+  color: #64748b;
+  display: block;
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* Sur écrans étroits : layout passe en 1 colonne, sidebar empilée en bas
+   (au lieu de cachée — l'info reste accessible). */
+@media (max-width: 1100px) {
+  .preco-layout { grid-template-columns: 1fr; }
+  .preco-sidebar { position: static; }
+}
+
+/* ─── Bouton "max" à droite de l'input montant ─── */
+.preco-montant-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.preco-montant-wrap .preco-montant-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.preco-max-btn {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  color: #475569;
+  font-size: 0.72em;
+  font-weight: 500;
+  cursor: pointer;
+  text-transform: lowercase;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.preco-max-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+/* ─── Widget rendement libre (Girardin PD/AG) ─── */
+.preco-rendement-wrap {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+.preco-rendement-btn {
+  width: 26px;
+  border: 0;
+  background: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+  font-size: 1.1em;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.15s;
+}
+.preco-rendement-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.preco-rendement-input {
+  width: 56px;
+  border: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  background: transparent;
+  outline: none;
+  padding: 4px 0;
+}
+.preco-rendement-input::-webkit-outer-spin-button,
+.preco-rendement-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.preco-rendement-suffix {
+  display: flex;
+  align-items: center;
+  padding: 0 6px 0 2px;
+  color: #64748b;
+  font-size: 0.9em;
+}
+
+/* ─── Jauges résiduelles en grille 3 colonnes (Budget, PER, Dons) ─── */
+.preco-jauges-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.preco-jauges-grid .preco-jauge-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+}
+.preco-jauges-grid .preco-jauge-label {
+  font-size: 0.82em;
+  color: #64748b;
+  font-weight: 500;
+}
+.preco-jauges-grid .preco-jauge-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.preco-jauges-grid .preco-jauge-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s ease, background 0.2s ease;
+}
+.preco-jauges-grid .preco-jauge-val {
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+  color: #475569;
+}
+@media (max-width: 720px) {
+  .preco-jauges-grid { grid-template-columns: 1fr; }
+}
