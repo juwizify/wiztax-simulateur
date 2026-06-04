@@ -352,13 +352,14 @@ header span {
 }
 
 /* Carte "cadre temporel" dans l'onglet Paramètres */
+/* .param-card--scope : variante d'introduction (texte explicatif).
+   Subtle background pour la différencier sans liseré coloré. */
 .param-card--scope {
-  background: #F0F4FF;
-  border-top-color: var(--accent);
+  background: var(--surface-container-low);
 }
 .param-card--scope p {
   font-size: .84rem;
-  color: var(--text-secondary);
+  color: var(--on-surface-variant);
   line-height: 1.5;
   margin: 0;
 }
@@ -366,24 +367,26 @@ header span {
 /* ─────────────────────────────────────────────
    PANNEAU RÉSULTATS
 ───────────────────────────────────────────── */
+/* .results-panel : aligné sur .section-card (cf. tasks/design-system-spec.md).
+   Conserve position:sticky pour rester visible au scroll. */
 .results-panel {
   position: sticky;
   top: 24px;
   background: var(--surface-lowest);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-arch);
+  border: 1px solid var(--surface-container-high);
+  border-radius: 8px;
   overflow: hidden;
-  border-top: 3px solid var(--accent);
 }
 .results-panel h2 {
   font-family: var(--font-headline);
-  font-size: .78rem;
-  font-weight: 700;
+  font-size: .72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .7px;
-  color: var(--on-surface);
-  padding: 14px 20px;
-  background: var(--surface-container-low);
+  letter-spacing: .6px;
+  color: var(--on-surface-variant);
+  padding: 12px 20px;
+  background: transparent;
+  border-bottom: 1px solid var(--surface-container-high);
 }
 .results-list { padding: 6px 0 12px; }
 
@@ -433,29 +436,30 @@ header span {
 ───────────────────────────────────────────── */
 #calcul { padding: 28px 40px; }
 
+/* .calc-section : aligné sur .section-card (cf. tasks/design-system-spec.md).
+   Variante .final pour l'impôt total (sémantique error). */
 .calc-section {
   background: var(--surface-lowest);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-arch);
-  margin-bottom: 16px;
+  border: 1px solid var(--surface-container-high);
+  border-radius: 8px;
+  margin-bottom: 14px;
   overflow: hidden;
-  border-top: 3px solid var(--accent);
 }
 .calc-section h2 {
   font-family: var(--font-headline);
-  font-size: .78rem;
-  font-weight: 700;
+  font-size: .72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .7px;
-  color: var(--on-surface);
-  padding: 14px 20px;
-  background: var(--surface-container-low);
-}
-.calc-section.final {
-  border-top-color: var(--error);
+  letter-spacing: .6px;
+  color: var(--on-surface-variant);
+  padding: 12px 20px;
+  background: transparent;
+  border-bottom: 1px solid var(--surface-container-high);
 }
 .calc-section.final h2 {
   color: var(--error);
+  /* On garde le signal "impôt final" via la couleur du texte (sémantique error),
+     pas via un liseré décoratif. */
 }
 
 .calc-table {
@@ -517,22 +521,24 @@ header span {
   gap: 20px;
   align-items: start;
 }
+/* .param-card : aligné sur .section-card (cf. tasks/design-system-spec.md).
+   Le liseré vert décoratif a été retiré (pas d'info sémantique). */
 .param-card {
   background: var(--surface-lowest);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-arch);
+  border: 1px solid var(--surface-container-high);
+  border-radius: 8px;
   overflow: hidden;
-  border-top: 3px solid #2E7D52;  /* vert — différencie l'onglet paramètres */
 }
 .param-card h2 {
   font-family: var(--font-headline);
-  font-size: .78rem;
-  font-weight: 700;
+  font-size: .72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .7px;
-  color: var(--on-surface);
-  padding: 14px 20px;
-  background: var(--surface-container-low);
+  letter-spacing: .6px;
+  color: var(--on-surface-variant);
+  padding: 12px 20px;
+  background: transparent;
+  border-bottom: 1px solid var(--surface-container-high);
 }
 .param-table {
   width: 100%;
@@ -580,15 +586,16 @@ header span {
   color: var(--on-surface-variant);
 }
 
+/* Titre de groupe dans l'onglet Leviers — typo cohérente avec les h2 de cards.
+   Pas de couleur thématique (décision DS : signal sans valeur sémantique). */
 .leviers-section-title {
   font-family: var(--font-headline);
-  font-size: .88rem;
-  font-weight: 700;
-  letter-spacing: .2px;
+  font-size: .72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--on-surface-variant);
   margin: 28px 0 10px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
 }
 .leviers-section-title:first-of-type { margin-top: 0; }
 
@@ -606,14 +613,14 @@ header span {
 .lbadge-18k    { background: #FEF3E2; color: #b45309; border: 1px solid #f8d89e; }
 .lbadge-deduct { background: var(--surface-container-low); color: var(--on-surface-variant); border: 1px solid var(--outline-variant); }
 
-/* Cards accordéon */
+/* .levier-card : card accordéon, alignée sur .section-card.
+   Pas de liseré coloré ni d'ombre lourde (cf. tasks/design-system-spec.md). */
 .levier-card {
   background: var(--surface-lowest);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-arch);
+  border: 1px solid var(--surface-container-high);
+  border-radius: 8px;
   margin-bottom: 8px;
   overflow: hidden;
-  border-top: 3px solid var(--accent);
 }
 .levier-header {
   display: flex;
