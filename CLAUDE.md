@@ -15,6 +15,11 @@ Destinée à être intégrée dans un vrai logiciel par un développeur.
 ## Structure
 - `js/params.js` — tous les paramètres fiscaux (ne pas modifier sans source officielle)
 - `js/calculator.js` — moteur de calcul pur (étapes 1 à 11), pas de DOM ici
+- `js/preconisations.js` — **catalogue unique des leviers fiscaux** (`LEVIERS_CATALOGUE`).
+  Source éditoriale unique consommée par : `renderLeviersOnglet()` (cards onglet
+  Leviers fiscaux) + `renderSimulateurFormRows(targetEl, family)` (form-rows
+  Simulateur). Tout enrichissement (label, taux, plafond, tooltip, liens, params)
+  passe par le catalogue, jamais en HTML statique.
 - `js/app.js` — lecture des inputs, affichage des résultats, navigation onglets
 - `css/styles.css` — design system + composants. **Banque centrale** : avant
   d'inventer une nouvelle classe, ouvrir l'en-tête du fichier (inventaire
@@ -23,6 +28,29 @@ Destinée à être intégrée dans un vrai logiciel par un développeur.
   (Simulateur [toggle mode simple/complet], Calcul détaillé, Préconisations,
   Paramètres fiscaux, Leviers fiscaux). Cf. tasks/option3-fusion-onglets.md
   pour le refactor du Simulateur unique (anciens Simplifié + Complet fusionnés).
+  Les form-rows IR-PME / SOFICA / FIP Corse / GFI / Malraux / Loc'Avantages
+  sont **générées dynamiquement** depuis `LEVIERS_CATALOGUE` (post-D3.6) ;
+  conteneurs `<div id="simXxx"></div>` pour chaque `family`.
+
+## Sémantique des leviers fiscaux (post-D3.x)
+
+Tous les véhicules « cash sortant » du Simulateur utilisent désormais la
+**sémantique investissement** : l'utilisateur saisit le montant souscrit (cash),
+et le moteur calcule la RI = invest retenu × taux applicable.
+
+| Levier | Input | Taux | Plafond invest |
+|---|---|---|---|
+| IR-PME (7 variantes) | montant souscrit | 18/25/30/40/50 % selon variante | 50k/100k (75k/150k pour JEI) |
+| SOFICA | montant souscrit + soficaTaux | 30/36/48 % | min(18k, 25 % RNG) |
+| FIP Corse | montant souscrit | 30 % | 12k/24k |
+| GFI | montant souscrit | 18 % | 50k/100k |
+| Malraux | travaux + malrauxZone | 22/30 % | 100k/an |
+| Loc'Avantages | dépenses + locAvantagesPalier | 15/35/65 % | 10k/an |
+
+FCPI classique : **retiré au 21/02/2026** (LF 2026 / loi 2026-103). Pinel :
+**fermé au 31/12/2024** (LF 2024 art. 168) — saisie réservée aux engagements
+existants en `.advanced`. Cf. `tasks/audit-liens-officiels.md` pour le statut
+des sources officielles.
 
 ## Paramètres fiscaux vérifiés (sources officielles)
 - Barème : 11 600 / 29 579 / 84 577 / 181 917 à 0% / 11% / 30% / 41% / 45%
