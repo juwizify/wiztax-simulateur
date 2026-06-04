@@ -101,13 +101,9 @@ const PARAMS = {
       taux: 0.30,
       panierPartage: 'irPmeJei',          // plafond commun avec irPmeJei
     },
-    // FCPI classique — NON ÉLIGIBLE IR-PME depuis le 21/02/2026.
-    // Conservé techniquement (entrées DOM legacy, suppression définitive en commit D3.1.c).
-    fcpi: {
-      versementMax:        12000,
-      versementMaxCouple:  24000,
-      taux: 0.18,
-    },
+    // FCPI classique : RETIRÉ au 21/02/2026 (LF 2026 / loi 2026-103). Suppression
+    // complète du moteur en D3.4 — la mécanique FCPI subsiste UNIQUEMENT via
+    // PD.fcpiJei (FCPI investi en JEI, taux 30 %, panier partagé avec IR-PME JEI).
     // FIP Corse / Outre-mer — art. 199 terdecies-0 A bis
     fipCorse: {
       versementMax:        12000,

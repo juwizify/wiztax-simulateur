@@ -54,7 +54,7 @@ function defaultInputs() {
     csgDeductible: 0, autresCharges: 0,
     // Réductions
     dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
-    fcpi: 0, fcpiJei: 0, fipCorse: 0, gfi: 0,
+    fcpiJei: 0, fipCorse: 0, gfi: 0,    // fcpi (classique) retiré en D3.4
     // IR-PME — 7 sous-dispositifs (cf. tasks/d3.1-irpme-spec.md)
     irPme: 0,        // PME standard 18 %         → niche10
     irPmeEsus: 0,    // ESUS / SFS 25 %           → niche10
@@ -125,9 +125,9 @@ function getInputs() {
     ehpadFrais: v('ehpadFrais'), ehpadNbPers: v('ehpadNbPers'),
     pinel: v('pinel'),
     girardinPD: v('girardinPD'), girardinAG: v('girardinAG'),
+    // FCPI classique : retiré du moteur en D3.4 — dispositif supprimé au
+    // 21/02/2026 (LF 2026). Seul FCPI-JEI subsiste (taux 30 %, family ir-pme).
     fcpiJei: v('fcpiJei'),
-    // fcpi (classique) : champ retiré du DOM en D3.1.c — non éligible IR-PME
-    // depuis le 21/02/2026. Conservé dans defaultInputs() à 0 pour compat moteur.
     fipCorse: v('fipCorse'), gfi: v('gfi'),
     // IR-PME — 7 sous-dispositifs (cf. tasks/d3.1-irpme-spec.md)
     irPme:        v('irPme'),
@@ -311,7 +311,7 @@ function updateCalcDetaille(d) {
     ['cd-rpinel',    'Pinel / Denormandie — NICHE 10k',            d.redPinel,        ''],
     ['cd-rgpd',      'Girardin plein droit — NICHE 18k (44%)',     d.redGirardinPD,   ''],
     ['cd-rgag',      'Girardin avec agrément — NICHE 18k (34%)',   d.redGirardinAG,   ''],
-    ['cd-rfcpi',     'FCPI / FIP classique — NICHE 10k',           d.redFCPI,         ''],
+    // FCPI classique (cd-rfcpi) : retiré en D3.4 — dispositif supprimé 21/02/2026.
     ['cd-rfcpijei',  'FCPI JEI (LF 2026, 30 %) — NICHE 10k',       d.redFcpiJei,      ''],
     ['cd-rfipcorse', 'FIP Corse / Outre-mer (30 %) — NICHE 10k',   d.redFipCorse,     ''],
     ['cd-rgfi',      'GFI (Groupements forestiers) — NICHE 10k',   d.redGfi,          ''],

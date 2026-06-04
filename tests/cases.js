@@ -69,7 +69,7 @@ function makeInput(overrides = {}) {
     pinel: 0,
     girardinPD: 0,
     girardinAG: 0,
-    fcpi: 0,
+    // fcpi (classique) retiré en D3.4 — dispositif supprimé au 21/02/2026.
     fcpiJei: 0,
     fipCorse: 0,
     gfi: 0,

@@ -66,7 +66,7 @@ function makeInput(o = {}) {
     per: 0, perPlafondManuel: 0, pensionsAlim: 0, nbBeneficiairesPA: 0,
     csgDeductible: 0, autresCharges: 0,
     dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
-    fcpi: 0, fcpiJei: 0, fipCorse: 0, gfi: 0, irPme: 0,
+    fcpiJei: 0, fipCorse: 0, gfi: 0, irPme: 0,    // fcpi (classique) retiré D3.4
     malraux: 0, locAvantages: 0,
     sofica: 0, soficaTaux: '36',         // D3.2 : sémantique investissement
     autresReductions: 0,
@@ -309,7 +309,7 @@ function oracleCalc(input) {
   const versSoficaEff = Math.min(18000, rni * 0.25);
   const TAUX_SOFICA   = { '30': 0.30, '36': 0.36, '48': 0.48 };
   const tauxSoficaOr  = TAUX_SOFICA[i.soficaTaux] || TAUX_SOFICA['36'];
-  const capFCPI       = cv(12000, 24000)  * 0.18;       // 2 160 / 4 320 (dispositif retiré 21/02/2026)
+  // capFCPI retiré en D3.4 — dispositif FCPI classique supprimé au 21/02/2026.
   const capFcpiJei    = cv(75000, 150000) * 0.30;       // 22 500 / 45 000 (plafond PARTAGÉ avec irPmeJei)
   // FIP Corse — D3.3 sémantique investissement : RI = min(invest, versCouple) × 30 %
   const versFipCorseEff = cv(12000, 24000);             // 12k / 24k
@@ -338,7 +338,7 @@ function oracleCalc(input) {
   const redPinel = i.pinel;                                   // pas de cap V1
   const redGirPD = i.girardinPD;                              // pas de cap (panier majoré)
   const redGirAG = i.girardinAG;
-  const redFCPI     = Math.min(i.fcpi || 0,        capFCPI);
+  // redFCPI retiré en D3.4 — dispositif FCPI classique supprimé au 21/02/2026.
   const redFipCorse = Math.min(i.fipCorse || 0, versFipCorseEff) * 0.30;
   const redGfi      = Math.min(i.gfi || 0,      versGfiEff)      * 0.18;
 
@@ -385,7 +385,7 @@ function oracleCalc(input) {
   const redAutres = i.autresReductions;
 
   const totalReductions = redDons + redPinel + redGirPD + redGirAG
-    + redFCPI + redFcpiJei + redFipCorse + redGfi
+    + redFcpiJei + redFipCorse + redGfi
     + redIrPme + redIrPmeEsus + redIrPmeMH
     + redIrPmeJei + redIrPmeJeii + redIrPmeJeir
     + redLocAv + redSofica + redAutres;
@@ -414,7 +414,7 @@ function oracleCalc(input) {
   // IR-PME : seuls irPme/irPmeEsus/irPmeMH dans niche10.
   // JEI direct, JEII, JEIR, FCPI-JEI sont HORS plafond niches (art. 200-0 A).
   const ri10Panier = redPinel
-    + redFCPI + redFipCorse + redGfi
+    + redFipCorse + redGfi
     + redIrPme + redIrPmeEsus + redIrPmeMH
     + redLocAv + redAutres
     + credDom + credGarde + credAutres;
@@ -438,7 +438,7 @@ function oracleCalc(input) {
   // --- Étape 11 : impôt net ---
   // IR-PME : seuls irPme/irPmeEsus/irPmeMH passent par le facteur niche10.
   // JEI direct / JEII / JEIR / FCPI-JEI sont HORS plafond niches (art. 200-0 A).
-  const redNiche10Retenue = (redPinel + redFCPI + redFipCorse + redGfi
+  const redNiche10Retenue = (redPinel + redFipCorse + redGfi
     + redIrPme + redIrPmeEsus + redIrPmeMH
     + redLocAv + redAutres) * facteur10;
   const redNiche18Retenue = (redGirPD + redGirAG + redSofica) * facteur18;

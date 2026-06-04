@@ -393,7 +393,6 @@ function calculerIR(input) {
     // (versSoficaEffectif sert de cap d'investissement). versSoficaEffectif
     // × tauxMax(PD.sofica) = 8 640 € reste utile pour les jauges plafonds UI.
     soficaRiMax:  versSoficaEffectif * tauxMax(PD.sofica),                         // min(18k, 25%RNG) × 48 % — info UI
-    fcpi:         versCouple(PD.fcpi) * PD.fcpi.taux,                              // 12k/24k × 18 % (dispositif retiré 21/02/2026)
     fcpiJei:      versCouple(PD.fcpiJei) * PD.fcpiJei.taux,                        // 75k/150k × 30 % (plafond PARTAGÉ avec irPmeJei)
     // FIP Corse — pas dans capRiMax depuis D3.3 : sémantique = INVESTISSEMENT
     // (cf. IR-PME / SOFICA). La RI est calculée plus bas via versement × taux.
@@ -427,7 +426,9 @@ function calculerIR(input) {
   det.redPinel       = input.pinel;             // Pinel : retiré du périmètre (fermé fin 2024). Pas de cap V1.
   det.redGirardinPD  = input.girardinPD;        // Girardin : pas de cap individuel, limité par panier majoré.
   det.redGirardinAG  = input.girardinAG;
-  det.redFCPI        = Math.min(input.fcpi || 0,         capRiMax.fcpi);
+  // FCPI classique : RETIRÉ au 21/02/2026 (LF 2026). det.redFCPI supprimé — la
+  // mécanique FCPI ne subsiste que via det.redFcpiJei (taux 30 %, panier partagé
+  // avec IR-PME JEI direct), calculé plus haut.
   // FIP Corse — sémantique investissement (post-D3.3) : input.fipCorse = MONTANT
   // SOUSCRIT (cash). RI = min(invest, 12k/24k) × 30 %. Art. 199 terdecies-0 A bis CGI.
   const versFipCorseEff = versCouple(PD.fipCorse);
@@ -512,7 +513,6 @@ function calculerIR(input) {
     // SOFICA en sémantique investissement (D3.2) : surplus = montant souscrit
     // au-delà du versement effectif (min 18k / 25%RNG). Cohérent IR-PME.
     sofica:       Math.max(0, (input.sofica || 0)       - versSoficaEffectif),
-    fcpi:         Math.max(0, (input.fcpi || 0)         - det.redFCPI),
     // FIP Corse / GFI — sémantique investissement (D3.3) : surplus = invest
     // saisi au-delà du plafond annuel de souscription.
     fipCorse:     Math.max(0, (input.fipCorse || 0)     - versFipCorseEff),
@@ -532,7 +532,7 @@ function calculerIR(input) {
   };
 
   det.totalReductions = det.redDons + det.redPinel + det.redGirardinPD + det.redGirardinAG
-    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi
+    + det.redFcpiJei + det.redFipCorse + det.redGfi
     + det.redIrPme + det.redIrPmeEsus + det.redIrPmeMH
     + det.redIrPmeJei + det.redIrPmeJeii + det.redIrPmeJeir
     + det.redLocAvantages + det.redSofica + det.redAutres;
@@ -592,7 +592,7 @@ function calculerIR(input) {
   // Les variantes JEI direct, JEII, JEIR et FCPI-JEI sont HORS plafond niches
   // (art. 200-0 A exclut 199 terdecies-0 A bis et ter) → ne PAS les inclure ici.
   const ri10Panier = det.redPinel
-    + det.redFCPI + det.redFipCorse + det.redGfi
+    + det.redFipCorse + det.redGfi
     + det.redIrPme + det.redIrPmeEsus + det.redIrPmeMH
     + det.redLocAvantages + det.redAutres
     + det.credDomicile + det.credGarde + det.credAutres;
@@ -639,7 +639,7 @@ function calculerIR(input) {
   // et les variantes IR-PME JEI direct / JEII / JEIR / FCPI-JEI
   // (art. 200-0 A CGI exclut explicitement 199 terdecies-0 A bis et ter).
   const redNiche10Retenue = (det.redPinel
-    + det.redFCPI + det.redFipCorse + det.redGfi
+    + det.redFipCorse + det.redGfi
     + det.redIrPme + det.redIrPmeEsus + det.redIrPmeMH
     + det.redLocAvantages + det.redAutres) * facteur10;
   const redNiche18Retenue = (det.redGirardinPD + det.redGirardinAG + det.redSofica) * facteur18;

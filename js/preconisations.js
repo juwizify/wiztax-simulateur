@@ -1020,7 +1020,7 @@ function computeWarnings(det) {
   if (det.capExcedents) {
     const labels = {
       sofica:       'SOFICA',
-      fcpi:         'FCPI classique',
+      // fcpi (classique) retiré en D3.4 — dispositif supprimé au 21/02/2026.
       fcpiJei:      'FCPI JEI',
       fipCorse:     'FIP Corse',
       irPme:        'IR-PME',
