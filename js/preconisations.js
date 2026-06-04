@@ -2,6 +2,10 @@
  * PRÉCONISATIONS — Allocation d'un budget d'épargne sur N leviers fiscaux
  * Outil pour le conseiller en gestion de patrimoine.
  *
+ * Lecture des paramètres fiscaux : on lit toujours via PARAMS (source unique
+ * de vérité). En navigateur, PARAMS est exposé globalement par params.js
+ * chargé avant ce script. En Node (tests), on importe via require.
+ *
  * Mode "ajout" : les préconisations s'AJOUTENT aux inputs déjà saisis dans
  * l'onglet Simulateur (le client peut avoir un PER existant + on préconise
  * un versement supplémentaire).
@@ -30,6 +34,11 @@
  *   - cash    : levier qui consomme du cash de l'année (PER, dons, etc.)
  *   - exclu   : levier financé à crédit ou amortissement (immo)
  */
+
+// ─── Accès aux paramètres fiscaux : browser (global) ou Node (require) ───
+const P = (typeof PARAMS !== 'undefined')
+  ? PARAMS
+  : require('./params.js').PARAMS;
 
 // ─────────────────────────────────────────────
 // CATALOGUE DES LEVIERS
@@ -71,10 +80,12 @@ const LEVIERS_CATALOGUE = [
     info: 'Saisir l\'AMORTISSEMENT ANNUEL = prix d\'achat du bien × taux selon la catégorie de loyer (3,5 / 4,5 / 5,5 %). Ce n\'est PAS du cash sortant — c\'est une déduction comptable qui réduit l\'assiette des revenus fonciers → EXCLU du budget annuel. Le bien lui-même est généralement financé à crédit. Applicable aux acquisitions jusqu\'au 31/12/2028.',
     params: [
       { name: 'categorie', label: 'Catégorie de loyer',
+        // Plafonds lus dans PARAMS — taux fiscaux conservés en clair dans le
+        // label parce qu'ils sont liés à la catégorie (pas dans PARAMS).
         options: [
-          { value: 'intermediaire', label: 'Intermédiaire (3,5 % · plafond 8 000 €)', plafond: 8000 },
-          { value: 'social',        label: 'Social (4,5 % · plafond 10 000 €)',       plafond: 10000 },
-          { value: 'tres-social',   label: 'Très social (5,5 % · plafond 12 000 €)',  plafond: 12000 },
+          { value: 'intermediaire', label: `Intermédiaire (3,5 % · plafond ${P.plafonds.jeanbrunPlafondInter.toLocaleString('fr-FR')} €)`,    plafond: P.plafonds.jeanbrunPlafondInter },
+          { value: 'social',        label: `Social (4,5 % · plafond ${P.plafonds.jeanbrunPlafondSocial.toLocaleString('fr-FR')} €)`,         plafond: P.plafonds.jeanbrunPlafondSocial },
+          { value: 'tres-social',   label: `Très social (5,5 % · plafond ${P.plafonds.jeanbrunPlafondTresSoc.toLocaleString('fr-FR')} €)`,   plafond: P.plafonds.jeanbrunPlafondTresSoc },
         ]
       },
     ],
@@ -341,12 +352,10 @@ function avantageEstime(p, inputAvant) {
     // approximation : versement × TMI (le delta réel dépend du barème)
     return null; // on laisse le delta global parler
   }
-  if (lev.id === 'dons7UD') return Math.min(p.montant, 2000) * 0.75 + Math.max(0, p.montant - 2000) * 0.66;
-  if (lev.id === 'dons7UF') return p.montant * 0.66;
-  if (lev.id === 'ehpad')   return Math.min(p.montant, 10000) * 0.25;
-  if (lev.id === 'syndic')  return p.montant * 0.66;
-  if (lev.id === 'emploiDom') return Math.min(p.montant, 12000) * 0.50;
-  if (lev.id === 'gardeEnf')  return Math.min(p.montant, 3500) * 0.50;
+  // Versement-direct simples (dons, ehpad, syndic, emploiDom, gardeEnf) :
+  // le moteur calcule le delta réel via la comparaison globale (même pattern
+  // que per/jeanbrun ci-dessus). Retourner null évite de dupliquer ici la
+  // logique fiscale (plafonds, majorations, dégressions) déjà dans calculator.js.
   return null;
 }
 
@@ -388,60 +397,68 @@ function checkPlafond(p, inputAvant, detSeul, inputSeul) {
   // ─── Dons : plafond 20 % du RNI (cumul 7UD + 7UF) ───
   if ((lev.id === 'dons7UD' || lev.id === 'dons7UF') && detSeul && inputSeul) {
     const donsTotal = (inputSeul.dons || 0) + (inputSeul.dons7UD || 0);
-    const capRni = (detSeul.revenuNetImposable || 0) * 0.20;
+    const capRni = (detSeul.revenuNetImposable || 0) * P.plafonds.donsPlafondRNI;
     if (donsTotal > capRni + 0.5) {
-      return { ok: false, msg: `Cumul dons > 20 % du RNI (${fmtEur(capRni)} €)` };
+      const pctLabel = (P.plafonds.donsPlafondRNI * 100).toFixed(0);
+      return { ok: false, msg: `Cumul dons > ${pctLabel} % du RNI (${fmtEur(capRni)} €)` };
     }
   }
 
-  // ─── EHPAD : 10 000 € × nbPers ───
+  // ─── EHPAD : plafond par personne hébergée ───
   if (lev.id === 'ehpad') {
     const nbPers = Math.max(1, inputAvant.ehpadNbPers || 1);
-    const cap = 10000 * nbPers;
+    const cap = P.plafonds.ehpadPlafondParPers * nbPers;
     if (total > cap) {
       return { ok: false, msg: `Cap ${fmtEur(cap)} € (${nbPers} pers.)` };
     }
   }
 
-  // ─── Emploi à domicile : 12 000 € (cumul existant + préco) ───
+  // ─── Emploi à domicile : plafond dynamique avec majoration enfants ───
+  // Réplique de la règle calculator.js (art. 199 sexdecies-I-2° CGI) :
+  // base + 1500 €/enfant + 750 €/garde alternée, capé à emploiDomMaxMajore.
   if (lev.id === 'emploiDom') {
-    if (total > 12000) {
-      return { ok: false, msg: `Cap 12 000 € (déjà saisi : ${fmtEur(existant)} €)` };
+    const majoEnf = P.plafonds.emploiDomMajEnfant * (inputAvant.nbEnfants || 0)
+                  + P.plafonds.emploiDomMajGardeAlt * (inputAvant.gardeAlternee || 0);
+    const cap = Math.min(P.plafonds.emploiDomMax + majoEnf, P.plafonds.emploiDomMaxMajore);
+    if (total > cap) {
+      return { ok: false, msg: `Cap ${fmtEur(cap)} € (déjà saisi : ${fmtEur(existant)} €)` };
     }
   }
 
-  // ─── Garde d'enfants : 3 500 € × nbEnfants (cumul) ───
+  // ─── Garde d'enfants : plafond par enfant à charge (cumul) ───
   if (lev.id === 'gardeEnf') {
     const nbEnf = Math.max(1, inputAvant.nbEnfants || 1);
-    const cap = 3500 * nbEnf;
+    const cap = P.plafonds.gardeEnfantsMax * nbEnf;
     if (total > cap) {
       return { ok: false, msg: `Cap ${fmtEur(cap)} € (${nbEnf} enf., déjà saisi : ${fmtEur(existant)} €)` };
     }
   }
 
-  // ─── Cotisations syndicales : 1 % des revenus ───
+  // ─── Cotisations syndicales : plafond en % des revenus salariaux ───
   if (lev.id === 'syndic' && detSeul) {
     const baseMax = ((inputAvant.sal1 || 0) + (inputAvant.sal2 || 0)
       + (inputAvant.allocChomage1 || 0) + (inputAvant.allocChomage2 || 0)
-      + (inputAvant.pen1 || 0) + (inputAvant.pen2 || 0)) * 0.01;
+      + (inputAvant.pen1 || 0) + (inputAvant.pen2 || 0)) * P.plafonds.cotSyndicalesPlafondPct;
     if (total > baseMax + 0.5 && baseMax > 0) {
-      return { ok: false, msg: `Cap ${fmtEur(baseMax)} € (1 % des revenus)` };
+      const pctLabel = (P.plafonds.cotSyndicalesPlafondPct * 100).toFixed(0);
+      return { ok: false, msg: `Cap ${fmtEur(baseMax)} € (${pctLabel} % des revenus)` };
     }
   }
 
-  // ─── Déficit foncier : cap d'imputation RG 10 700 €/an ───
+  // ─── Déficit foncier : cap d'imputation RG (art. 156-I-3° CGI) ───
   if (lev.id === 'deficitFoncier' && inputSeul) {
+    const cap = P.plafonds.deficitFoncierMax;
     const deficitTotal = -Math.min(0, inputSeul.foncierReel || 0);
-    if (deficitTotal > 10700 + 0.5) {
-      const surplus = deficitTotal - 10700;
-      return { ok: false, msg: `${fmtEur(surplus)} € au-delà du cap 10 700 € (reportable 10 ans sur foncier)` };
+    if (deficitTotal > cap + 0.5) {
+      const surplus = deficitTotal - cap;
+      return { ok: false, msg: `${fmtEur(surplus)} € au-delà du cap ${fmtEur(cap)} € (reportable 10 ans sur foncier)` };
     }
   }
 
   // ─── Jeanbrun : plafond par catégorie ───
   if (lev.mode === 'jeanbrun') {
     const opt = lev.params[0].options.find(o => o.value === p.paramValue);
-    const cap = opt ? opt.plafond : 8000;
+    const cap = opt ? opt.plafond : P.plafonds.jeanbrunPlafondInter;
     if (p.montant > cap) {
       return { ok: false, msg: `Cap ${fmtEur(cap)} € (cat. ${p.paramValue})` };
     }

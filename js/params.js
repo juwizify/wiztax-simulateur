@@ -227,3 +227,7 @@ const PARAMS = {
     taux2: 0.04,
   },
 };
+
+// Compat Node (tests CommonJS). En navigateur, PARAMS reste exposé globalement
+// par le chargement <script> sans avoir à passer par exports.
+if (typeof module !== 'undefined') module.exports = { PARAMS };
