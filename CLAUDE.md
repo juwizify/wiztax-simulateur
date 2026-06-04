@@ -17,7 +17,10 @@ Destinée à être intégrée dans un vrai logiciel par un développeur.
 - `js/calculator.js` — moteur de calcul pur (étapes 1 à 11), pas de DOM ici
 - `js/app.js` — lecture des inputs, affichage des résultats, navigation onglets
 - `css/styles.css` — mise en forme
-- `index.html` — structure HTML complète avec les 3 onglets
+- `index.html` — structure HTML complète avec les 5 onglets
+  (Simulateur [toggle mode simple/complet], Calcul détaillé, Préconisations,
+  Paramètres fiscaux, Leviers fiscaux). Cf. tasks/option3-fusion-onglets.md
+  pour le refactor du Simulateur unique (anciens Simplifié + Complet fusionnés).
 
 ## Paramètres fiscaux vérifiés (sources officielles)
 - Barème : 11 600 / 29 579 / 84 577 / 181 917 à 0% / 11% / 30% / 41% / 45%

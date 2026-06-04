@@ -4,6 +4,23 @@ Date : 2026-06-04
 Branche : `wip/ajustements`
 Contexte : refactor « source unique de vérité » sous grille Stripe-grade.
 
+## ⚠ Axe A résolu (2026-06-04)
+
+L'axe A (« deux DOM séparés sans sync » entre Simulateur simplifié et
+Complet) a été traité par le refactor Option 3, cf.
+`tasks/option3-fusion-onglets.md`. L'onglet Simplifié n'existe plus comme
+entité HTML séparée — un seul onglet « Simulateur » avec toggle
+mode-simple / mode-complet et un DOM unique. Les bugs de désynchro
+mentionnés ci-dessous (notamment ceux qui motivaient l'investigation) ne
+peuvent plus apparaître par construction.
+
+Désormais seul l'Axe B (les 4 sources de vérité côté **données fiscales**
+— PARAMS, onglets Paramètres/Leviers/Préco) reste à traiter dans les
+phases suivantes (B.1.2 IR-PME, B.1.3 Loc'Av, etc.).
+
+---
+
+
 ## Les 4 sources
 
 1. **`js/params.js`** — objet `PARAMS` (constante autoritaire en théorie)
