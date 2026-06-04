@@ -292,9 +292,9 @@ function calculerIR(input) {
   const abat75  = Math.min(av75,  avAbat - abat128);
   det.avAbattement = abat128 + abat75;
   det.avImposable  = (av128 - abat128) + (av75 - abat75);
-  det.irAV = (av128 - abat128) * 0.128 + (av75 - abat75) * 0.075;
+  det.irAV = (av128 - abat128) * P.ps.pfuIr + (av75 - abat75) * P.ps.avIr75;
   // PFNL AV prélevé à la source — crédit d'impôt
-  det.pfnlAV = av75 * 0.075 + av128 * 0.128;
+  det.pfnlAV = av75 * P.ps.avIr75 + av128 * P.ps.pfuIr;
   const avProduits = av75 + av128;
 
   // ============================================================
@@ -350,7 +350,7 @@ function calculerIR(input) {
   const base66Cap    = Math.min(surplus7UD + dons7UF, Math.max(0, plafondRNI - base7UD75Cap));
 
   det.donsBase = base7UD75Cap + base66Cap;
-  det.redDons  = base7UD75Cap * 0.75 + base66Cap * 0.66;
+  det.redDons  = base7UD75Cap * P.plafonds.dons75Taux + base66Cap * P.plafonds.dons66Taux;
 
   // Frais de scolarité enfants (7EA/7EC/7EF) — réduction forfaitaire HORS niches
   det.fraisScol = (input.fraisScolCollege || 0) * P.plafonds.fraisScolCollege
@@ -385,7 +385,7 @@ function calculerIR(input) {
   // après charges déductibles).
   const versSoficaEffectif = Math.min(
     PD.sofica.versementMax,
-    det.revenuNetImposable * 0.25
+    det.revenuNetImposable * PD.sofica.plafondAssiettePctRng
   );
   const capRiMax = {
     sofica:       versSoficaEffectif * tauxMax(PD.sofica),                         // min(18k, 25%RNG) × 48 %

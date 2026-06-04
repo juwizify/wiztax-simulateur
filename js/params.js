@@ -59,7 +59,8 @@ const PARAMS = {
     mobilier: 0.186,  // dividendes, intérêts, PV mob — CSG 10.6% + CRDS 0.5% + sol. 7.5%
     foncier:  0.186,  // foncier nu, LMNP, micro-foncier — CFA LFSS 2026 inclus
     av:       0.172,  // AV > 8 ans — non concernée par la CFA, reste à 17,2 %
-    pfuIr:    0.128,  // PFU — part IR
+    pfuIr:    0.128,  // PFU — part IR (et IR sur AV > 8 ans avant abattement, art. 125-0 A CGI)
+    avIr75:   0.075,  // IR sur AV ≤ 8 ans (PFNL) avant abattement, art. 125-0 A CGI
     csgDeductible: 0.068,
   },
 
@@ -84,6 +85,8 @@ const PARAMS = {
     // SOFICA — art. 199 unvicies CGI, niche majorée 18 k
     sofica: {
       versementMax: 18000,
+      // Versement effectif retenu = min(versementMax, plafondAssiettePctRng × RNG)
+      plafondAssiettePctRng: 0.25,
       // Taux selon engagement de la SOFICA (production indépendante / langue régionale…)
       taux: { '30': 0.30, '36': 0.36, '48': 0.48 },
       tauxDefaut: '36',
@@ -144,9 +147,11 @@ const PARAMS = {
 
   // --- PLAFONDS RÉDUCTIONS / CRÉDITS ---
   plafonds: {
-    // Dons
-    dons75Plafond:        2000,    // seuil taux 75% (LF 2026 art. 28)
-    donsPlafondRNI:       0.20,    // base totale dons plafonnée à 20% du RNI (art. 200 CGI)
+    // Dons (art. 200 CGI + LF 2026 art. 28 pour le seuil 75 %)
+    dons75Taux:           0.75,    // taux 7UD organismes d'aide aux personnes (Coluche)
+    dons66Taux:           0.66,    // taux 7UF intérêt général (cas standard)
+    dons75Plafond:        2000,    // seuil au-dessus duquel le 7UD bascule sur le régime 66 %
+    donsPlafondRNI:       0.20,    // base totale dons plafonnée à 20 % du RNI
 
     // PER — déduction plafonnée à 10% des revenus pro (art. 163 quatervicies CGI)
     // Note : le plafond réglementaire se calcule sur les revenus N-1.
