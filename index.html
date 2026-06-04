@@ -557,24 +557,13 @@
           </div>
 
           <div class="form-row advanced">
-            <label for="fcpi">
-              FCPI / FIP classique (extinction)
-              <i class="tip" data-tip="Cases 7GQ / 7FQ de la déclaration.&#10;Fonds Communs de Placement dans l'Innovation (FCPI) ou Fonds d'Investissement de Proximité (FIP) métropolitain.&#10;&#10;⚠ DISPOSITIF QUASI ÉTEINT pour les souscriptions 2026 :&#10;· FIP classique métropolitain : supprimé au 01/01/2026 (LF 2025)&#10;· FCPI classique : supprimé au 21/02/2026 (LF 2026)&#10;&#10;Ce champ reste utile pour :&#10;· Souscription FCPI classique faite entre le 01/01/2026 et le 20/02/2026 (taux 25 % boost transitoire)&#10;· Reports d'années antérieures non encore consommés&#10;&#10;Pour les nouvelles souscriptions 2026, utiliser plutôt :&#10;· FCPI JEI (30 %)&#10;· FIP Corse / Outre-mer (30 %)&#10;· IR-PME / Madelin (25 %)&#10;&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue (pas le montant souscrit).&#10;Plafond global niches : 10 000 €.">i</i>
-            </label>
-            <input type="number" id="fcpi" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-10k">niche 10 000 €</span>
-            </div>
-          </div>
-
-          <div class="form-row advanced">
             <label for="fcpiJei">
-              FCPI JEI — Jeunes Entreprises Innovantes (30 %)
-              <i class="tip" data-tip="Dispositif créé par la LF 2026 pour remplacer le FCPI classique supprimé.&#10;Les FCPI investissant dans des Jeunes Entreprises Innovantes (JEI) bénéficient d'un taux MAJORÉ à 30 %.&#10;&#10;Applicable aux souscriptions à partir du 21/02/2026 (donc concerne tes versements 2026 à projeter ici).&#10;&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue (= souscription × 30 % dans la limite de 12 000 € single / 24 000 € couple).&#10;Plafond global niches : 10 000 €.">i</i>
+              IR-PME — FCPI investi en JEI (30 %)
+              <i class="tip" data-tip="Souscription de parts de FCPI investissant en Jeunes Entreprises Innovantes (au quota prévu par le règlement du fonds).&#10;&#10;Art. 199 terdecies-0 A bis CGI. Taux 30 %.&#10;&#10;Plafond ANNUEL : 75 000 € (célibataire) / 150 000 € (couple), PARTAGÉ avec l'IR-PME JEI direct (cumul des deux ≤ ce plafond).&#10;&#10;HORS plafond niches 10 000 € (art. 200-0 A exclut 199 terdecies-0 A bis).&#10;&#10;Validité : versements depuis le 21/02/2026. Les FCPI classiques ne sont plus éligibles depuis cette date.&#10;&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue (= souscription × 30 %).">i</i>
             </label>
             <input type="number" id="fcpiJei" value="0" min="0">
             <div class="niche-cell">
-              <span class="niche-marker niche-10k">niche 10 000 €</span>
+              <span class="niche-marker niche-hors">hors plafond niches</span>
             </div>
           </div>
 
@@ -602,13 +591,76 @@
 
           <div class="form-row advanced">
             <label for="irPme">
-              IR-PME (Madelin) — souscription capital PME (25 %)
-              <i class="tip" data-tip="Cases 7CF / 7CL / 7CM de la déclaration (art. 199 terdecies-0 A CGI).&#10;Souscription DIRECTE au capital de PME non cotées (≠ via fonds FCPI/FIP).&#10;&#10;Taux 25 % (boost 2024-2025) sur versements plafonnés à 50 000 € (single) / 100 000 € (couple).&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.&#10;Plafond global niches : 10 000 €.">i</i>
+              IR-PME — PME standard (18 %)
+              <i class="tip" data-tip="Souscription DIRECTE au capital de PME non cotées (cas général).&#10;Art. 199 terdecies-0 A CGI.&#10;&#10;Taux 18 % en 2026 (le « boost » 25 % de 2024-2025 a expiré).&#10;Plafond : 50 000 € (célibataire) / 100 000 € (couple). Conservation 5 ans.&#10;&#10;DANS le plafond global des niches fiscales (10 000 €).&#10;&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue (= souscription × 18 %).">i</i>
             </label>
             <input type="number" id="irPme" value="0" min="0">
             <div class="niche-cell">
               <span class="niche-marker niche-10k">niche 10 000 €</span>
             </div>
+          </div>
+
+          <div class="form-row advanced">
+            <label for="irPmeEsus">
+              IR-PME — ESUS / SFS (25 %)
+              <i class="tip" data-tip="Souscription au capital d'une Entreprise Solidaire d'Utilité Sociale (ESUS) ou Société Foncière Solidaire (SFS).&#10;&#10;Taux MAJORÉ 25 %. Plafond 50 000 € (single) / 100 000 € (couple).&#10;&#10;Validité : versements 28/06/2024 → 30/09/2026.&#10;⚠ À partir du 1/10/2026 : subordonné à validation Commission européenne.&#10;&#10;DANS le plafond niches 10 000 €.&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.">i</i>
+            </label>
+            <input type="number" id="irPmeEsus" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-10k">niche 10 000 €</span>
+            </div>
+          </div>
+
+          <div class="form-row advanced">
+            <label for="irPmeMH">
+              IR-PME — Monuments historiques (25 %)
+              <i class="tip" data-tip="Souscription au capital d'une société foncière de monuments historiques (immeubles protégés, sites, parcs, jardins).&#10;&#10;Taux 25 %. Plafond 50 000 € / 100 000 €.&#10;Validité : versements depuis le 28/09/2025.&#10;&#10;DANS le plafond niches 10 000 €.&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.">i</i>
+            </label>
+            <input type="number" id="irPmeMH" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-10k">niche 10 000 €</span>
+            </div>
+          </div>
+
+          <div class="form-row advanced">
+            <label for="irPmeJei">
+              IR-PME — JEI direct (30 %)
+              <i class="tip" data-tip="Souscription DIRECTE au capital d'une Jeune Entreprise Innovante (JEI).&#10;Art. 199 terdecies-0 A bis CGI.&#10;&#10;Taux 30 %. Plafond ANNUEL 75 000 € (single) / 150 000 € (couple), PARTAGÉ avec FCPI-JEI (cumul ≤ ce plafond).&#10;&#10;HORS plafond niches 10 000 € (art. 200-0 A exclut).&#10;&#10;Plafond pluri-annuel : RI cumulée JEI + JEIR ≤ 50 000 € sur 2024-2028 (cf. champ « RI JEI/JEIR déjà imputée »).&#10;&#10;Validité : 1/1/2024 → 31/12/2028. Conservation 5 ans.&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.">i</i>
+            </label>
+            <input type="number" id="irPmeJei" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+            </div>
+          </div>
+
+          <div class="form-row advanced">
+            <label for="irPmeJeii">
+              IR-PME — JEII (40 %)
+              <i class="tip" data-tip="Souscription au capital d'une Jeune Entreprise Innovante à Impact (JEII).&#10;Dispositif créé par la LF 2026 (nouvel article).&#10;&#10;Taux 40 %. Plafond 50 000 € / 100 000 €.&#10;Validité : 21/02/2026 → 31/12/2028.&#10;&#10;HORS plafond niches 10 000 €.&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.">i</i>
+            </label>
+            <input type="number" id="irPmeJeii" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+            </div>
+          </div>
+
+          <div class="form-row advanced">
+            <label for="irPmeJeir">
+              IR-PME — JEIR (50 %)
+              <i class="tip" data-tip="Souscription au capital d'une Jeune Entreprise Innovante de Rupture (JEIR).&#10;Art. 199 terdecies-0 A ter CGI.&#10;&#10;Taux 50 %. Plafond 50 000 € / 100 000 €.&#10;&#10;Plafond pluri-annuel : RI cumulée JEI + JEIR ≤ 50 000 € sur 2024-2028 (cf. champ « RI JEI/JEIR déjà imputée »).&#10;&#10;HORS plafond niches 10 000 €.&#10;Validité : 1/1/2024 → 31/12/2028.&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue.">i</i>
+            </label>
+            <input type="number" id="irPmeJeir" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-hors">hors plafond niches</span>
+            </div>
+          </div>
+
+          <div class="form-row advanced">
+            <label for="irPmeJeiJeirImputeAnterieur">
+              ↳ RI JEI/JEIR déjà imputée (2024-2025)
+              <i class="tip tip-down" data-tip="Plafond pluri-annuel art. 199 terdecies-0 A bis et ter : la RI cumulée JEI direct + JEIR ne peut pas dépasser 50 000 € sur la période 2024-2028.&#10;&#10;Saisir ici le montant de RI JEI/JEIR déjà obtenue sur 2024 et 2025 (à reporter de l'avis d'imposition).&#10;&#10;Le simulateur cape automatiquement la RI 2026 à (50 000 − cumul antérieur).&#10;&#10;Laisser à 0 si le client n'a pas investi en JEI/JEIR avant 2026.">i</i>
+            </label>
+            <input type="number" id="irPmeJeiJeirImputeAnterieur" value="0" min="0">
           </div>
 
           <div class="form-row advanced">

@@ -123,8 +123,18 @@ function getInputs() {
     ehpadFrais: v('ehpadFrais'), ehpadNbPers: v('ehpadNbPers'),
     pinel: v('pinel'),
     girardinPD: v('girardinPD'), girardinAG: v('girardinAG'),
-    fcpi: v('fcpi'), fcpiJei: v('fcpiJei'),
-    fipCorse: v('fipCorse'), gfi: v('gfi'), irPme: v('irPme'),
+    fcpiJei: v('fcpiJei'),
+    // fcpi (classique) : champ retiré du DOM en D3.1.c — non éligible IR-PME
+    // depuis le 21/02/2026. Conservé dans defaultInputs() à 0 pour compat moteur.
+    fipCorse: v('fipCorse'), gfi: v('gfi'),
+    // IR-PME — 7 sous-dispositifs (cf. tasks/d3.1-irpme-spec.md)
+    irPme:        v('irPme'),
+    irPmeEsus:    v('irPmeEsus'),
+    irPmeMH:      v('irPmeMH'),
+    irPmeJei:     v('irPmeJei'),
+    irPmeJeii:    v('irPmeJeii'),
+    irPmeJeir:    v('irPmeJeir'),
+    irPmeJeiJeirImputeAnterieur: v('irPmeJeiJeirImputeAnterieur'),
     malraux: v('malraux'),               // legacy (RI directe) — UI n'expose plus ce champ
     malrauxTravaux: v('malrauxTravaux'),
     malrauxZone: _sel('malrauxZone', d.malrauxZone),
