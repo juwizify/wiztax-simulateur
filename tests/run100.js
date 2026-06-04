@@ -311,14 +311,16 @@ function oracleCalc(input) {
   const tauxSoficaOr  = TAUX_SOFICA[i.soficaTaux] || TAUX_SOFICA['36'];
   const capFCPI       = cv(12000, 24000)  * 0.18;       // 2 160 / 4 320 (dispositif retiré 21/02/2026)
   const capFcpiJei    = cv(75000, 150000) * 0.30;       // 22 500 / 45 000 (plafond PARTAGÉ avec irPmeJei)
-  const capFipCorse   = cv(12000, 24000)  * 0.30;       // 3 600 / 7 200
+  // FIP Corse — D3.3 sémantique investissement : RI = min(invest, versCouple) × 30 %
+  const versFipCorseEff = cv(12000, 24000);             // 12k / 24k
   const capIrPme      = cv(50000, 100000) * 0.18;       // 9 000 / 18 000 (PME standard, taux corrigé post-LF 2026)
   const capIrPmeEsus  = cv(50000, 100000) * 0.25;       // 12 500 / 25 000 (ESUS/SFS)
   const capIrPmeMH    = cv(50000, 100000) * 0.25;       // 12 500 / 25 000 (Monuments historiques)
   const capIrPmeJei   = cv(75000, 150000) * 0.30;       // 22 500 / 45 000 (JEI direct, plafond PARTAGÉ avec fcpiJei)
   const capIrPmeJeii  = cv(50000, 100000) * 0.40;       // 20 000 / 40 000 (JEII LF 2026)
   const capIrPmeJeir  = cv(50000, 100000) * 0.50;       // 25 000 / 50 000 (JEIR art. 199 terdecies-0 A ter)
-  const capGfi        = cv(50000, 100000) * 0.18;       //  9 000 / 18 000
+  // GFI — D3.3 sémantique investissement : RI = min(invest, versCouple) × 18 %
+  const versGfiEff      = cv(50000, 100000);            // 50k / 100k
   const capMalraux    = 100000 * 0.30;                  // 30 000
   const capLocAv      = 10000 * 0.65;                   //  6 500
 
@@ -337,8 +339,8 @@ function oracleCalc(input) {
   const redGirPD = i.girardinPD;                              // pas de cap (panier majoré)
   const redGirAG = i.girardinAG;
   const redFCPI     = Math.min(i.fcpi || 0,        capFCPI);
-  const redFipCorse = Math.min(i.fipCorse || 0,    capFipCorse);
-  const redGfi      = Math.min(i.gfi || 0,         capGfi);
+  const redFipCorse = Math.min(i.fipCorse || 0, versFipCorseEff) * 0.30;
+  const redGfi      = Math.min(i.gfi || 0,      versGfiEff)      * 0.18;
 
   // ─── IR-PME : sémantique post-F4 — input = MONTANT INVESTI (€) ───
   // RI = min(invest, versementMax) × taux (miroir calculator.js).

@@ -395,14 +395,17 @@ function calculerIR(input) {
     soficaRiMax:  versSoficaEffectif * tauxMax(PD.sofica),                         // min(18k, 25%RNG) × 48 % — info UI
     fcpi:         versCouple(PD.fcpi) * PD.fcpi.taux,                              // 12k/24k × 18 % (dispositif retiré 21/02/2026)
     fcpiJei:      versCouple(PD.fcpiJei) * PD.fcpiJei.taux,                        // 75k/150k × 30 % (plafond PARTAGÉ avec irPmeJei)
-    fipCorse:     versCouple(PD.fipCorse) * PD.fipCorse.taux,                      // 12k/24k × 30 %
+    // FIP Corse — pas dans capRiMax depuis D3.3 : sémantique = INVESTISSEMENT
+    // (cf. IR-PME / SOFICA). La RI est calculée plus bas via versement × taux.
+    fipCorseRiMax: versCouple(PD.fipCorse) * PD.fipCorse.taux,                     // 12k/24k × 30 % — info UI seule
     irPme:        versCouple(PD.irPme) * PD.irPme.taux,                            // 50k/100k × 18 % (PME standard)
     irPmeEsus:    versCouple(PD.irPmeEsus) * PD.irPmeEsus.taux,                    // 50k/100k × 25 % (ESUS/SFS)
     irPmeMH:      versCouple(PD.irPmeMH)   * PD.irPmeMH.taux,                      // 50k/100k × 25 % (Monuments Historiques)
     irPmeJei:     versCouple(PD.irPmeJei)  * PD.irPmeJei.taux,                     // 75k/150k × 30 % (JEI, plafond PARTAGÉ avec fcpiJei)
     irPmeJeii:    versCouple(PD.irPmeJeii) * PD.irPmeJeii.taux,                    // 50k/100k × 40 % (JEII, LF 2026)
     irPmeJeir:    versCouple(PD.irPmeJeir) * PD.irPmeJeir.taux,                    // 50k/100k × 50 % (JEIR, art 199 terdecies-0 A ter)
-    gfi:          versCouple(PD.gfi) * PD.gfi.taux,                                // 50k/100k × 18 %
+    // GFI — pas dans capRiMax depuis D3.3 : sémantique = INVESTISSEMENT.
+    gfiRiMax:     versCouple(PD.gfi) * PD.gfi.taux,                                // 50k/100k × 18 % — info UI seule
     malraux:      PD.malraux.depensesParAnMax * tauxMax(PD.malraux),               // 100 000 × 30 % = 30 000
     locAvantages: PD.locAvantages.depensesMax * tauxMax(PD.locAvantages),          // 10 000 × 65 % = 6 500
   };
@@ -425,8 +428,15 @@ function calculerIR(input) {
   det.redGirardinPD  = input.girardinPD;        // Girardin : pas de cap individuel, limité par panier majoré.
   det.redGirardinAG  = input.girardinAG;
   det.redFCPI        = Math.min(input.fcpi || 0,         capRiMax.fcpi);
-  det.redFipCorse    = Math.min(input.fipCorse || 0,     capRiMax.fipCorse);
-  det.redGfi         = Math.min(input.gfi || 0,          capRiMax.gfi);
+  // FIP Corse — sémantique investissement (post-D3.3) : input.fipCorse = MONTANT
+  // SOUSCRIT (cash). RI = min(invest, 12k/24k) × 30 %. Art. 199 terdecies-0 A bis CGI.
+  const versFipCorseEff = versCouple(PD.fipCorse);
+  det.redFipCorse    = Math.min(input.fipCorse || 0, versFipCorseEff) * PD.fipCorse.taux;
+  // GFI — sémantique investissement (post-D3.3) : input.gfi = MONTANT SOUSCRIT
+  // en parts de Groupement Forestier d'Investissement. RI = min(invest, 50k/100k) × 18 %.
+  // Art. 199 decies H CGI / BOI-IR-RICI-80.
+  const versGfiEff = versCouple(PD.gfi);
+  det.redGfi         = Math.min(input.gfi || 0, versGfiEff) * PD.gfi.taux;
 
   // ─── IR-PME : saisie = MONTANT INVESTI (€), moteur calcule la RI ───
   // Sémantique 2026 (F4-IRPME.a) : l'utilisateur saisit ce qui figure sur sa
@@ -503,8 +513,10 @@ function calculerIR(input) {
     // au-delà du versement effectif (min 18k / 25%RNG). Cohérent IR-PME.
     sofica:       Math.max(0, (input.sofica || 0)       - versSoficaEffectif),
     fcpi:         Math.max(0, (input.fcpi || 0)         - det.redFCPI),
-    fipCorse:     Math.max(0, (input.fipCorse || 0)     - det.redFipCorse),
-    gfi:          Math.max(0, (input.gfi || 0)          - det.redGfi),
+    // FIP Corse / GFI — sémantique investissement (D3.3) : surplus = invest
+    // saisi au-delà du plafond annuel de souscription.
+    fipCorse:     Math.max(0, (input.fipCorse || 0)     - versFipCorseEff),
+    gfi:          Math.max(0, (input.gfi || 0)          - versGfiEff),
     malraux:      Math.max(0, (input.malraux || 0)      - det.redMalraux),
     locAvantages: Math.max(0, (input.locAvantages || 0) - det.redLocAvantages),
     // IR-PME (sémantique investissement) : surplus = invest saisi − plafond d'invest annuel

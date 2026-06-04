@@ -458,10 +458,14 @@ const LEVIERS_CATALOGUE = [
   },
   // 2.c) Autres dispositifs niche 10 000 €
   {
-    id: 'fipCorse', label: 'FIP Corse / Outre-mer (30 %)',
-    levier: 2, cat: 'niche10', mode: 'taux', taux: PD.fipCorse.taux, inputKey: 'fipCorse',
+    // Sémantique D3.3 : input.fipCorse = MONTANT SOUSCRIT (cash), RI = invest × 30 %
+    // plafonné à versCouple(PD.fipCorse) = 12 000 € (single) / 24 000 € (couple).
+    // Aligné sur le pattern IR-PME / SOFICA.
+    id: 'fipCorse', family: 'fipCorse', label: 'FIP Corse / Outre-mer (30 %)',
+    levier: 2, cat: 'niche10', mode: 'versement-direct', inputKey: 'fipCorse',
+    taux: PD.fipCorse.taux,    // constante éditoriale, sert à avantageEstime et aux tooltips
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Souscription en parts de FIP Corse ou Outre-mer. Réduction 30 %. Plafond 12 000 € / 24 000 €. Blocage 5 ans minimum.',
+    info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de FIP Corse ou Outre-mer. Cash sortant. Réduction 30 %. Plafond versement : 12 000 € (célib) / 24 000 € (couple). Blocage 5 ans minimum.',
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
     titleLong: 'FIP Corse / Outre-mer',
@@ -479,11 +483,24 @@ const LEVIERS_CATALOGUE = [
         text: 'RI = versement × 30 %, plafonné à 12 000 € (cél) / 24 000 € (couple). Exemple : 10 000 € → 3 000 €.' },
     ],
     refCGI: 'Art. 199 terdecies-0 A bis CGI',
-    refBofip: '—',
+    refBofip: 'BOI-IR-RICI-100',
+    links: [
+      { label: 'Art. 199 terdecies-0 A bis CGI (Légifrance)',
+        url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000041464766' },
+      { label: 'BOFiP — BOI-IR-RICI-100',
+        url: 'https://bofip.impots.gouv.fr/bofip/2049-PGP.html' },
+      { label: 'Service-public.fr — FIP',
+        url: 'https://www.service-public.fr/particuliers/vosdroits/F12888' },
+    ],
   },
   {
-    id: 'gfi', label: 'GFI Forestier (18%)',
-    levier: 2, cat: 'niche10', mode: 'taux', taux: 0.18, inputKey: 'gfi',
+    // Sémantique D3.3 : input.gfi = MONTANT SOUSCRIT (cash), RI = invest × 18 %
+    // plafonné à versCouple(PD.gfi) = 50 000 € / 100 000 €.
+    // Arbitrage BOFiP en attente (audit-preco-vs-leviers.md) : taux 25 % en zone
+    // éligible reste à modéliser. V1 = 18 % uniformément.
+    id: 'gfi', family: 'gfi', label: 'GFI Forestier (18%)',
+    levier: 2, cat: 'niche10', mode: 'versement-direct', inputKey: 'gfi',
+    taux: PD.gfi.taux,    // 0.18 — constante éditoriale pour avantageEstime + tooltips
     nature: 'versement-annuel', budget: 'cash',
     info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de Groupement Forestier d\'Investissement. Cash sortant. Réduction 18 % (jusqu\'à 25 % en zone éligible). Plafond 50 k€ / 100 k€. Avantages annexes IFI et succession.',
     sectionGroup: 'investissement-financier',
@@ -506,6 +523,14 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 decies H CGI',
     refBofip: 'BOI-IR-RICI-130',
+    links: [
+      { label: 'Art. 199 decies H CGI (Légifrance)',
+        url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000045203167' },
+      { label: 'BOFiP — BOI-IR-RICI-80',
+        url: 'https://bofip.impots.gouv.fr/bofip/2105-PGP.html' },
+      { label: 'Service-public.fr — GFI',
+        url: 'https://www.service-public.fr/particuliers/vosdroits/F22806' },
+    ],
   },
   {
     id: 'locAvantages', label: 'Loc\'Avantages',
@@ -842,6 +867,13 @@ function avantageEstime(p, inputAvant) {
   if (lev.id === 'sofica' && lev.params && lev.params[0]) {
     const opt = lev.params[0].options.find(o => o.value === p.paramValue);
     if (opt && opt.taux !== undefined) return p.montant * opt.taux;
+  }
+  // Versement-direct + family + taux constant (D3.3) — FIP Corse, GFI, etc.
+  // Sémantique investissement pure : RI ≈ montant × taux (cap effectif côté moteur).
+  // Critère `lev.family` indispensable pour ne pas attraper les leviers en mode
+  // dépenses ou autres versement-direct sans correspondance simple.
+  if (lev.mode === 'versement-direct' && lev.family && lev.taux !== undefined) {
+    return p.montant * lev.taux;
   }
   // versement-direct : selon le levier
   if (lev.id === 'per') {

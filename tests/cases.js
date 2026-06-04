@@ -575,19 +575,20 @@ const CASES = [
   },
 
   // -------------------------------------------------------------------
-  // FIP Corse + GFI + IR-PME : sémantique mixte (legacy + post-F4)
-  // - fipCorse, gfi : saisie en RI directe (sémantique non encore migrée)
-  // - irPme         : sémantique post-F4 = MONTANT INVESTI
+  // FIP Corse + GFI + IR-PME : tous en sémantique INVESTISSEMENT (post-D3.3)
+  // - fipCorse : RI = min(invest, 12k single) × 30 %
+  // - gfi      : RI = min(invest, 50k single) × 18 %
+  // - irPme    : RI = min(invest, 50k single) × 18 %
   // -------------------------------------------------------------------
   {
-    name: 'FIP Corse 3k RI + GFI 2k RI + IR-PME 2k investi → 360 € RI',
-    input: makeInput({ sal1: 100000, fipCorse: 3000, gfi: 2000, irPme: 2000 }),
+    name: 'FIP Corse 10k + GFI 10k + IR-PME 10k investis → 3000+1800+1800 € RI',
+    input: makeInput({ sal1: 100000, fipCorse: 10000, gfi: 10000, irPme: 10000 }),
     // sal net 90k → impôt brut tranche 41 % = 20 701.
-    // RI : fipCorse 3 000 (RI directe) + gfi 2 000 (RI directe)
-    //   + irPme 2 000 invest × 18 % = 360 € de RI.
-    // Total RI niche10 = 5 360 < plafond 10 000 → appliquée intégralement.
-    // impôt net = 20 701 - 5 360 = 15 341 (arrondi).
-    expected: { impotNet: 15341, revenuReference: 90000, tmi: 0.41 },
+    // RI : fipCorse 10 000 × 30 % = 3 000 ; gfi 10 000 × 18 % = 1 800
+    //   ; irPme 10 000 × 18 % = 1 800.
+    // Total RI niche10 panier = 6 600 < plafond 10 000 → appliquée intégralement.
+    // impôt net = 20 701 - 6 600 = 14 101.
+    expected: { impotNet: 14101, revenuReference: 90000, tmi: 0.41 },
   },
 
   // -------------------------------------------------------------------

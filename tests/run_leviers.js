@@ -87,8 +87,8 @@ const TESTS = [
   //    expected (= merged[inputKey]) = montant brut, delta IR = montant × taux.
   { id: 'fcpiJei',    montant: 5000, key: 'fcpiJei',    expected: 5000, delta: 1500, deltaTol: 1 },
 
-  // FIP Corse : sémantique inchangée (saisie RI directe — à migrer dans une phase ultérieure)
-  { id: 'fipCorse', montant: 5000, key: 'fipCorse', expected: 1500, delta: 1500, deltaTol: 1 },
+  // FIP Corse — D3.3 sémantique investissement : montant souscrit, RI = invest × 30 %.
+  { id: 'fipCorse', montant: 5000, key: 'fipCorse', expected: 5000, delta: 1500, deltaTol: 1 },
 
   // IR-PME PME standard : 5000 € investis → RI 5000 × 18 % = 900
   { id: 'irPme',      montant: 5000, key: 'irPme',      expected: 5000, delta: 900,  deltaTol: 1 },
@@ -103,8 +103,8 @@ const TESTS = [
   // IR-PME JEIR : 5000 € investis × 50 % = 2500 (HORS, plafond pluri-annuel)
   { id: 'irPmeJeir',  montant: 5000, key: 'irPmeJeir',  expected: 5000, delta: 2500, deltaTol: 1 },
 
-  // GFI : 5000 × 18% = 900
-  { id: 'gfi', montant: 5000, key: 'gfi', expected: 900, delta: 900, deltaTol: 1 },
+  // GFI — D3.3 sémantique investissement : montant souscrit, RI = invest × 18 % = 900.
+  { id: 'gfi', montant: 5000, key: 'gfi', expected: 5000, delta: 900, deltaTol: 1 },
 
   // LocAvantages mode versement-direct (Phase 2.4) : input.locAvantagesDepenses = montant.
   // Le moteur calcule la RI = min(dépenses, 10k) × taux(palier). Niche 10k (couple+1enf, sans autres niches).

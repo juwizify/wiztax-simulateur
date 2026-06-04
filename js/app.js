@@ -437,6 +437,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // SOFICA (D3.2) : même pattern — container vide alimenté depuis le catalogue
     const simSofica = document.getElementById('simSofica');
     if (simSofica) renderSimulateurFormRows(simSofica, 'sofica');
+    // FIP Corse + GFI (D3.3) : sémantique investissement, mode versement-direct
+    const simFipCorse = document.getElementById('simFipCorse');
+    if (simFipCorse) renderSimulateurFormRows(simFipCorse, 'fipCorse');
+    const simGfi = document.getElementById('simGfi');
+    if (simGfi) renderSimulateurFormRows(simGfi, 'gfi');
   }
 
   // Écouter tous les inputs : un seul handler (recalculer) — le périmètre
