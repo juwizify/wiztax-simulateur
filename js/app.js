@@ -425,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Préconisations : init + listeners
   initPreconisations();
 
-  // Dev toolbar : bouton "Charger cas démo" + "Vider" — temporaire, à retirer.
+  // Dev toolbar (mode dev uniquement, voir isDevMode).
   initDevToolbar();
 
   // Premiers calculs
@@ -602,9 +602,17 @@ function computeMaxForLevier(lev, inputAvant, paramValue, detAvant, isCouple) {
 }
 
 // ─────────────────────────────────────────────
-// DEV TOOLBAR — bouton "Charger cas démo" + "Vider"
-// Temporaire pour faciliter le test manuel. À retirer avant prod.
+// DEV TOOLBAR — outils de test (charger cas démo, vider les champs).
+// Visible UNIQUEMENT en mode dev : localhost / 127.0.0.1 / fichier local,
+// ou si l'URL contient ?dev (ex: https://wizify.github.io/...?dev).
+// En production publique : la toolbar est cachée par isDevMode().
 // ─────────────────────────────────────────────
+function isDevMode() {
+  const h = location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '') return true;
+  return new URLSearchParams(location.search).has('dev');
+}
+
 const DEMO_CASE = {
   // Foyer : couple marié 2 enfants
   situation: 'marie-pacse',
@@ -628,6 +636,11 @@ const DEMO_CASE = {
 };
 
 function initDevToolbar() {
+  const toolbar = document.querySelector('.dev-toolbar');
+  if (!isDevMode()) {
+    if (toolbar) toolbar.style.display = 'none';
+    return;
+  }
   const btnLoad = document.getElementById('btnLoadDemo');
   const btnReset = document.getElementById('btnResetInputs');
   if (btnLoad) {

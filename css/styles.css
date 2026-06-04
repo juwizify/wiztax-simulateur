@@ -1050,7 +1050,7 @@ header span {
    PRÉCONISATIONS — refonte 3 leviers (Phase 3)
 ═══════════════════════════════════════════════════════════ */
 
-/* ─── Dev toolbar (temporaire — à retirer avant prod) ─── */
+/* ─── Dev toolbar (mode dev uniquement — cf. isDevMode dans app.js) ─── */
 .dev-toolbar {
   display: flex;
   align-items: center;
