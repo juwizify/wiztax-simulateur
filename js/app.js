@@ -442,6 +442,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (simFipCorse) renderSimulateurFormRows(simFipCorse, 'fipCorse');
     const simGfi = document.getElementById('simGfi');
     if (simGfi) renderSimulateurFormRows(simGfi, 'gfi');
+    // Malraux (D3.7) + Loc'Avantages (D3.6) : input dépenses + select empilés
+    const simMalraux = document.getElementById('simMalraux');
+    if (simMalraux) renderSimulateurFormRows(simMalraux, 'malraux');
+    const simLocAvantages = document.getElementById('simLocAvantages');
+    if (simLocAvantages) renderSimulateurFormRows(simLocAvantages, 'locAvantages');
   }
 
   // Écouter tous les inputs : un seul handler (recalculer) — le périmètre

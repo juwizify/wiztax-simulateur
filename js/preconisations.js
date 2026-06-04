@@ -225,7 +225,10 @@ const LEVIERS_CATALOGUE = [
     refBofip: 'BOI-IR-RICI-140',
   },
   {
-    id: 'malraux', label: 'Loi Malraux (22% ou 30%)',
+    // D3.7 : ajout family 'malraux' pour génération form-row depuis catalogue.
+    // Sémantique = TRAVAUX DE L'ANNÉE + select zone (SPR sans PSMV / SPR-PSMV ou QAD).
+    // Moteur calcule RI = min(travaux, 100 000 €) × taux zone (22 % / 30 %).
+    id: 'malraux', family: 'malraux', label: 'Loi Malraux (22% ou 30%)',
     levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'malrauxTravaux',
     paramKey: 'malrauxZone',
     nature: 'depenses-annuelles', budget: 'exclu',
@@ -250,7 +253,7 @@ const LEVIERS_CATALOGUE = [
     refCGI: 'Art. 199 tervicies CGI',
     refBofip: 'BOI-IR-RICI-200',
     params: [
-      { name: 'zone', label: 'Zone',
+      { name: 'zone', label: 'Zone', defaultValue: 'spr-non',
         options: [
           { value: 'spr-non', label: 'SPR sans PSMV (22 %)' },
           { value: 'spr-oui', label: 'SPR avec PSMV ou QAD (30 %)' },
@@ -537,7 +540,10 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'locAvantages', label: 'Loc\'Avantages',
+    // D3.6 : ajout family 'locAvantages' pour génération form-row depuis catalogue.
+    // Sémantique = DÉPENSES (loyers décotés) + select palier (loc1/loc2/loc3).
+    // Moteur calcule RI = min(dépenses, 10 000 €) × taux palier.
+    id: 'locAvantages', family: 'locAvantages', label: 'Loc\'Avantages',
     levier: 2, cat: 'niche10', mode: 'versement-direct', inputKey: 'locAvantagesDepenses',
     paramKey: 'locAvantagesPalier',
     nature: 'depenses-annuelles', budget: 'exclu',
@@ -561,7 +567,7 @@ const LEVIERS_CATALOGUE = [
     refCGI: 'Art. 199 tricies CGI',
     refBofip: '—',
     params: [
-      { name: 'palier', label: 'Palier de décote',
+      { name: 'palier', label: 'Palier de décote', defaultValue: 'loc1',
         options: [
           { value: 'loc1', label: 'Loc 1 — décote 15 % (RI 15 %)' },
           { value: 'loc2', label: 'Loc 2 — décote 30 % (RI 35 %)' },

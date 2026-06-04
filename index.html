@@ -577,50 +577,11 @@
             <input type="number" id="irPmeJeiJeirImputeAnterieur" value="0" min="0">
           </div>
 
-          <div class="form-row advanced">
-            <label for="malrauxTravaux">
-              Loi Malraux — travaux de l'année
-              <i class="tip" data-tip="Cases 7NX / 7NY de la déclaration (art. 199 tervicies CGI).&#10;Restauration d'immeubles situés en Site Patrimonial Remarquable (SPR) ou QAD.&#10;&#10;Saisir le MONTANT DES TRAVAUX engagés dans l'année — pas la réduction.&#10;Le simulateur calcule la RI = min(travaux, 100 000 €/an) × taux zone.&#10;&#10;Plafond cumulé légal : 400 000 € de travaux sur 4 ans (= 100 000 €/an).&#10;⚠ Phase 2.5 : on ne suit pas le cumul multi-année — le cap 100 k€ est appliqué chaque année indépendamment.&#10;&#10;⚠ HORS plafond des niches fiscales (atout majeur du dispositif).">i</i>
-            </label>
-            <input type="number" id="malrauxTravaux" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-hors">hors plafond niches</span>
-            </div>
-          </div>
-
-          <div class="form-row advanced">
-            <label for="malrauxZone">
-              ↳ Zone Malraux
-              <i class="tip tip-down" data-tip="Détermine le taux de réduction :&#10;· SPR avec PSMV approuvé / QAD : 30 %&#10;· SPR sans PSMV approuvé : 22 %">i</i>
-            </label>
-            <select id="malrauxZone">
-              <option value="spr-non">SPR sans PSMV — taux 22 %</option>
-              <option value="spr-oui">SPR avec PSMV ou QAD — taux 30 %</option>
-            </select>
-          </div>
-
-          <div class="form-row advanced">
-            <label for="locAvantagesDepenses">
-              Loc'Avantages — dépenses annuelles
-              <i class="tip" data-tip="Cases 7QO / 7QP / 7QR de la déclaration (art. 199 tricies CGI).&#10;Ex-dispositif Cosse « Louer abordable », réformé en 2022.&#10;&#10;Saisir le MONTANT DES DÉPENSES annuelles (loyer décoté brut) — pas la réduction.&#10;Le simulateur calcule la RI = min(dépenses, 10 000 €) × taux du palier.&#10;&#10;Paliers (choisir ci-dessous) :&#10;· Loc 1 (décote 15 %) : taux 15 %&#10;· Loc 2 (décote 30 %) : taux 35 %&#10;· Loc 3 (intermédiation locative IML, décote 45 %) : taux 65 %&#10;&#10;Plafond de dépenses retenues : 10 000 €/an.&#10;Plafond global niches : 10 000 €.">i</i>
-            </label>
-            <input type="number" id="locAvantagesDepenses" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-10k">niche 10 000 €</span>
-            </div>
-          </div>
-
-          <div class="form-row advanced">
-            <label for="locAvantagesPalier">
-              ↳ Palier de décote Loc'Avantages
-              <i class="tip tip-down" data-tip="Détermine le taux de réduction appliqué aux dépenses :&#10;· Loc 1 — décote loyer 15 % → RI 15 %&#10;· Loc 2 — décote 30 % → RI 35 %&#10;· Loc 3 — intermédiation locative (IML), décote 45 % → RI 65 %">i</i>
-            </label>
-            <select id="locAvantagesPalier">
-              <option value="loc1">Loc 1 — décote 15 % (RI 15 %)</option>
-              <option value="loc2">Loc 2 — décote 30 % (RI 35 %)</option>
-              <option value="loc3">Loc 3 — IML décote 45 % (RI 65 %)</option>
-            </select>
-          </div>
+          <!-- Malraux (D3.7) + Loc'Avantages (D3.6) — form-rows générées depuis
+               LEVIERS_CATALOGUE (family:'malraux' / 'locAvantages'). Input dépenses
+               + select empilés (cf. pattern SOFICA / D3.2). -->
+          <div id="simMalraux"></div>
+          <div id="simLocAvantages"></div>
 
           <!-- SOFICA (D3.2) — form-row généré depuis LEVIERS_CATALOGUE (family:'sofica').
                Sémantique investissement : input.sofica = souscription saisie + select
