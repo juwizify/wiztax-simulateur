@@ -436,6 +436,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mode simple / complet — toggle persistant (cf. tasks/option3-fusion-onglets.md)
   initModeToggle();
 
+  // Onglet Leviers fiscaux : génération dynamique des cards depuis le catalogue
+  // (Phase F3 — en construction, coexiste avec le HTML statique pendant la migration).
+  if (typeof renderLeviersOnglet === 'function') {
+    const auto = document.getElementById('leviersAuto');
+    if (auto) renderLeviersOnglet(auto);
+  }
+
   // Préconisations : init + listeners
   initPreconisations();
 

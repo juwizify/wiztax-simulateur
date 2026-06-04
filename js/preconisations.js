@@ -61,11 +61,33 @@ const PD = P.plafondsDispositifs;
 // `cat` reste utilisé par la mécanique 2 poches niches (niche10 / niche18 / hors / foncier).
 const LEVIERS_CATALOGUE = [
   // ─── LEVIER 1 — RÉDUIRE LA BASE IMPOSABLE ──────────────
+  // Champs descriptifs (sectionGroup, tagType, meta, descBlocks, refs) consommés
+  // par renderLeviersOnglet() pour générer dynamiquement les cards de l'onglet
+  // Leviers fiscaux. Cf. tasks/d3.1-irpme-spec.md et la spec F2 à venir.
   {
     id: 'per', label: 'PER (Plan d\'Épargne Retraite)',
     levier: 1, cat: 'hors', mode: 'versement-direct', inputKey: 'per',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Saisir le VERSEMENT VOLONTAIRE de l\'année sur le PER. Cash sortant pour le client (épargne bloquée jusqu\'à la retraite). Déduction du revenu imposable → économie ≈ versement × TMI. Plafond auto = 10 % des revenus pro (cap 37 680 €), par déclarant.',
+    // ── Enrichissement pour l'onglet Leviers fiscaux (générateur F3) ──
+    sectionGroup: 'epargne-retraite',
+    tagType: 'Déduction du revenu imposable',
+    titleLong: 'PER — Plan d\'Épargne Retraite',
+    meta: [
+      { label: 'Plafond salarié', value: '10 % revenus N−1 · max 37 680 €' },
+      { label: 'Plafond TNS (Madelin)', value: 'jusqu\'à 88 911 €' },
+      { label: 'Plancher', value: '4 710 €' },
+      { label: 'Dans le plafond niches ?', value: 'Non — hors plafond', status: 'warn' },
+      { label: 'Report plafond non utilisé', value: '5 ans (LF 2026, art. 10)' },
+    ],
+    descBlocks: [
+      { label: 'Ce que c\'est',
+        text: 'Le PER individuel (PERIN) permet de verser volontairement des sommes déduites du revenu brut global. L\'économie dépend directement de la TMI : plus elle est élevée, plus le gain est fort. Argent bloqué jusqu\'à la retraite, sauf déblocage anticipé (achat résidence principale, accidents de la vie). Non déductible pour les 70 ans et plus (LF 2026, art. 9).' },
+      { label: 'Calcul de l\'économie',
+        text: 'Versement × TMI = économie d\'impôt. Exemple : 10 000 € versés, TMI 30 % → 3 000 € d\'impôt en moins. Un couple peut mutualiser ses plafonds non utilisés sur 5 ans.' },
+    ],
+    refCGI: 'Art. 163 quatervicies CGI',
+    refBofip: 'BOI-IR-BASE-20-50',
   },
   {
     id: 'deficitFoncier', label: 'Déficit foncier (travaux)',
@@ -597,6 +619,111 @@ if (typeof window !== 'undefined') {
   };
 }
 
+// ─────────────────────────────────────────────
+// GÉNÉRATEUR ONGLET LEVIERS — depuis LEVIERS_CATALOGUE
+// ─────────────────────────────────────────────
+// Phase F3 : produit dynamiquement les cards de l'onglet Leviers fiscaux
+// à partir du catalogue. Un seul niveau de configuration (le catalogue)
+// pilote 3 vues (Préco, Simulateur, Leviers).
+//
+// Un levier doit avoir : sectionGroup, tagType, titleLong, meta[], descBlocks[],
+// refCGI, [refBofip]. Si l'un manque, la card affiche un fallback minimal
+// (titre seul) — l'ajout progressif au catalogue est ainsi non-bloquant.
+
+const SECTION_LABELS = {
+  'epargne-retraite':      'Épargne retraite',
+  'immobilier-locatif':    'Immobilier locatif',
+  'investissement-financier': 'Investissement financier',
+  'dons':                  'Dons et mécénat',
+  'famille-quotidien':     'Famille et quotidien',
+};
+
+function escHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function badgeForCat(cat) {
+  if (cat === 'hors')    return '<span class="lbadge lbadge-hors">Hors plafond niches</span>';
+  if (cat === 'niche10') return '<span class="lbadge lbadge-10k">Niche 10 000 €</span>';
+  if (cat === 'niche18') return '<span class="lbadge lbadge-18k">Niche 18 000 €</span>';
+  if (cat === 'foncier') return '<span class="lbadge lbadge-hors">Hors plafond niches</span>'
+    + '<span class="lbadge lbadge-deduct">Déduction revenu foncier</span>';
+  return '';
+}
+
+function badgeForLevier(levier, cat) {
+  // Levier 1 (déduction) ajoute un badge "Déduction revenu"
+  if (levier === 1 && cat !== 'foncier') return '<span class="lbadge lbadge-deduct">Déduction revenu</span>';
+  return '';
+}
+
+function renderLevierCard(lev) {
+  // Fallback minimal si le catalogue n'a pas encore été enrichi pour ce levier
+  if (!lev.titleLong && !lev.tagType) {
+    return `<div class="levier-card">
+      <div class="levier-header" onclick="toggleLevier(this)">
+        <div class="levier-header-left">
+          <div class="levier-title">${escHtml(lev.label)}</div>
+        </div>
+        <span class="levier-arrow">▾</span>
+      </div>
+    </div>`;
+  }
+
+  const badges = badgeForCat(lev.cat) + badgeForLevier(lev.levier, lev.cat);
+  const meta = (lev.meta || []).map(m =>
+    `<div class="levier-meta-item">
+       <div class="levier-meta-label">${escHtml(m.label)}</div>
+       <div class="levier-meta-value${m.status === 'warn' ? ' lmv-warn' : (m.status === 'good' ? ' lmv-good' : '')}">${escHtml(m.value)}</div>
+     </div>`
+  ).join('');
+  const descs = (lev.descBlocks || []).map((d, i, all) => {
+    // La dernière desc inclut la référence CGI en italique à la fin
+    const isLast = i === all.length - 1;
+    const ref = isLast && lev.refCGI
+      ? ` <em>${escHtml(lev.refCGI)}${lev.refBofip ? ' — ' + escHtml(lev.refBofip) : ''}</em>` : '';
+    return `<div class="levier-desc">
+       <div class="levier-desc-label">${escHtml(d.label)}</div>
+       <div class="levier-desc-text">${escHtml(d.text)}${ref}</div>
+     </div>`;
+  }).join('');
+
+  return `<div class="levier-card">
+    <div class="levier-header" onclick="toggleLevier(this)">
+      <div class="levier-header-left">
+        <div class="levier-tag-type">${escHtml(lev.tagType)}</div>
+        <div class="levier-title">${escHtml(lev.titleLong || lev.label)}</div>
+      </div>
+      <div class="levier-badges">${badges}</div>
+      <span class="levier-arrow">▾</span>
+    </div>
+    <div class="levier-body"><div class="levier-body-inner">
+      ${meta ? `<div class="levier-meta">${meta}</div>` : ''}
+      ${descs}
+    </div></div>
+  </div>`;
+}
+
+function renderLeviersOnglet(targetEl) {
+  if (!targetEl) return;
+  // Groupe les leviers par sectionGroup ; ceux sans sectionGroup sont ignorés
+  // (fallback : restent en HTML statique pendant la transition F3).
+  const bySection = new Map();
+  for (const lev of LEVIERS_CATALOGUE) {
+    if (!lev.sectionGroup) continue;
+    if (!bySection.has(lev.sectionGroup)) bySection.set(lev.sectionGroup, []);
+    bySection.get(lev.sectionGroup).push(lev);
+  }
+  const parts = [];
+  for (const [section, leviers] of bySection) {
+    parts.push(`<div class="leviers-section-title">${escHtml(SECTION_LABELS[section] || section)}</div>`);
+    parts.push(leviers.map(renderLevierCard).join(''));
+  }
+  targetEl.innerHTML = parts.join('');
+}
+
 // Export Node pour tests
 if (typeof module !== 'undefined') {
   module.exports = {
@@ -605,5 +732,6 @@ if (typeof module !== 'undefined') {
     avantageEstime,
     checkPlafond,
     computeWarnings,
+    renderLeviersOnglet,
   };
 }
