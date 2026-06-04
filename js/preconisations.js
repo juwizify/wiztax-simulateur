@@ -92,6 +92,11 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 163 quatervicies CGI',
     refBofip: 'BOI-IR-BASE-20-50',
+    // D3.8 : seules les URLs vérifiées (audit) sont collées ici.
+    links: [
+      { label: 'service-public.gouv.fr — Plan d\'Épargne Retraite (PER)',
+        url: 'https://www.service-public.gouv.fr/particuliers/vosdroits/F34982' },
+    ],
   },
   {
     id: 'deficitFoncier', label: 'Déficit foncier (travaux)',
@@ -177,6 +182,10 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 200 CGI',
     refBofip: 'BOI-IR-RICI-250 · LF 2026 art. 28',
+    links: [
+      { label: 'service-public.gouv.fr — Réduction d\'impôt pour dons',
+        url: 'https://www.service-public.gouv.fr/particuliers/vosdroits/F426' },
+    ],
   },
   {
     id: 'dons7UF', label: 'Dons d\'intérêt général (66%)',
@@ -200,6 +209,10 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 200 CGI',
     refBofip: 'BOI-IR-RICI-250',
+    links: [
+      { label: 'service-public.gouv.fr — Réduction d\'impôt pour dons',
+        url: 'https://www.service-public.gouv.fr/particuliers/vosdroits/F426' },
+    ],
   },
   {
     id: 'ehpad', label: 'Frais EHPAD ascendants (25%)',
@@ -288,7 +301,7 @@ const LEVIERS_CATALOGUE = [
     links: [
       { label: 'service-public.gouv.fr — IR-PME', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
       { label: 'Légifrance — Art. 199 terdecies-0 A CGI', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051213428' },
-      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html/identifiant=BOI-IR-RICI-90-20140509' },
+      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html' },
     ],
   },
   {
@@ -317,7 +330,7 @@ const LEVIERS_CATALOGUE = [
     links: [
       { label: 'service-public.gouv.fr — IR-PME (cas ESUS)', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
       { label: 'Légifrance — Art. 199 terdecies-0 A CGI', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051213428' },
-      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html/identifiant=BOI-IR-RICI-90-20140509' },
+      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html' },
     ],
   },
   {
@@ -372,8 +385,8 @@ const LEVIERS_CATALOGUE = [
     refBofip: 'BOI-IR-RICI-90',
     links: [
       { label: 'service-public.gouv.fr — IR-PME (cas JEI)', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
-      { label: 'Légifrance — Art. 199 terdecies-0 A bis CGI', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051213424' },
-      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html/identifiant=BOI-IR-RICI-90-20140509' },
+      // Légifrance Art. 199 terdecies-0 A bis : URL retirée en D3.8 (non vérifiée).
+      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html' },
     ],
   },
   {
@@ -401,8 +414,8 @@ const LEVIERS_CATALOGUE = [
     refBofip: 'BOI-IR-RICI-90',
     links: [
       { label: 'service-public.gouv.fr — IR-PME (cas FCPI-JEI)', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
-      { label: 'Légifrance — Art. 199 terdecies-0 A bis CGI', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051213424' },
-      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html/identifiant=BOI-IR-RICI-90-20140509' },
+      // Légifrance Art. 199 terdecies-0 A bis : URL retirée en D3.8 (non vérifiée).
+      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html' },
     ],
   },
   {
@@ -430,7 +443,7 @@ const LEVIERS_CATALOGUE = [
     refBofip: '—',
     links: [
       { label: 'service-public.gouv.fr — IR-PME (cas JEII)', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
-      { label: 'Loi 2026-103 du 19 février 2026 (création JEII)', url: 'https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051200000' },
+      // Légifrance Loi 2026-103 (création JEII) : URL retirée en D3.8 (non vérifiée).
     ],
   },
   {
@@ -459,8 +472,8 @@ const LEVIERS_CATALOGUE = [
     refBofip: 'BOI-IR-RICI-90',
     links: [
       { label: 'service-public.gouv.fr — IR-PME (cas JEIR)', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
-      { label: 'Légifrance — Art. 199 terdecies-0 A ter CGI', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000053543758' },
-      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html/identifiant=BOI-IR-RICI-90-20140509' },
+      // Légifrance Art. 199 terdecies-0 A ter : URL retirée en D3.8 (non vérifiée).
+      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html' },
     ],
   },
   // 2.c) Autres dispositifs niche 10 000 €
@@ -491,14 +504,7 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 terdecies-0 A bis CGI',
     refBofip: 'BOI-IR-RICI-100',
-    links: [
-      { label: 'Art. 199 terdecies-0 A bis CGI (Légifrance)',
-        url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000041464766' },
-      { label: 'BOFiP — BOI-IR-RICI-100',
-        url: 'https://bofip.impots.gouv.fr/bofip/2049-PGP.html' },
-      { label: 'Service-public.fr — FIP',
-        url: 'https://www.service-public.fr/particuliers/vosdroits/F12888' },
-    ],
+    // D3.8 : liens officiels retirés — voir entrée SOFICA pour le rationale.
   },
   {
     // Sémantique D3.3 : input.gfi = MONTANT SOUSCRIT (cash), RI = invest × 18 %
@@ -530,14 +536,7 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 decies H CGI',
     refBofip: 'BOI-IR-RICI-130',
-    links: [
-      { label: 'Art. 199 decies H CGI (Légifrance)',
-        url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000045203167' },
-      { label: 'BOFiP — BOI-IR-RICI-80',
-        url: 'https://bofip.impots.gouv.fr/bofip/2105-PGP.html' },
-      { label: 'Service-public.fr — GFI',
-        url: 'https://www.service-public.fr/particuliers/vosdroits/F22806' },
-    ],
+    // D3.8 : liens officiels retirés — voir entrée SOFICA pour le rationale.
   },
   {
     // D3.6 : ajout family 'locAvantages' pour génération form-row depuis catalogue.
@@ -606,14 +605,10 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 unvicies CGI',
     refBofip: 'BOI-IR-RICI-180',
-    links: [
-      { label: 'Art. 199 unvicies CGI (Légifrance)',
-        url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000041467091' },
-      { label: 'BOFiP BOI-IR-RICI-180-20',
-        url: 'https://bofip.impots.gouv.fr/bofip/3666-PGP.html' },
-      { label: 'Service-public.fr — SOFICA',
-        url: 'https://www.service-public.fr/particuliers/vosdroits/F31290' },
-    ],
+    // D3.8 : liens officiels retirés — audit a confirmé que les permaliens
+    // Légifrance/BOFiP/service-public.fr testés étaient invalides (404 ou
+    // hors sujet). Mieux vaut afficher refCGI/refBofip en texte que des
+    // liens trompeurs. Cf. tasks/audit-liens-officiels.md.
     params: [
       { name: 'taux', label: 'Taux SOFICA', defaultValue: '36',
         options: [
@@ -699,6 +694,10 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 sexdecies-I-2° CGI',
     refBofip: '—',
+    links: [
+      { label: 'service-public.gouv.fr — Emploi à domicile (crédit 50 %)',
+        url: 'https://www.service-public.gouv.fr/particuliers/vosdroits/F12' },
+    ],
   },
   {
     id: 'gardeEnf', label: 'Garde enfants < 6 ans (50%)',
@@ -722,6 +721,10 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 200 quater B CGI',
     refBofip: 'BOI-IR-RICI-300',
+    links: [
+      { label: 'service-public.gouv.fr — Garde d\'enfants hors domicile (crédit 50 %)',
+        url: 'https://www.service-public.gouv.fr/particuliers/vosdroits/F8' },
+    ],
   },
   {
     id: 'syndic', label: 'Cotisations syndicales (66%)',
