@@ -26,7 +26,9 @@ Destinée à être intégrée dans un vrai logiciel par un développeur.
   Source : BOI-IR-LIQ-20-20-20 du 07/04/2026
 - Décote : célibataire 897 € (seuil 1 982 €), couple 1 483 € (seuil 3 277 €), taux 45,25 %
   Source : BOI-IR-LIQ-20-20-30 du 07/04/2026
-- PS : 18,6 % mobilier (dividendes/PV), 17,2 % foncier — Source : LFSS 2026 art. 12
+- PS : 18,6 % mobilier (dividendes/intérêts/PV mobilières), 18,6 % foncier nu/LMNP,
+  17,2 % AV > 8 ans (et PV immobilières) — Source : LFSS 2026 art. 12
+  (cf. commit e39d7f1 « fix(ps): foncier/LMNP à 18,6 % (CFA LFSS 2026) »)
 - PFU : 12,8 % IR + 18,6 % PS = 31,4 % total
 - Niches : 10 000 € général, 18 000 € majoré (Girardin/Sofica)
 - Girardin plein droit : 44 % dans le plafond (rétrocession 56%) — art. 200-0 A, 4° CGI
