@@ -28,7 +28,7 @@ function v(id) {
 
 // Valeurs neutres par défaut pour TOUS les champs attendus par calculerIR.
 // Source unique : si un nouveau champ est ajouté au moteur, on l'ajoute ici
-// une seule fois, et les deux getters getInputs/getInputsSimple en héritent
+// une seule fois et getInputs en hérite via `{ ...defaultInputs(), ...DOM }`
 // (plus besoin de forcer chaque champ absent à 0 manuellement).
 function defaultInputs() {
   return {
@@ -326,72 +326,6 @@ function updateCalcDetaille(d) {
 }
 
 // ─────────────────────────────────────────────
-// INPUTS SIMULATEUR SIMPLIFIÉ
-// ─────────────────────────────────────────────
-function getInputsSimple() {
-  // Le DOM Simplifié n'expose qu'un sous-ensemble des champs ; on hérite
-  // d'abord des valeurs neutres (defaultInputs) et on n'écrase que les
-  // champs effectivement présents dans #simplifie. Plus de hardcoded 0 :
-  // tout nouveau champ moteur sera automatiquement 0 ici sans modif.
-  const d = defaultInputs();
-  return {
-    ...d,
-    // Situation
-    situation:    _sel('s-situation', d.situation),
-    nbEnfants:    v('s-nbEnfants'),
-    gardeAlternee: v('s-gardeAlternee'),
-    parentIsole:  _sel('s-parentIsole', 'non') === 'oui',
-    // Revenus — l'onglet Simplifié agrège (s-sal = total foyer, mappé sur sal1)
-    sal1:         v('s-sal'),
-    bncMicro1:    v('s-bnc'),
-    dividendes:   v('s-dividendes'),
-    optionPFU:    _sel('s-optionPFU', d.optionPFU),
-    // Charges
-    per:               v('s-per'),
-    pensionsAlim:      v('s-pensionsAlim'),
-    nbBeneficiairesPA: v('s-nbBeneficiairesPA'),
-    csgDeductible:     v('s-csg'),
-    // Réductions / Crédits exposés en Simplifié
-    dons:            v('s-dons'),
-    emploiDomicile:  v('s-emploi'),
-    gardeEnfants:    v('s-garde'),
-    pinel:           v('s-pinel'),
-    sofica:          v('s-sofica'),
-  };
-}
-
-// ─────────────────────────────────────────────
-// RÉSULTATS SIMULATEUR SIMPLIFIÉ
-// ─────────────────────────────────────────────
-function updateResultsSimple(d) {
-  const set = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
-  };
-
-  set('s-res-rni',          fmt(d.revenuNetImposable));
-  set('s-res-parts',        fmtParts(d.parts));
-  set('s-res-impot-brut',   fmt(d.impotBrut));
-  set('s-res-supp-qf',      fmt(d.supplementQF));
-  set('s-res-decote',       fmt(d.decote));
-  set('s-res-apres-decote', fmt(d.impotApresDecote));
-  set('s-res-ir-mob',       fmt(d.irMobilier));
-  set('s-res-ps',           fmt(d.psRole));
-  set('s-res-cehr',         fmt(d.cehr));
-  // Plafond PER live
-  set('s-per-cap-live',     fmt(d.perCap));
-  // Réductions + crédits = avantages totaux appliqués
-  const avantages = d.reductionsAppliquees + d.creditsAppliques;
-  set('s-res-avantages',    avantages > 0 ? '−\u202F' + fmt(avantages) : fmt(0));
-  set('s-res-taux-moyen',   fmtPct(d.tauxMoyen));
-  set('s-res-tmi',          fmtPct(d.tmi));
-  set('s-parts-affichage',  fmtParts(d.parts) + ' parts');
-
-  const impotNetEl = document.getElementById('s-res-impot-net');
-  if (impotNetEl) impotNetEl.textContent = fmt(d.impotNet);
-}
-
-// ─────────────────────────────────────────────
 // ACCORDÉON LEVIERS FISCAUX
 // ─────────────────────────────────────────────
 function toggleLevier(header) {
@@ -416,12 +350,6 @@ function recalculer() {
   updateCalcDetaille(det);
   // Met à jour aussi l'onglet préconisations (calculs uniquement, sans toucher aux inputs)
   if (typeof refreshPreconisationsCalculs === 'function') refreshPreconisationsCalculs();
-}
-
-function recalculerSimple() {
-  const input = getInputsSimple();
-  const det = calculerIR(input);
-  updateResultsSimple(det);
 }
 
 // ─────────────────────────────────────────────
@@ -469,12 +397,11 @@ function initModeToggle() {
 // INITIALISATION
 // ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Écouter tous les inputs — chaque champ déclenche son propre simulateur
+  // Écouter tous les inputs : un seul handler (recalculer) — le périmètre
+  // (mode simple vs complet) est géré par getInputs en lisant body.mode-simple.
   document.querySelectorAll('input[type="number"], input[type="checkbox"], select').forEach(el => {
-    const isSimple = el.id && el.id.startsWith('s-');
-    const handler = isSimple ? recalculerSimple : recalculer;
-    el.addEventListener('input',  handler);
-    el.addEventListener('change', handler);
+    el.addEventListener('input',  recalculer);
+    el.addEventListener('change', recalculer);
   });
 
   // Demi-part supplémentaire : afficher le select des cas seulement si cochée
@@ -495,9 +422,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Dev toolbar (mode dev uniquement, voir isDevMode).
   initDevToolbar();
 
-  // Premiers calculs
+  // Premier calcul
   recalculer();
-  recalculerSimple();
 });
 
 // ─────────────────────────────────────────────
