@@ -26,87 +26,104 @@ function v(id) {
   return parseFloat(el.value.replace(/\s/g, '').replace(',', '.')) || 0;
 }
 
-function getInputs() {
+// Valeurs neutres par défaut pour TOUS les champs attendus par calculerIR.
+// Source unique : si un nouveau champ est ajouté au moteur, on l'ajoute ici
+// une seule fois, et les deux getters getInputs/getInputsSimple en héritent
+// (plus besoin de forcer chaque champ absent à 0 manuellement).
+function defaultInputs() {
   return {
     // Situation
-    situation:    document.getElementById('situation').value,
+    situation: 'celibataire', nbEnfants: 0, gardeAlternee: 0,
+    parentIsole: false, demiPartSupp: false, demiPartCas: 'L',
+    // Revenus salaires/pensions
+    sal1: 0, sal2: 0, allocChomage1: 0, allocChomage2: 0,
+    fraisReels1: 0, fraisReels2: 0, heuresSupExo1: 0, heuresSupExo2: 0,
+    pen1: 0, pen2: 0, pensInvalidite1: 0, pensInvalidite2: 0,
+    pensAlimRecue1: 0, pensAlimRecue2: 0,
+    // BNC, foncier, meublé
+    bncMicro1: 0, bncMicro2: 0, bncReel1: 0, bncReel2: 0,
+    microFoncier: 0, foncierReel: 0,
+    meubleClasse: 0, meubleNonClasse: 0, autresMeubles: 0,
+    jeanbrunAmort: 0, jeanbrunCategorie: 'intermediaire',
+    // Mobilier
+    dividendes: 0, interets: 0, pv: 0,
+    avProduits75: 0, avProduits128: 0, pfnlVerse: 0,
+    optionPFU: 'pfu', autresRevenus: 0,
+    // Charges déductibles
+    per: 0, perPlafondManuel: 0, pensionsAlim: 0, nbBeneficiairesPA: 0,
+    csgDeductible: 0, autresCharges: 0,
+    // Réductions
+    dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
+    fcpi: 0, fcpiJei: 0, fipCorse: 0, gfi: 0, irPme: 0,
+    malraux: 0, malrauxTravaux: 0, malrauxZone: 'spr-non',
+    locAvantages: 0, locAvantagesDepenses: 0, locAvantagesPalier: 'loc1',
+    sofica: 0, autresReductions: 0,
+    // Crédits
+    emploiDomicile: 0, gardeEnfants: 0, cotSyndicales: 0,
+    fraisScolCollege: 0, fraisScolLycee: 0, fraisScolSup: 0,
+    ehpadFrais: 0, ehpadNbPers: 1, autresCredits: 0,
+  };
+}
+
+// Helpers de lecture DOM avec fallback sur la valeur défaut (cf. defaultInputs).
+const _sel  = (id, fallback) => document.getElementById(id)?.value ?? fallback;
+const _bool = (id) => document.getElementById(id)?.checked ?? false;
+
+function getInputs() {
+  const d = defaultInputs();
+  return {
+    ...d,
+    // Situation
+    situation:    _sel('situation', d.situation),
     nbEnfants:    v('nbEnfants'),
     gardeAlternee: v('gardeAlternee'),
-    parentIsole:  document.getElementById('parentIsole').value === 'oui',
-    demiPartSupp: document.getElementById('demiPartSupp').checked,
-    demiPartCas:  document.getElementById('demiPartCas').value,
-
+    parentIsole:  _sel('parentIsole', 'non') === 'oui',
+    demiPartSupp: _bool('demiPartSupp'),
+    demiPartCas:  _sel('demiPartCas', d.demiPartCas),
     // Revenus
-    sal1:         v('sal1'),
-    sal2:         v('sal2'),
-    allocChomage1: v('allocChomage1'),
-    allocChomage2: v('allocChomage2'),
-    fraisReels1:  v('fraisReels1'),
-    fraisReels2:  v('fraisReels2'),
-    heuresSupExo1: v('heuresSupExo1'),
-    heuresSupExo2: v('heuresSupExo2'),
-    pen1:         v('pen1'),
-    pen2:         v('pen2'),
-    pensInvalidite1: v('pensInvalidite1'),
-    pensInvalidite2: v('pensInvalidite2'),
-    pensAlimRecue1: v('pensAlimRecue1'),
-    pensAlimRecue2: v('pensAlimRecue2'),
-    bncMicro1:    v('bncMicro1'),
-    bncMicro2:    v('bncMicro2'),
-    bncReel1:     v('bncReel1'),
-    bncReel2:     v('bncReel2'),
-    microFoncier: v('microFoncier'),
-    foncierReel:  v('foncierReel'),
-    meubleClasse: v('meubleClasse'),
-    meubleNonClasse: v('meubleNonClasse'),
+    sal1: v('sal1'), sal2: v('sal2'),
+    allocChomage1: v('allocChomage1'), allocChomage2: v('allocChomage2'),
+    fraisReels1: v('fraisReels1'),     fraisReels2: v('fraisReels2'),
+    heuresSupExo1: v('heuresSupExo1'), heuresSupExo2: v('heuresSupExo2'),
+    pen1: v('pen1'), pen2: v('pen2'),
+    pensInvalidite1: v('pensInvalidite1'), pensInvalidite2: v('pensInvalidite2'),
+    pensAlimRecue1: v('pensAlimRecue1'),   pensAlimRecue2: v('pensAlimRecue2'),
+    bncMicro1: v('bncMicro1'), bncMicro2: v('bncMicro2'),
+    bncReel1: v('bncReel1'),   bncReel2: v('bncReel2'),
+    microFoncier: v('microFoncier'), foncierReel: v('foncierReel'),
+    meubleClasse: v('meubleClasse'), meubleNonClasse: v('meubleNonClasse'),
     autresMeubles: v('autresMeubles'),
-    jeanbrunAmort:    v('jeanbrunAmort'),
-    jeanbrunCategorie: v('jeanbrunCategorie'),
-    dividendes:   v('dividendes'),
-    interets:     v('interets'),
-    pv:           v('pv'),
-    avProduits75:  v('avProduits75'),
-    avProduits128: v('avProduits128'),
-    pfnlVerse:    v('pfnlVerse'),
-    autresRevenus: v('autresRevenus'),
-    optionPFU:    document.getElementById('optionPFU').value,
-
+    jeanbrunAmort: v('jeanbrunAmort'),
+    jeanbrunCategorie: _sel('jeanbrunCategorie', d.jeanbrunCategorie),
+    dividendes: v('dividendes'), interets: v('interets'), pv: v('pv'),
+    avProduits75: v('avProduits75'), avProduits128: v('avProduits128'),
+    pfnlVerse: v('pfnlVerse'), autresRevenus: v('autresRevenus'),
+    optionPFU: _sel('optionPFU', d.optionPFU),
     // Charges
-    per:               v('per'),
-    perPlafondManuel:  v('perPlafondManuel'),
-    pensionsAlim:      v('pensionsAlim'),
-    nbBeneficiairesPA: v('nbBeneficiairesPA'),
-    csgDeductible:     v('csgDeductible'),
-    autresCharges:     v('autresCharges'),
-
+    per: v('per'), perPlafondManuel: v('perPlafondManuel'),
+    pensionsAlim: v('pensionsAlim'), nbBeneficiairesPA: v('nbBeneficiairesPA'),
+    csgDeductible: v('csgDeductible'), autresCharges: v('autresCharges'),
     // Réductions / Crédits
-    dons:            v('dons'),
-    dons7UD:         v('dons7UD'),
-    emploiDomicile:  v('emploiDomicile'),
-    gardeEnfants:    v('gardeEnfants'),
-    cotSyndicales:   v('cotSyndicales'),
+    dons: v('dons'), dons7UD: v('dons7UD'),
+    emploiDomicile: v('emploiDomicile'), gardeEnfants: v('gardeEnfants'),
+    cotSyndicales: v('cotSyndicales'),
     fraisScolCollege: v('fraisScolCollege'),
     fraisScolLycee:   v('fraisScolLycee'),
     fraisScolSup:     v('fraisScolSup'),
-    ehpadFrais:      v('ehpadFrais'),
-    ehpadNbPers:     v('ehpadNbPers'),
-    pinel:           v('pinel'),
-    girardinPD:      v('girardinPD'),
-    girardinAG:      v('girardinAG'),
-    fcpi:            v('fcpi'),
-    fcpiJei:         v('fcpiJei'),
-    fipCorse:        v('fipCorse'),
-    gfi:             v('gfi'),
-    irPme:           v('irPme'),
-    malraux:          v('malraux'),  // legacy (RI directe) — UI n'expose plus ce champ
-    malrauxTravaux:   v('malrauxTravaux'),
-    malrauxZone:      document.getElementById('malrauxZone')?.value || 'spr-non',
-    locAvantages:    v('locAvantages'),  // legacy (RI directe) — UI n'expose plus ce champ, conservé pour rétro-compat
+    ehpadFrais: v('ehpadFrais'), ehpadNbPers: v('ehpadNbPers'),
+    pinel: v('pinel'),
+    girardinPD: v('girardinPD'), girardinAG: v('girardinAG'),
+    fcpi: v('fcpi'), fcpiJei: v('fcpiJei'),
+    fipCorse: v('fipCorse'), gfi: v('gfi'), irPme: v('irPme'),
+    malraux: v('malraux'),               // legacy (RI directe) — UI n'expose plus ce champ
+    malrauxTravaux: v('malrauxTravaux'),
+    malrauxZone: _sel('malrauxZone', d.malrauxZone),
+    locAvantages: v('locAvantages'),     // legacy (RI directe) — UI n'expose plus ce champ
     locAvantagesDepenses: v('locAvantagesDepenses'),
-    locAvantagesPalier:   document.getElementById('locAvantagesPalier')?.value || 'loc1',
-    sofica:          v('sofica'),
+    locAvantagesPalier: _sel('locAvantagesPalier', d.locAvantagesPalier),
+    sofica: v('sofica'),
     autresReductions: v('autresReductions'),
-    autresCredits:   v('autresCredits'),
+    autresCredits: v('autresCredits'),
   };
 }
 
@@ -297,43 +314,34 @@ function updateCalcDetaille(d) {
 // INPUTS SIMULATEUR SIMPLIFIÉ
 // ─────────────────────────────────────────────
 function getInputsSimple() {
+  // Le DOM Simplifié n'expose qu'un sous-ensemble des champs ; on hérite
+  // d'abord des valeurs neutres (defaultInputs) et on n'écrase que les
+  // champs effectivement présents dans #simplifie. Plus de hardcoded 0 :
+  // tout nouveau champ moteur sera automatiquement 0 ici sans modif.
+  const d = defaultInputs();
   return {
+    ...d,
     // Situation
-    situation:    v('s-situation'),
+    situation:    _sel('s-situation', d.situation),
     nbEnfants:    v('s-nbEnfants'),
     gardeAlternee: v('s-gardeAlternee'),
-    parentIsole:  v('s-parentIsole') === 'oui',
-
-    // Revenus — champs simplifiés
+    parentIsole:  _sel('s-parentIsole', 'non') === 'oui',
+    // Revenus — l'onglet Simplifié agrège (s-sal = total foyer, mappé sur sal1)
     sal1:         v('s-sal'),
-    sal2:         0,
-    pen1:         0, pen2:           0,
     bncMicro1:    v('s-bnc'),
-    bncMicro2:    0,
-    bncReel1:     0, bncReel2:       0,
-    microFoncier: 0, foncierReel:    0,
-    meubleClasse: 0, meubleNonClasse: 0, autresMeubles: 0,
     dividendes:   v('s-dividendes'),
-    pv:           0,
-    autresRevenus: 0,
-    optionPFU:    v('s-optionPFU'),
-
+    optionPFU:    _sel('s-optionPFU', d.optionPFU),
     // Charges
     per:               v('s-per'),
     pensionsAlim:      v('s-pensionsAlim'),
     nbBeneficiairesPA: v('s-nbBeneficiairesPA'),
     csgDeductible:     v('s-csg'),
-    autresCharges:     0,
-
-    // Réductions / Crédits
+    // Réductions / Crédits exposés en Simplifié
     dons:            v('s-dons'),
     emploiDomicile:  v('s-emploi'),
     gardeEnfants:    v('s-garde'),
     pinel:           v('s-pinel'),
-    girardinPD:      0, girardinAG:   0, fcpi:          0,
     sofica:          v('s-sofica'),
-    autresReductions: 0,
-    autresCredits:    0,
   };
 }
 
