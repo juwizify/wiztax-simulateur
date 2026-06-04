@@ -1088,34 +1088,41 @@ header span {
 
 /* ─── Toggle Mode simple / Mode complet ─── */
 /* Une seule source DOM, deux vues filtrées (cf. tasks/option3-fusion-onglets.md).
-   La règle .advanced ci-dessous matche tous les champs marqués avancés à
-   partir de Phase C2 — en mode simple ils sont cachés du DOM utilisateur,
-   et en C3 ignorés par getInputs() pour qu'ils ne contaminent pas le calcul. */
+   Style underline aligné sur .tabs-nav — sobre, sans fond, sans coins arrondis.
+   La règle .advanced ci-dessous matche tous les champs marqués avancés en C2 :
+   en mode simple ils sont cachés du DOM et ignorés par getInputs() (C3). */
 .mode-toggle {
-  display: inline-flex;
-  margin: 16px 40px 0;
-  background: #f1f5f9;
-  border-radius: 8px;
-  padding: 4px;
-  gap: 0;
+  display: flex;
+  gap: 28px;
+  margin: 20px 40px 4px;
+  padding: 0;
+  border-bottom: 1px solid var(--surface-container-high);
 }
 .mode-btn {
-  padding: 7px 18px;
-  background: transparent;
+  padding: 8px 0;
+  margin-bottom: -1px;        /* chevauche la border-bottom du conteneur */
+  background: none;
   border: none;
-  border-radius: 6px;
-  font-size: 0.9em;
-  font-weight: 500;
-  color: #475569;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--on-surface-variant);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  font-family: var(--font-body);
+  font-size: .8rem;
+  font-weight: 500;
+  letter-spacing: .2px;
+  transition: color .15s, border-color .15s;
 }
-.mode-btn:hover { color: #1e293b; }
+.mode-btn:hover { color: var(--on-surface); }
 .mode-btn.active {
-  background: #fff;
-  color: #0f172a;
+  color: var(--on-surface);
+  border-bottom-color: var(--on-surface);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.mode-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 2px;
 }
 body.mode-simple .advanced { display: none !important; }
 
