@@ -71,7 +71,7 @@ const _bool = (id) => document.getElementById(id)?.checked ?? false;
 
 function getInputs() {
   const d = defaultInputs();
-  return {
+  const out = {
     ...d,
     // Situation
     situation:    _sel('situation', d.situation),
@@ -125,6 +125,21 @@ function getInputs() {
     autresReductions: v('autresReductions'),
     autresCredits: v('autresCredits'),
   };
+
+  // Phase C3 : en mode simple, les champs marqués .advanced dans le DOM sont
+  // IGNORÉS par le moteur. Leur valeur DOM est préservée (pour rebascule en
+  // mode complet) mais le calcul utilise la valeur neutre de defaultInputs().
+  // Source unique = le markup HTML (`.advanced` posé en C2), pas de liste
+  // dupliquée à maintenir ici.
+  if (document.body.classList.contains('mode-simple')) {
+    const advancedNodes = document.querySelectorAll(
+      '#simulateur .advanced input[id], #simulateur .advanced select[id]'
+    );
+    advancedNodes.forEach(el => {
+      if (el.id in d) out[el.id] = d[el.id];
+    });
+  }
+  return out;
 }
 
 // ─────────────────────────────────────────────
