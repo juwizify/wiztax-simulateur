@@ -257,7 +257,7 @@ const LEVIERS_CATALOGUE = [
   // 2.b) IR-PME et apparentés (art. 199 terdecies-0 A et bis/ter, post-LF 2026)
   // Source unique : PARAMS.plafondsDispositifs (cf. tasks/d3.1-irpme-spec.md)
   {
-    id: 'irPme', label: 'IR-PME — PME standard (18 %)',
+    id: 'irPme', family: 'ir-pme', label: 'IR-PME — PME standard (18 %)',
     levier: 2, cat: 'niche10', mode: 'versement-direct', taux: PD.irPme.taux, inputKey: 'irPme',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription au capital d\'une PME non cotée (cas général). Réduction 18 % (le « boost 25 % » de 2024-2025 a expiré). Plafond 50 000 € (célibataire) / 100 000 € (couple). Conservation 5 ans. Art. 199 terdecies-0 A CGI.',
@@ -285,7 +285,7 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'irPmeEsus', label: 'IR-PME — ESUS / SFS (25 %)',
+    id: 'irPmeEsus', family: 'ir-pme', label: 'IR-PME — ESUS / SFS (25 %)',
     levier: 2, cat: 'niche10', mode: 'versement-direct', taux: PD.irPmeEsus.taux, inputKey: 'irPmeEsus',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription au capital d\'une Entreprise Solidaire d\'Utilité Sociale (ESUS) ou Société Foncière Solidaire (SFS). Réduction 25 %. Plafond 50 000 € / 100 000 €. Validité versements 28/06/2024 → 30/09/2026 ; au-delà du 1/10/2026 subordonné à validation Commission européenne.',
@@ -314,7 +314,7 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'irPmeMH', label: 'IR-PME — Monuments historiques (25 %)',
+    id: 'irPmeMH', family: 'ir-pme', label: 'IR-PME — Monuments historiques (25 %)',
     levier: 2, cat: 'niche10', mode: 'versement-direct', taux: PD.irPmeMH.taux, inputKey: 'irPmeMH',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription au capital d\'une société foncière de monuments historiques (immeubles protégés, sites, parcs, jardins). Réduction 25 %. Plafond 50 000 € / 100 000 €. Validité depuis le 28/09/2025.',
@@ -341,7 +341,7 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'irPmeJei', label: 'IR-PME — JEI direct (30 %)',
+    id: 'irPmeJei', family: 'ir-pme', label: 'IR-PME — JEI direct (30 %)',
     levier: 2, cat: 'hors', mode: 'versement-direct', taux: PD.irPmeJei.taux, inputKey: 'irPmeJei',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription directe au capital d\'une Jeune Entreprise Innovante (JEI). Réduction 30 %. Plafond ANNUEL 75 000 € / 150 000 € PARTAGÉ avec FCPI-JEI (cumul des deux ≤ ce plafond). Plafond pluri-annuel : RI cumulée JEI+JEIR ≤ 50 000 € sur 2024-2028. Hors plafond niches 10 k (art. 200-0 A exclut 199 terdecies-0 A bis). Conservation 5 ans.',
@@ -370,7 +370,7 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'fcpiJei', label: 'IR-PME — FCPI investi en JEI (30 %)',
+    id: 'fcpiJei', family: 'ir-pme', label: 'IR-PME — FCPI investi en JEI (30 %)',
     levier: 2, cat: 'hors', mode: 'versement-direct', taux: PD.fcpiJei.taux, inputKey: 'fcpiJei',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription de parts de FCPI investissant en Jeunes Entreprises Innovantes (au quota prévu par le règlement du fonds). Réduction 30 %. Plafond ANNUEL 75 000 € / 150 000 € PARTAGÉ avec IR-PME JEI direct. Hors plafond niches 10 k. Validité depuis le 21/02/2026 — les FCPI classiques ne sont plus éligibles.',
@@ -399,7 +399,7 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'irPmeJeii', label: 'IR-PME — JEII (40 %)',
+    id: 'irPmeJeii', family: 'ir-pme', label: 'IR-PME — JEII (40 %)',
     levier: 2, cat: 'hors', mode: 'versement-direct', taux: PD.irPmeJeii.taux, inputKey: 'irPmeJeii',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription au capital d\'une Jeune Entreprise Innovante à Impact (JEII). Réduction 40 %. Plafond 50 000 € / 100 000 €. Validité 21/02/2026 → 31/12/2028 (LF 2026, nouvel article).',
@@ -427,7 +427,7 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'irPmeJeir', label: 'IR-PME — JEIR (50 %)',
+    id: 'irPmeJeir', family: 'ir-pme', label: 'IR-PME — JEIR (50 %)',
     levier: 2, cat: 'hors', mode: 'versement-direct', taux: PD.irPmeJeir.taux, inputKey: 'irPmeJeir',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription au capital d\'une Jeune Entreprise Innovante de Rupture (JEIR). Réduction 50 %. Plafond 50 000 € / 100 000 €. Plafond pluri-annuel : RI cumulée JEI+JEIR ≤ 50 000 € sur 2024-2028. Hors plafond niches. Validité 1/1/2024 → 31/12/2028. Art. 199 terdecies-0 A ter CGI.',
@@ -1139,6 +1139,39 @@ function renderLevierCard(lev) {
   </div>`;
 }
 
+// ─────────────────────────────────────────────
+// GÉNÉRATEUR FORM-ROWS SIMULATEUR — depuis le catalogue
+// ─────────────────────────────────────────────
+// Pour une `family` du catalogue (ex: 'ir-pme'), génère les form-rows
+// correspondantes dans le Simulateur. Élimine la duplication HTML.
+// Pattern : chaque famille de leviers fiscaux a un container vide dans
+// index.html (ex: <div id="simIrPme"></div>), alimenté par cette fonction.
+function renderSimulateurFormRows(targetEl, family) {
+  if (!targetEl) return;
+  const leviers = LEVIERS_CATALOGUE.filter(l => l.family === family);
+  const html = leviers.map(lev => {
+    const nicheClass = lev.cat === 'hors'    ? 'niche-hors'
+                     : lev.cat === 'niche18' ? 'niche-18k'
+                     : lev.cat === 'foncier' ? 'niche-hors'
+                     :                         'niche-10k';
+    const nicheLabel = lev.cat === 'hors'    ? 'hors plafond niches'
+                     : lev.cat === 'niche18' ? 'niche 18 000 €'
+                     : lev.cat === 'foncier' ? 'hors plafond niches'
+                     :                         'niche 10 000 €';
+    return `<div class="form-row advanced">
+      <label for="${escHtml(lev.inputKey)}">
+        ${escHtml(lev.titleLong || lev.label)}
+        <i class="tip" data-tip="${escHtml(lev.info || '')}">i</i>
+      </label>
+      <input type="number" id="${escHtml(lev.inputKey)}" value="0" min="0">
+      <div class="niche-cell">
+        <span class="niche-marker ${nicheClass}">${escHtml(nicheLabel)}</span>
+      </div>
+    </div>`;
+  }).join('');
+  targetEl.innerHTML = html;
+}
+
 function renderLeviersOnglet(targetEl) {
   if (!targetEl) return;
   // Groupe les leviers par sectionGroup ; ceux sans sectionGroup sont ignorés
@@ -1166,5 +1199,6 @@ if (typeof module !== 'undefined') {
     checkPlafond,
     computeWarnings,
     renderLeviersOnglet,
+    renderSimulateurFormRows,
   };
 }

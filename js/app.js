@@ -425,6 +425,14 @@ function initModeToggle() {
 // INITIALISATION
 // ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Générer les form-rows IR-PME du Simulateur depuis LEVIERS_CATALOGUE
+  // AVANT d'attacher les listeners (sinon les nouveaux inputs ne reçoivent
+  // pas le handler de recalcul). Cf. tasks/d3.1-irpme-spec.md.
+  if (typeof renderSimulateurFormRows === 'function') {
+    const simIrPme = document.getElementById('simIrPme');
+    if (simIrPme) renderSimulateurFormRows(simIrPme, 'ir-pme');
+  }
+
   // Écouter tous les inputs : un seul handler (recalculer) — le périmètre
   // (mode simple vs complet) est géré par getInputs en lisant body.mode-simple.
   document.querySelectorAll('input[type="number"], input[type="checkbox"], select').forEach(el => {

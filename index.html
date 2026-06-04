@@ -556,16 +556,6 @@
             </div>
           </div>
 
-          <div class="form-row advanced">
-            <label for="fcpiJei">
-              IR-PME — FCPI investi en JEI (30 %)
-              <i class="tip" data-tip="Souscription de parts de FCPI investissant en Jeunes Entreprises Innovantes (au quota prévu par le règlement du fonds).&#10;&#10;Art. 199 terdecies-0 A bis CGI. Taux 30 %.&#10;&#10;Plafond ANNUEL : 75 000 € (célibataire) / 150 000 € (couple), PARTAGÉ avec l'IR-PME JEI direct (cumul des deux ≤ ce plafond).&#10;&#10;HORS plafond niches 10 000 € (art. 200-0 A exclut 199 terdecies-0 A bis).&#10;&#10;Validité : versements depuis le 21/02/2026. Les FCPI classiques ne sont plus éligibles depuis cette date.&#10;&#10;Saisir le MONTANT INVESTI (souscription en parts FCPI-JEI). Le moteur calcule la RI = invest × 30 %.">i</i>
-            </label>
-            <input type="number" id="fcpiJei" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-hors">hors plafond niches</span>
-            </div>
-          </div>
 
           <div class="form-row advanced">
             <label for="fipCorse">
@@ -589,71 +579,11 @@
             </div>
           </div>
 
-          <div class="form-row advanced">
-            <label for="irPme">
-              IR-PME — PME standard (18 %)
-              <i class="tip" data-tip="Souscription DIRECTE au capital de PME non cotées (cas général).&#10;Art. 199 terdecies-0 A CGI.&#10;&#10;Taux 18 % en 2026 (le « boost » 25 % de 2024-2025 a expiré).&#10;Plafond : 50 000 € (célibataire) / 100 000 € (couple). Conservation 5 ans.&#10;&#10;DANS le plafond global des niches fiscales (10 000 €).&#10;&#10;Saisir le MONTANT INVESTI (souscription au capital). Le moteur calcule la RI = invest × 18 %.">i</i>
-            </label>
-            <input type="number" id="irPme" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-10k">niche 10 000 €</span>
-            </div>
-          </div>
-
-          <div class="form-row advanced">
-            <label for="irPmeEsus">
-              IR-PME — ESUS / SFS (25 %)
-              <i class="tip" data-tip="Souscription au capital d'une Entreprise Solidaire d'Utilité Sociale (ESUS) ou Société Foncière Solidaire (SFS).&#10;&#10;Taux MAJORÉ 25 %. Plafond 50 000 € (single) / 100 000 € (couple).&#10;&#10;Validité : versements 28/06/2024 → 30/09/2026.&#10;⚠ À partir du 1/10/2026 : subordonné à validation Commission européenne.&#10;&#10;DANS le plafond niches 10 000 €.&#10;Saisir le MONTANT INVESTI (souscription au capital ESUS/SFS). Le moteur calcule la RI = invest × 25 %.">i</i>
-            </label>
-            <input type="number" id="irPmeEsus" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-10k">niche 10 000 €</span>
-            </div>
-          </div>
-
-          <div class="form-row advanced">
-            <label for="irPmeMH">
-              IR-PME — Monuments historiques (25 %)
-              <i class="tip" data-tip="Souscription au capital d'une société foncière de monuments historiques (immeubles protégés, sites, parcs, jardins).&#10;&#10;Taux 25 %. Plafond 50 000 € / 100 000 €.&#10;Validité : versements depuis le 28/09/2025.&#10;&#10;DANS le plafond niches 10 000 €.&#10;Saisir le MONTANT INVESTI (souscription en société foncière MH). Le moteur calcule la RI = invest × 25 %.">i</i>
-            </label>
-            <input type="number" id="irPmeMH" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-10k">niche 10 000 €</span>
-            </div>
-          </div>
-
-          <div class="form-row advanced">
-            <label for="irPmeJei">
-              IR-PME — JEI direct (30 %)
-              <i class="tip" data-tip="Souscription DIRECTE au capital d'une Jeune Entreprise Innovante (JEI).&#10;Art. 199 terdecies-0 A bis CGI.&#10;&#10;Taux 30 %. Plafond ANNUEL 75 000 € (single) / 150 000 € (couple), PARTAGÉ avec FCPI-JEI (cumul ≤ ce plafond).&#10;&#10;HORS plafond niches 10 000 € (art. 200-0 A exclut).&#10;&#10;Plafond pluri-annuel : RI cumulée JEI + JEIR ≤ 50 000 € sur 2024-2028 (cf. champ « RI JEI/JEIR déjà imputée »).&#10;&#10;Validité : 1/1/2024 → 31/12/2028. Conservation 5 ans.&#10;Saisir le MONTANT INVESTI (souscription directe JEI). Le moteur calcule la RI = invest × 30 %.">i</i>
-            </label>
-            <input type="number" id="irPmeJei" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-hors">hors plafond niches</span>
-            </div>
-          </div>
-
-          <div class="form-row advanced">
-            <label for="irPmeJeii">
-              IR-PME — JEII (40 %)
-              <i class="tip" data-tip="Souscription au capital d'une Jeune Entreprise Innovante à Impact (JEII).&#10;Dispositif créé par la LF 2026 (nouvel article).&#10;&#10;Taux 40 %. Plafond 50 000 € / 100 000 €.&#10;Validité : 21/02/2026 → 31/12/2028.&#10;&#10;HORS plafond niches 10 000 €.&#10;Saisir le MONTANT INVESTI (souscription JEII). Le moteur calcule la RI = invest × 40 %.">i</i>
-            </label>
-            <input type="number" id="irPmeJeii" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-hors">hors plafond niches</span>
-            </div>
-          </div>
-
-          <div class="form-row advanced">
-            <label for="irPmeJeir">
-              IR-PME — JEIR (50 %)
-              <i class="tip" data-tip="Souscription au capital d'une Jeune Entreprise Innovante de Rupture (JEIR).&#10;Art. 199 terdecies-0 A ter CGI.&#10;&#10;Taux 50 %. Plafond 50 000 € / 100 000 €.&#10;&#10;Plafond pluri-annuel : RI cumulée JEI + JEIR ≤ 50 000 € sur 2024-2028 (cf. champ « RI JEI/JEIR déjà imputée »).&#10;&#10;HORS plafond niches 10 000 €.&#10;Validité : 1/1/2024 → 31/12/2028.&#10;Saisir le MONTANT INVESTI (souscription JEIR). Le moteur calcule la RI = invest × 50 %.">i</i>
-            </label>
-            <input type="number" id="irPmeJeir" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-hors">hors plafond niches</span>
-            </div>
-          </div>
+          <!-- IR-PME : les 7 sous-dispositifs sont générés dynamiquement depuis
+               LEVIERS_CATALOGUE (family: 'ir-pme'). Tout enrichissement / nouveau
+               levier IR-PME se fait dans le catalogue, jamais en dur ici.
+               Cf. tasks/d3.1-irpme-spec.md. -->
+          <div id="simIrPme"></div>
 
           <div class="form-row advanced">
             <label for="irPmeJeiJeirImputeAnterieur">
