@@ -917,11 +917,14 @@ const CASES = [
     expected: { impotNet: 1204, revenuReference: 45000, tmi: 0.30 },
   },
   {
-    name: 'Cap individuel FCPI JEI single — saisie 10k de RI → tronqué à 3 600 € (12k × 30%)',
+    name: 'FCPI-JEI single — saisie 10k de RI sous cap 22 500 € (75k × 30%)',
     input: makeInput({ sal1: 100000, fcpiJei: 10000 }),
-    // capRiMax.fcpiJei (single) = 12 000 × 30 % = 3 600 €
-    // ri10 = 3 600 → poche1 = 3 600 ; impôt net = 20 701 - 3 600 = 17 101
-    expected: { impotNet: 17101, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+    // Post-LF 2026 : plafond FCPI-JEI relevé à 75 000 €/célib (partagé avec
+    // irPmeJei). capRiMax.fcpiJei (single) = 75 000 × 30 % = 22 500 €.
+    // Saisie 10 000 € < cap individuel → RI entièrement appliquée.
+    // Le panier niche10 (10 000 €) est saturé exactement : pas de RI perdue.
+    // impôt brut = 20 701, impôt net = 20 701 - 10 000 = 10 701.
+    expected: { impotNet: 10701, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
   },
   {
     name: 'Cap individuel Malraux — sal 500k + Malraux 200k → RI tronquée à 30 000 €',

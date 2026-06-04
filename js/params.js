@@ -91,13 +91,18 @@ const PARAMS = {
       taux: { '30': 0.30, '36': 0.36, '48': 0.48 },
       tauxDefaut: '36',
     },
-    // FCPI JEI — LF 2026 (remplace le FCPI classique pour les souscriptions 2026+)
+    // FCPI investi en JEI — art. 199 terdecies-0 A bis (LF 2026 art. 199 terdecies-0 A bis)
+    // Taux 30 %, plafond ANNUEL PARTAGÉ avec irPmeJei (cumul fcpiJei + irPmeJei ≤ vMax).
+    // Hors plafond niches (art. 200-0 A exclut explicitement 199 terdecies-0 A bis).
+    // Validité : versements depuis le 21/02/2026 (LF 2026 / loi 2026-103).
     fcpiJei: {
-      versementMax:        12000,
-      versementMaxCouple:  24000,
+      versementMax:        75000,
+      versementMaxCouple: 150000,
       taux: 0.30,
+      panierPartage: 'irPmeJei',          // plafond commun avec irPmeJei
     },
-    // FCPI classique — extinction au 21/02/2026 (LF 2026)
+    // FCPI classique — NON ÉLIGIBLE IR-PME depuis le 21/02/2026.
+    // Conservé techniquement (entrées DOM legacy, suppression définitive en commit D3.1.c).
     fcpi: {
       versementMax:        12000,
       versementMaxCouple:  24000,
@@ -109,12 +114,65 @@ const PARAMS = {
       versementMaxCouple:  24000,
       taux: 0.30,
     },
-    // IR-PME / Madelin — art. 199 terdecies-0 A
+
+    // ── IR-PME (art. 199 terdecies-0 A CGI et variantes) ────────────────
+    // Source : Légifrance + BOFiP BOI-IR-RICI-90, post-LF 2026 (loi 2026-103
+    // du 19/02/2026). Cf. tasks/d3.1-irpme-spec.md pour la cartographie.
+
+    // IR-PME — PME standard (art. 199 terdecies-0 A)
+    // Taux 18 % (le « boost » 25 % de 2024-2025 a expiré au 31/12/2025).
+    // DANS le plafond niches 10 000 €.
     irPme: {
+      versementMax:        50000,
+      versementMaxCouple: 100000,
+      taux: 0.18,
+    },
+    // IR-PME — ESUS / SFS (Entreprise Solidaire d'Utilité Sociale / Société Foncière Solidaire)
+    // Taux majoré 25 % — versements 28/06/2024 → 30/09/2026.
+    // Au-delà du 30/09/2026 : subordonné à validation Commission européenne.
+    irPmeEsus: {
       versementMax:        50000,
       versementMaxCouple: 100000,
       taux: 0.25,
     },
+    // IR-PME — Sociétés foncières de monuments historiques
+    // Taux 25 %, depuis le 28/09/2025.
+    irPmeMH: {
+      versementMax:        50000,
+      versementMaxCouple: 100000,
+      taux: 0.25,
+    },
+    // IR-PME — JEI direct (art. 199 terdecies-0 A bis)
+    // Taux 30 %, plafond ANNUEL 75k/150k PARTAGÉ avec fcpiJei.
+    // Plafond pluri-annuel : RI cumulée irPmeJei + irPmeJeir ≤ 50 000 € sur 2024-2028.
+    // Hors plafond niches (art. 200-0 A exclut 199 terdecies-0 A bis).
+    irPmeJei: {
+      versementMax:        75000,
+      versementMaxCouple: 150000,
+      taux: 0.30,
+      panierPartage: 'fcpiJei',           // plafond commun avec fcpiJei
+    },
+    // IR-PME — JEII (Jeune Entreprise Innovante à Impact) — nouvel art. LF 2026
+    // Taux 40 %, validité 21/02/2026 → 31/12/2028.
+    irPmeJeii: {
+      versementMax:        50000,
+      versementMaxCouple: 100000,
+      taux: 0.40,
+    },
+    // IR-PME — JEIR (Jeune Entreprise Innovante de Rupture) — art. 199 terdecies-0 A ter
+    // Taux 50 %, validité 1/1/2024 → 31/12/2028.
+    // Plafond pluri-annuel partagé avec irPmeJei (cf. ci-dessus).
+    // Hors plafond niches (art. 200-0 A exclut 199 terdecies-0 A ter).
+    irPmeJeir: {
+      versementMax:        50000,
+      versementMaxCouple: 100000,
+      taux: 0.50,
+    },
+
+    // Plafond pluri-annuel commun JEI + JEIR : 50 000 € de RI cumulée sur 2024-2028
+    // (art. 199 terdecies-0 A bis et ter). Appliqué dans le moteur via input
+    // `irPmeJeiJeirImputeAnterieur` (RI déjà imputée 2024-2025, optionnel).
+    irPmeJeiJeirPlafondCumule: 50000,
     // GFI — art. 199 decies H CGI (Groupements Forestiers d'Investissement)
     gfi: {
       versementMax:        50000,
