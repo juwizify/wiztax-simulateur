@@ -1,6 +1,40 @@
 /* ═══════════════════════════════════════════════════
-   DESIGN SYSTEM — "The Architectural Ledger"
-   Palette : L'Éditorial Wealth / Stitch
+   DESIGN SYSTEM WizTax
+   ───────────────────────────────────────────────────
+   Spec complète : tasks/design-system-spec.md
+
+   Principe directeur (Stripe-grade) :
+   ───────────────────────────────────
+   Une seule banque de composants partagée par toutes les pages.
+   Quand une page a besoin d'un visuel — Card, Badge, Button… — elle
+   réutilise le composant central. Si un composant manque, on l'ajoute
+   ICI (jamais en local dans une page). L'accent bleu (--accent) est
+   réservé aux signaux interactifs (tab actif, focus). PAS de décoration
+   de masse (plus de liserés colorés sur les cards, plus de h2 en accent).
+
+   Inventaire des composants (à consulter avant d'inventer une nouvelle classe) :
+   ──────────────────────────────────────────────────────────────────────────────
+   Layout       : .sim-layout, .form-grid, .form-row, .form-subsection
+   Navigation   : .tabs-nav + .tab-btn, .mode-toggle + .mode-btn
+   Cards        : .section-card, .calc-section, .param-card, .levier-card,
+                  .results-panel — TOUTES alignées sur le même style sobre
+                  (border 1px var(--surface-container-high), radius 8px,
+                  h2 .72rem uppercase color var(--on-surface-variant)).
+   Badges       : .niche-marker / .lbadge / .preco-cat-badge — 3 noms
+                  historiques, MÊME langage visuel + MÊME palette par
+                  catégorie (cf. variables --badge-{hors,10k,18k,foncier}-*).
+                  Pour une nouvelle utilisation, préférer .niche-marker.
+   Inputs       : .form-row input/select avec focus accent
+   Tooltips     : .tip + .tip-down (info "i")
+   Tables       : .calc-table (calcul détaillé), .param-table (paramètres),
+                  .preco-compare-table (préco) — à factoriser en E future
+   Dev          : .dev-toolbar (visible uniquement en mode dev)
+
+   Composants spécifiques métier (pas factorisables, documentés mais à part) :
+   ──────────────────────────────────────────────────────────────────────────
+   .preco-*  (~30 classes) : onglet Préconisations — table de leviers
+                             ajoutables, jauges paniers, barre de synthèse.
+   .levier-* : onglet Leviers fiscaux — cards accordéon descriptives.
 ═══════════════════════════════════════════════════ */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

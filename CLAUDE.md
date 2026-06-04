@@ -16,7 +16,9 @@ Destinée à être intégrée dans un vrai logiciel par un développeur.
 - `js/params.js` — tous les paramètres fiscaux (ne pas modifier sans source officielle)
 - `js/calculator.js` — moteur de calcul pur (étapes 1 à 11), pas de DOM ici
 - `js/app.js` — lecture des inputs, affichage des résultats, navigation onglets
-- `css/styles.css` — mise en forme
+- `css/styles.css` — design system + composants. **Banque centrale** : avant
+  d'inventer une nouvelle classe, ouvrir l'en-tête du fichier (inventaire
+  des composants) et utiliser/étendre l'existant. Spec : `tasks/design-system-spec.md`.
 - `index.html` — structure HTML complète avec les 5 onglets
   (Simulateur [toggle mode simple/complet], Calcul détaillé, Préconisations,
   Paramètres fiscaux, Leviers fiscaux). Cf. tasks/option3-fusion-onglets.md
