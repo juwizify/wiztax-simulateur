@@ -278,6 +278,11 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 terdecies-0 A CGI',
     refBofip: 'BOI-IR-RICI-90',
+    links: [
+      { label: 'service-public.gouv.fr — IR-PME', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
+      { label: 'Légifrance — Art. 199 terdecies-0 A CGI', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051213428' },
+      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html/identifiant=BOI-IR-RICI-90-20140509' },
+    ],
   },
   {
     id: 'irPmeEsus', label: 'IR-PME — ESUS / SFS (25 %)',
@@ -302,6 +307,11 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 terdecies-0 A CGI',
     refBofip: 'BOI-IR-RICI-90',
+    links: [
+      { label: 'service-public.gouv.fr — IR-PME (cas ESUS)', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
+      { label: 'Légifrance — Art. 199 terdecies-0 A CGI', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051213428' },
+      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html/identifiant=BOI-IR-RICI-90-20140509' },
+    ],
   },
   {
     id: 'irPmeMH', label: 'IR-PME — Monuments historiques (25 %)',
@@ -325,6 +335,10 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 terdecies-0 A CGI (extension)',
     refBofip: 'BOI-IR-RICI-90',
+    links: [
+      { label: 'service-public.gouv.fr — IR-PME (cas Monuments historiques)', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
+      { label: 'Légifrance — Art. 199 terdecies-0 A CGI', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051213428' },
+    ],
   },
   {
     id: 'irPmeJei', label: 'IR-PME — JEI direct (30 %)',
@@ -349,6 +363,11 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 terdecies-0 A bis CGI',
     refBofip: 'BOI-IR-RICI-90',
+    links: [
+      { label: 'service-public.gouv.fr — IR-PME (cas JEI)', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
+      { label: 'Légifrance — Art. 199 terdecies-0 A bis CGI', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051213424' },
+      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html/identifiant=BOI-IR-RICI-90-20140509' },
+    ],
   },
   {
     id: 'fcpiJei', label: 'IR-PME — FCPI investi en JEI (30 %)',
@@ -373,6 +392,11 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 terdecies-0 A bis CGI',
     refBofip: 'BOI-IR-RICI-90',
+    links: [
+      { label: 'service-public.gouv.fr — IR-PME (cas FCPI-JEI)', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
+      { label: 'Légifrance — Art. 199 terdecies-0 A bis CGI', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051213424' },
+      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html/identifiant=BOI-IR-RICI-90-20140509' },
+    ],
   },
   {
     id: 'irPmeJeii', label: 'IR-PME — JEII (40 %)',
@@ -397,6 +421,10 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'LF 2026 nouvel article',
     refBofip: '—',
+    links: [
+      { label: 'service-public.gouv.fr — IR-PME (cas JEII)', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
+      { label: 'Loi 2026-103 du 19 février 2026 (création JEII)', url: 'https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051200000' },
+    ],
   },
   {
     id: 'irPmeJeir', label: 'IR-PME — JEIR (50 %)',
@@ -422,6 +450,11 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 terdecies-0 A ter CGI',
     refBofip: 'BOI-IR-RICI-90',
+    links: [
+      { label: 'service-public.gouv.fr — IR-PME (cas JEIR)', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
+      { label: 'Légifrance — Art. 199 terdecies-0 A ter CGI', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000053543758' },
+      { label: 'BOFiP — BOI-IR-RICI-90', url: 'https://bofip.impots.gouv.fr/bofip/4374-PGP.html/identifiant=BOI-IR-RICI-90-20140509' },
+    ],
   },
   // 2.c) Autres dispositifs niche 10 000 €
   {
@@ -1067,14 +1100,27 @@ function renderLevierCard(lev) {
   ).join('');
   const descs = (lev.descBlocks || []).map((d, i, all) => {
     // La dernière desc inclut la référence CGI en italique à la fin
+    // (sauf si lev.links est présent — dans ce cas la ref est dans le bloc Sources)
     const isLast = i === all.length - 1;
-    const ref = isLast && lev.refCGI
+    const hasLinks = Array.isArray(lev.links) && lev.links.length > 0;
+    const ref = isLast && lev.refCGI && !hasLinks
       ? ` <em>${escHtml(lev.refCGI)}${lev.refBofip ? ' — ' + escHtml(lev.refBofip) : ''}</em>` : '';
     return `<div class="levier-desc">
        <div class="levier-desc-label">${escHtml(d.label)}</div>
        <div class="levier-desc-text">${escHtml(d.text)}${ref}</div>
      </div>`;
   }).join('');
+
+  // Bloc Sources officielles (si lev.links défini) — liens cliquables vers BOFiP,
+  // Légifrance, service-public.gouv.fr. Sécurité : target="_blank" rel="noopener".
+  const sources = Array.isArray(lev.links) && lev.links.length > 0
+    ? `<div class="levier-sources">
+         <div class="levier-desc-label">Sources officielles</div>
+         <ul class="levier-sources-list">
+           ${lev.links.map(l => `<li><a href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">${escHtml(l.label)}</a></li>`).join('')}
+         </ul>
+       </div>`
+    : '';
 
   return `<div class="levier-card">
     <div class="levier-header" onclick="toggleLevier(this)">
@@ -1088,6 +1134,7 @@ function renderLevierCard(lev) {
     <div class="levier-body"><div class="levier-body-inner">
       ${meta ? `<div class="levier-meta">${meta}</div>` : ''}
       ${descs}
+      ${sources}
     </div></div>
   </div>`;
 }
