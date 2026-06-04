@@ -410,6 +410,47 @@ function recalculerSimple() {
 }
 
 // ─────────────────────────────────────────────
+// MODE SIMPLE / COMPLET — toggle persistant
+// ─────────────────────────────────────────────
+// Phase C1 (infra) : toggle qui pose body.mode-simple / body.mode-complet
+// et persiste le choix en localStorage. Effet visible à partir de C2
+// (champs .advanced marqués) ; effet sur le calcul à partir de C3
+// (getInputs filtre les .advanced en mode simple).
+const MODE_STORAGE_KEY = 'wiztax.mode';
+
+function getMode() {
+  try {
+    const stored = localStorage.getItem(MODE_STORAGE_KEY);
+    return stored === 'complet' ? 'complet' : 'simple';
+  } catch (e) {
+    return 'simple';
+  }
+}
+
+function setMode(mode) {
+  const m = (mode === 'complet') ? 'complet' : 'simple';
+  document.body.classList.toggle('mode-simple',  m === 'simple');
+  document.body.classList.toggle('mode-complet', m === 'complet');
+  try { localStorage.setItem(MODE_STORAGE_KEY, m); } catch (e) {}
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    const active = btn.dataset.mode === m;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-checked', active ? 'true' : 'false');
+  });
+  // À partir de Phase C3, getInputs() filtre selon le mode → on doit
+  // re-calculer pour refléter le nouveau périmètre. En C1/C2 c'est un
+  // no-op côté résultats, mais sans coût.
+  if (typeof recalculer === 'function') recalculer();
+}
+
+function initModeToggle() {
+  setMode(getMode());
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => setMode(btn.dataset.mode));
+  });
+}
+
+// ─────────────────────────────────────────────
 // INITIALISATION
 // ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -429,6 +470,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   demiPartCb.addEventListener('change', toggleDemiPartCas);
   toggleDemiPartCas();
+
+  // Mode simple / complet — toggle persistant (cf. tasks/option3-fusion-onglets.md)
+  initModeToggle();
 
   // Préconisations : init + listeners
   initPreconisations();

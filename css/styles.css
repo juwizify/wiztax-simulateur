@@ -1086,6 +1086,39 @@ header span {
   background: #fde68a;
 }
 
+/* ─── Toggle Mode simple / Mode complet ─── */
+/* Une seule source DOM, deux vues filtrées (cf. tasks/option3-fusion-onglets.md).
+   La règle .advanced ci-dessous matche tous les champs marqués avancés à
+   partir de Phase C2 — en mode simple ils sont cachés du DOM utilisateur,
+   et en C3 ignorés par getInputs() pour qu'ils ne contaminent pas le calcul. */
+.mode-toggle {
+  display: inline-flex;
+  margin: 16px 40px 0;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 0;
+}
+.mode-btn {
+  padding: 7px 18px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9em;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.mode-btn:hover { color: #1e293b; }
+.mode-btn.active {
+  background: #fff;
+  color: #0f172a;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+body.mode-simple .advanced { display: none !important; }
+
 /* ─── Layout 2 colonnes ─── */
 .preco-layout {
   display: grid;
