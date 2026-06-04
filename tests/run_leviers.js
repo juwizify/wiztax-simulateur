@@ -112,9 +112,11 @@ const TESTS = [
   { id: 'locAvantages', montant: 8000, paramValue: 'loc2', key: 'locAvantagesDepenses', expected: 8000, delta: 8000 * 0.35, deltaTol: 1 },
   { id: 'locAvantages', montant: 8000, paramValue: 'loc3', key: 'locAvantagesDepenses', expected: 8000, delta: 8000 * 0.65, deltaTol: 1 },
 
-  // SOFICA taux-variable : 30 / 36 / 48 % selon scénario
-  { id: 'sofica', montant: 5000, paramValue: '30', key: 'sofica', expected: 1500, delta: 1500, deltaTol: 1 },
-  { id: 'sofica', montant: 5000, paramValue: '48', key: 'sofica', expected: 2400, delta: 2400, deltaTol: 1 },
+  // SOFICA — D3.2 sémantique investissement (versement-direct + paramKey).
+  //   input.sofica = MONTANT SOUSCRIT (5 000 €) ; input.soficaTaux = '30'|'36'|'48'
+  //   RI gagnée par le moteur = invest × taux choisi → delta IR = 1500 ou 2400.
+  { id: 'sofica', montant: 5000, paramValue: '30', key: 'sofica', expected: 5000, delta: 1500, deltaTol: 1 },
+  { id: 'sofica', montant: 5000, paramValue: '48', key: 'sofica', expected: 5000, delta: 2400, deltaTol: 1 },
 
   // Girardin PD mode taux-libre : rendement saisi en décimal (1.13 = 113 %)
   //   versement 5 000 × rendement 1.13 = 5 650 € de RI brute Girardin.
@@ -163,8 +165,17 @@ for (const t of TESTS) {
 
   // Vérif avantageEstime (si pertinent)
   const est = avantageEstime(preco[0], TEMOIN);
-  if (lev.mode === 'taux' || lev.mode === 'taux-variable') {
-    const expEst = t.id === 'pinel' || t.id === 'sofica' || t.id === 'fcpiJei' ||
+  // D3.2 : SOFICA est passé en 'versement-direct' (+ paramKey 'soficaTaux').
+  // On l'inclut explicitement dans le check avantageEstime (avantage IR =
+  // montant × taux choisi, cf. branche dédiée dans preconisations.js).
+  const inclusAvantage = lev.mode === 'taux' || lev.mode === 'taux-variable'
+    || lev.id === 'sofica';
+  if (inclusAvantage) {
+    // Pour SOFICA (sémantique investissement), expected = montant brut souscrit ;
+    // l'avantage IR attendu est dans t.delta. Pour les autres taux-variable / taux,
+    // expected EST l'avantage attendu (montant déjà transformé en RI dans appliquerPreconisations).
+    const expEst = t.id === 'sofica' ? t.delta
+                 : t.id === 'pinel' || t.id === 'fcpiJei' ||
                    t.id === 'fipCorse' || t.id === 'irPme' || t.id === 'gfi' ||
                    t.id === 'malraux' || t.id === 'locAvantages' ||
                    t.id === 'girardinPD' || t.id === 'girardinAG'

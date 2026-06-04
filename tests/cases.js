@@ -82,7 +82,7 @@ function makeInput(overrides = {}) {
     irPmeJeiJeirImputeAnterieur: 0,
     malraux: 0,
     locAvantages: 0,
-    sofica: 0,
+    sofica: 0, soficaTaux: '36',   // D3.2 : sémantique investissement
     autresReductions: 0,
 
     // Crédits d'impôt
@@ -835,13 +835,14 @@ const CASES = [
     expected: { impotNet: 10701, revenuReference: 90000, nichesPerdues: 5000, tmi: 0.41 },
   },
   {
-    name: 'Niches 2 poches — autresReductions 8k + SOFICA 5k : mix poche1+poche2, 0 perdu',
-    input: makeInput({ sal1: 100000, autresReductions: 8000, sofica: 5000 }),
-    // ri10=8 000, ri18=5 000 (SOFICA quote-part = 1)
-    // poche1 = 8 000 niche10 + 2 000 niche18 = 10 000 ; poche2 = 3 000 niche18
-    // Tout passe → RI retenue = 13 000
-    // impôt net = 20 701 - 13 000 = 7 701
-    expected: { impotNet: 7701, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+    name: 'Niches 2 poches — autresReductions 8k + SOFICA 5k @48 % : mix poche1+poche2, 0 perdu',
+    // D3.2 : SOFICA en sémantique investissement → 5000 € souscrits × 48 % = 2 400 € de RI
+    input: makeInput({ sal1: 100000, autresReductions: 8000, sofica: 5000, soficaTaux: '48' }),
+    // ri10=8 000, ri18=2 400 (SOFICA RI brute)
+    // poche1 = 8 000 niche10 + 2 000 niche18 = 10 000 ; poche2 = 400 niche18
+    // Tout passe → RI retenue = 10 400
+    // impôt net = 20 701 - 10 400 = 10 301
+    expected: { impotNet: 10301, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
   },
   {
     name: 'Niches 2 poches — autresReductions 12k + Girardin PD 25k : poches saturées, 5k perdus (panier)',
@@ -857,16 +858,16 @@ const CASES = [
     expected: { impotNet: 0, revenuReference: 90000, nichesPerdues: 5000, tmi: 0.41 },
   },
   {
-    name: 'Niches 2 poches — autresReductions 17k + SOFICA 1k (révèle l\'ancien bug)',
-    input: makeInput({ sal1: 100000, autresReductions: 17000, sofica: 1000 }),
-    // ANCIEN comportement : 1 € de SOFICA → plafondMajore 18k pour TOUT le panier
-    //   → nichesUtilisees = 18 000 → 0 dépassement → tout retenu → impôt = 2 701 (FAUX)
-    // NOUVEAU : niche10 cap à 10 000 indépendamment
-    //   poche1 = 10 000 niche10 + 0 niche18 ; poche2 = 1 000 SOFICA
-    //   surplus_10 = 7 000 PERDU
-    //   RI retenue = 10 000 + 1 000 = 11 000
-    //   impôt net = 20 701 - 11 000 = 9 701
-    expected: { impotNet: 9701, revenuReference: 90000, nichesPerdues: 7000, tmi: 0.41 },
+    name: 'Niches 2 poches — autresReductions 17k + SOFICA 1k @48 % : niche10 cap indépendamment',
+    // D3.2 : SOFICA en sémantique investissement → 1000 € × 48 % = 480 € de RI
+    input: makeInput({ sal1: 100000, autresReductions: 17000, sofica: 1000, soficaTaux: '48' }),
+    // Vérifie que niche10 (autresReductions) est cap à 10 000 INDÉPENDAMMENT
+    // de la présence d'un dispositif niche18 (anciennement bug 18k pour tout panier).
+    //   poche1 = 10 000 niche10 ; poche2 = 480 SOFICA
+    //   surplus_10 = 7 000 PERDU ; surplus_18 = 0
+    //   RI retenue = 10 000 + 480 = 10 480
+    //   impôt net = 20 701 - 10 480 = 10 221
+    expected: { impotNet: 10221, revenuReference: 90000, nichesPerdues: 7000, tmi: 0.41 },
   },
   {
     name: 'Niches 2 poches — Girardin PD 40 910 : maxe poche1 + poche2, 0 perdu',
@@ -904,20 +905,21 @@ const CASES = [
   // (Phase 2.3 : Math.min(input, versementMax × tauxMax))
   // -------------------------------------------------------------------
   {
-    name: 'Cap SOFICA — sal 100k + SOFICA 18k → cap absolu 18 000 € × 48 % = 8 640 €',
-    input: makeInput({ sal1: 100000, sofica: 18000 }),
+    name: 'Cap SOFICA — sal 100k + SOFICA 18k @48 % → cap absolu 18 000 € × 48 % = 8 640 €',
+    // D3.2 sémantique investissement : 18 000 € souscrits, taux choisi 48 %.
+    input: makeInput({ sal1: 100000, sofica: 18000, soficaTaux: '48' }),
     // RNI 90 000 → 25 % = 22 500 > 18 000 → cap absolu domine, versement effectif = 18 000
-    // capRiMax.sofica = 18 000 × 48 % = 8 640 € (taux le plus permissif)
+    // RI = 18 000 × 48 % = 8 640 € (taux le plus permissif sélectionné)
     // ri18 panier = 8 640 → poche1 = 8 640, poche2 = 0
     // impôt net = 20 701 - 8 640 = 12 061
     expected: { impotNet: 12061, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
   },
   {
-    name: 'Cap SOFICA — sal 50k + SOFICA 18k → cap 25 % RNG = 11 250, RI tronquée à 5 400 €',
-    input: makeInput({ sal1: 50000, sofica: 18000 }),
+    name: 'Cap SOFICA — sal 50k + SOFICA 18k @48 % → cap 25 % RNG = 11 250, RI tronquée à 5 400 €',
+    input: makeInput({ sal1: 50000, sofica: 18000, soficaTaux: '48' }),
     // RNI 45 000 → 25 % = 11 250 < 18 000 → CAP 25 % RNG domine
     // Versement effectif SOFICA = min(18 000, 11 250) = 11 250
-    // capRiMax.sofica = 11 250 × 48 % = 5 400 €
+    // RI = 11 250 × 48 % = 5 400 €
     // impôt brut (sal 50k célib) = 6 604 → moins 5 400 = 1 204
     // Démontre que le cap relatif 25 % RNG (art. 199 unvicies CGI) est plus
     // restrictif que le cap absolu 18 000 € pour les revenus modestes.

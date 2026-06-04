@@ -335,6 +335,26 @@ header span {
 }
 .form-row select { text-align: left; }
 
+/* Cellule centrale composée — input + select empilés verticalement.
+   Utilisée par renderSimulateurFormRows() quand un levier a un paramètre
+   additionnel (ex. SOFICA : montant souscrit + select taux 30/36/48 %).
+   La grille `.form-row` impose 130 px en col 2 ; pour rester lisible on
+   stacke input au-dessus, select dessous (les labels d'options peuvent
+   être longs et débordent normalement via le menu déroulant natif). */
+.form-row-input-with-param {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.form-row-input-with-param input[type="number"],
+.form-row-input-with-param select {
+  width: 100%;
+}
+.form-row-input-with-param select {
+  font-size: .78rem;
+  padding: 5px 8px;
+}
+
 /* Checkbox dans un form-row : aligne à droite comme les inputs number, taille raisonnable */
 .form-row input[type="checkbox"].form-checkbox {
   justify-self: end;

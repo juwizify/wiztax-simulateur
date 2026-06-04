@@ -67,7 +67,9 @@ function makeInput(o = {}) {
     csgDeductible: 0, autresCharges: 0,
     dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
     fcpi: 0, fcpiJei: 0, fipCorse: 0, gfi: 0, irPme: 0,
-    malraux: 0, locAvantages: 0, sofica: 0, autresReductions: 0,
+    malraux: 0, locAvantages: 0,
+    sofica: 0, soficaTaux: '36',         // D3.2 : sémantique investissement
+    autresReductions: 0,
     emploiDomicile: 0, gardeEnfants: 0, cotSyndicales: 0,
     fraisScolCollege: 0, fraisScolLycee: 0, fraisScolSup: 0,
     ehpadFrais: 0, ehpadNbPers: 1, autresCredits: 0,
@@ -301,9 +303,12 @@ function oracleCalc(input) {
   // Couple : SOFICA = 18 000 × 48 % = 8 640 (pas de différence single/couple).
   const couple = i.situation === 'marie-pacse';
   const cv = (single, c) => couple && c !== undefined ? c : single;
-  // SOFICA double plafond : min(18 000, 25 % RNG) × 48 %
+  // SOFICA — D3.2 sémantique investissement :
+  //   versement effectif = min(18 000, 25 % RNG) — c'est le CAP D'INVESTISSEMENT
+  //   RI = versement effectif retenu × taux choisi (input.soficaTaux)
   const versSoficaEff = Math.min(18000, rni * 0.25);
-  const capSofica   = versSoficaEff * 0.48;
+  const TAUX_SOFICA   = { '30': 0.30, '36': 0.36, '48': 0.48 };
+  const tauxSoficaOr  = TAUX_SOFICA[i.soficaTaux] || TAUX_SOFICA['36'];
   const capFCPI       = cv(12000, 24000)  * 0.18;       // 2 160 / 4 320 (dispositif retiré 21/02/2026)
   const capFcpiJei    = cv(75000, 150000) * 0.30;       // 22 500 / 45 000 (plafond PARTAGÉ avec irPmeJei)
   const capFipCorse   = cv(12000, 24000)  * 0.30;       // 3 600 / 7 200
@@ -374,7 +379,7 @@ function oracleCalc(input) {
   } else {
     redLocAv = Math.min(i.locAvantages || 0, capLocAv);
   }
-  const redSofica = Math.min(i.sofica || 0,     capSofica);
+  const redSofica = Math.min(i.sofica || 0, versSoficaEff) * tauxSoficaOr;
   const redAutres = i.autresReductions;
 
   const totalReductions = redDons + redPinel + redGirPD + redGirAG
@@ -582,7 +587,13 @@ function generateProfile(idx) {
   if (rand() < 0.08) profile.dons = randInt(100, 3000);
   if (rand() < 0.05) profile.pinel = randInt(2000, 10000);
   if (rand() < 0.04) profile.girardinPD = randInt(1000, 6000);
-  if (rand() < 0.03) profile.sofica = randInt(500, 5000);
+  if (rand() < 0.03) {
+    // D3.2 sémantique investissement : on saisit un MONTANT SOUSCRIT
+    // (typiquement jusqu'au cap absolu 18 k€) + un taux aléatoire 30/36/48 %
+    profile.sofica = randInt(500, 18000);
+    const tauxOpts = ['30', '36', '48'];
+    profile.soficaTaux = tauxOpts[Math.floor(rand() * 3)];
+  }
   if (rand() < 0.06) profile.fcpiJei = randInt(200, 2000);
   if (rand() < 0.05) profile.malraux = randInt(1000, 6000);
 

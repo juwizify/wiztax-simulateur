@@ -67,7 +67,9 @@ function defaultInputs() {
     irPmeJeiJeirImputeAnterieur: 0,
     malraux: 0, malrauxTravaux: 0, malrauxZone: 'spr-non',
     locAvantages: 0, locAvantagesDepenses: 0, locAvantagesPalier: 'loc1',
-    sofica: 0, autresReductions: 0,
+    // SOFICA (D3.2) : sémantique investissement = montant souscrit + taux choisi
+    sofica: 0, soficaTaux: '36',
+    autresReductions: 0,
     // Crédits
     emploiDomicile: 0, gardeEnfants: 0, cotSyndicales: 0,
     fraisScolCollege: 0, fraisScolLycee: 0, fraisScolSup: 0,
@@ -142,6 +144,7 @@ function getInputs() {
     locAvantagesDepenses: v('locAvantagesDepenses'),
     locAvantagesPalier: _sel('locAvantagesPalier', d.locAvantagesPalier),
     sofica: v('sofica'),
+    soficaTaux: _sel('soficaTaux', d.soficaTaux),
     autresReductions: v('autresReductions'),
     autresCredits: v('autresCredits'),
   };
@@ -431,6 +434,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof renderSimulateurFormRows === 'function') {
     const simIrPme = document.getElementById('simIrPme');
     if (simIrPme) renderSimulateurFormRows(simIrPme, 'ir-pme');
+    // SOFICA (D3.2) : même pattern — container vide alimenté depuis le catalogue
+    const simSofica = document.getElementById('simSofica');
+    if (simSofica) renderSimulateurFormRows(simSofica, 'sofica');
   }
 
   // Écouter tous les inputs : un seul handler (recalculer) — le périmètre

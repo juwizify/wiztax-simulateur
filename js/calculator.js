@@ -388,7 +388,11 @@ function calculerIR(input) {
     det.revenuNetImposable * PD.sofica.plafondAssiettePctRng
   );
   const capRiMax = {
-    sofica:       versSoficaEffectif * tauxMax(PD.sofica),                         // min(18k, 25%RNG) × 48 %
+    // SOFICA — pas dans capRiMax depuis D3.2 : sémantique = INVESTISSEMENT.
+    // La RI est calculée plus bas avec le taux choisi par l'utilisateur
+    // (versSoficaEffectif sert de cap d'investissement). versSoficaEffectif
+    // × tauxMax(PD.sofica) = 8 640 € reste utile pour les jauges plafonds UI.
+    soficaRiMax:  versSoficaEffectif * tauxMax(PD.sofica),                         // min(18k, 25%RNG) × 48 % — info UI
     fcpi:         versCouple(PD.fcpi) * PD.fcpi.taux,                              // 12k/24k × 18 % (dispositif retiré 21/02/2026)
     fcpiJei:      versCouple(PD.fcpiJei) * PD.fcpiJei.taux,                        // 75k/150k × 30 % (plafond PARTAGÉ avec irPmeJei)
     fipCorse:     versCouple(PD.fipCorse) * PD.fipCorse.taux,                      // 12k/24k × 30 %
@@ -478,7 +482,15 @@ function calculerIR(input) {
   } else {
     det.redLocAvantages = Math.min(input.locAvantages || 0, capRiMax.locAvantages);
   }
-  det.redSofica      = Math.min(input.sofica || 0,       capRiMax.sofica);
+  // SOFICA — sémantique investissement (post-D3.2)
+  //   * input.sofica       = MONTANT SOUSCRIT dans l'année (cash sortant)
+  //   * input.soficaTaux   = '30' | '36' | '48' (engagement de la SOFICA)
+  // Versement effectif retenu = min(souscription, 18 000 €, 25 %·RNG) puis
+  // RI = versement retenu × taux choisi. Art. 199 unvicies CGI / BOI-IR-RICI-180-20.
+  const _tauxSoficaCle  = input.soficaTaux || PD.sofica.tauxDefaut;
+  const _tauxSofica     = PD.sofica.taux[_tauxSoficaCle] || PD.sofica.taux[PD.sofica.tauxDefaut];
+  const versSoficaRetenu = Math.min(input.sofica || 0, versSoficaEffectif);
+  det.redSofica      = versSoficaRetenu * _tauxSofica;
   det.redAutres      = input.autresReductions;  // catch-all, pas de cap
 
   // Surplus écrasés par les caps individuels (pour affichage UI)
@@ -487,7 +499,9 @@ function calculerIR(input) {
   // - input = INVESTISSEMENT (post-F4 pour IR-PME) : surplus = input − versementMax
   //   (= ce qui dépasse le plafond d'investissement annuel)
   det.capExcedents = {
-    sofica:       Math.max(0, (input.sofica || 0)       - det.redSofica),
+    // SOFICA en sémantique investissement (D3.2) : surplus = montant souscrit
+    // au-delà du versement effectif (min 18k / 25%RNG). Cohérent IR-PME.
+    sofica:       Math.max(0, (input.sofica || 0)       - versSoficaEffectif),
     fcpi:         Math.max(0, (input.fcpi || 0)         - det.redFCPI),
     fipCorse:     Math.max(0, (input.fipCorse || 0)     - det.redFipCorse),
     gfi:          Math.max(0, (input.gfi || 0)          - det.redGfi),

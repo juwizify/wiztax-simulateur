@@ -543,8 +543,13 @@ const LEVIERS_CATALOGUE = [
   },
   // 2.c) Dans le panier niche 18 000 € (majoration)
   {
-    id: 'sofica', label: 'SOFICA',
-    levier: 2, cat: 'niche18', mode: 'taux-variable', inputKey: 'sofica',
+    // Sémantique D3.2 : input.sofica = MONTANT SOUSCRIT (cash) ; input.soficaTaux
+    // = '30' | '36' | '48' (engagement de la SOFICA). RI = invest × taux,
+    // plafonné par versement effectif = min(18 000 €, 25 %·RNG).
+    // Aligné sur le pattern IR-PME (post-F4) : 1 input numérique + 1 select de taux.
+    id: 'sofica', family: 'sofica', label: 'SOFICA',
+    levier: 2, cat: 'niche18', mode: 'versement-direct', inputKey: 'sofica',
+    paramKey: 'soficaTaux',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de SOFICA (financement cinéma/audiovisuel). Cash sortant. Choisir ensuite le taux selon le scénario de la SOFICA. Versement plafonné à min(18 000 €, 25 % du RNG). Niche majorée 18 k€. Conservation 5 ans.',
     sectionGroup: 'investissement-financier',
@@ -566,8 +571,16 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 unvicies CGI',
     refBofip: 'BOI-IR-RICI-180',
+    links: [
+      { label: 'Art. 199 unvicies CGI (Légifrance)',
+        url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000041467091' },
+      { label: 'BOFiP BOI-IR-RICI-180-20',
+        url: 'https://bofip.impots.gouv.fr/bofip/3666-PGP.html' },
+      { label: 'Service-public.fr — SOFICA',
+        url: 'https://www.service-public.fr/particuliers/vosdroits/F31290' },
+    ],
     params: [
-      { name: 'taux', label: 'Taux SOFICA',
+      { name: 'taux', label: 'Taux SOFICA', defaultValue: '36',
         options: [
           { value: '30', label: '30 % — standard',                                taux: 0.30 },
           { value: '36', label: '36 % — engagement production (10 %)',             taux: 0.36 },
@@ -820,6 +833,15 @@ function avantageEstime(p, inputAvant) {
   }
   if (lev.mode === 'jeanbrun') {
     return null; // pas un avantage IR direct
+  }
+  // SOFICA (D3.2) — versement-direct + paramKey, sémantique INVESTISSEMENT pure.
+  // RI brute = montant × taux choisi (cap effectif appliqué par le moteur).
+  // Loc'Av / Malraux utilisent aussi versement-direct+paramKey mais en mode
+  // « dépenses + palier » (RI = min(montant, plafond) × taux) : on ne peut PAS
+  // assimiler montant × taux à l'avantage estimé pour eux, d'où la restriction.
+  if (lev.id === 'sofica' && lev.params && lev.params[0]) {
+    const opt = lev.params[0].options.find(o => o.value === p.paramValue);
+    if (opt && opt.taux !== undefined) return p.montant * opt.taux;
   }
   // versement-direct : selon le levier
   if (lev.id === 'per') {
@@ -1158,12 +1180,30 @@ function renderSimulateurFormRows(targetEl, family) {
                      : lev.cat === 'niche18' ? 'niche 18 000 €'
                      : lev.cat === 'foncier' ? 'hors plafond niches'
                      :                         'niche 10 000 €';
+    // Si le levier a un paramètre additionnel (taux variable côté UI, ex.
+    // SOFICA 30/36/48 %), on génère un <select> à droite de l'input numérique.
+    // Le wrapper `.form-row-input-with-param` impose un flex 1+auto dans la
+    // cellule centrale de la grille (cf. CSS).
+    const hasParam = lev.paramKey && lev.params && lev.params[0] && lev.params[0].options;
+    const selectHtml = hasParam
+      ? `<select id="${escHtml(lev.paramKey)}" aria-label="${escHtml(lev.params[0].label || '')}">${
+          lev.params[0].options.map(o =>
+            `<option value="${escHtml(o.value)}"${o.value === (lev.params[0].defaultValue || '') ? ' selected' : ''}>${escHtml(o.label)}</option>`
+          ).join('')
+        }</select>`
+      : '';
+    const inputCell = hasParam
+      ? `<div class="form-row-input-with-param">
+          <input type="number" id="${escHtml(lev.inputKey)}" value="0" min="0">
+          ${selectHtml}
+        </div>`
+      : `<input type="number" id="${escHtml(lev.inputKey)}" value="0" min="0">`;
     return `<div class="form-row advanced">
       <label for="${escHtml(lev.inputKey)}">
         ${escHtml(lev.titleLong || lev.label)}
         <i class="tip" data-tip="${escHtml(lev.info || '')}">i</i>
       </label>
-      <input type="number" id="${escHtml(lev.inputKey)}" value="0" min="0">
+      ${inputCell}
       <div class="niche-cell">
         <span class="niche-marker ${nicheClass}">${escHtml(nicheLabel)}</span>
       </div>
