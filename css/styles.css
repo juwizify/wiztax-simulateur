@@ -31,9 +31,19 @@
   --shadow-arch:   0px 8px 24px rgba(20, 23, 32, 0.08), 0px 1px 4px rgba(20, 23, 32, 0.04);
   --shadow-float:  0px 4px 16px rgba(51, 64, 250, 0.12);
   --gradient-cta:  linear-gradient(135deg, #3340FA 0%, #0716E5 100%);
-  --radius-card:   1.25rem;  /* 20px — légèrement moins rond */
+  --radius-card:   1.25rem;  /* 20px — legacy, à terme aligné sur 8px (cf. spec DS) */
   --radius-input:  0.625rem; /* 10px */
   --radius-sm:     0.5rem;   /* 8px */
+
+  /* Tokens badges — palette unique pour les paniers de niches fiscales.
+     Une catégorie = une couleur partout (cf. tasks/design-system-spec.md). */
+  --badge-hors-fg:    #1e40af;  --badge-hors-bg:    #EFF6FF;  --badge-hors-br:    #BFDBFE;
+  --badge-10k-fg:     #475569;  --badge-10k-bg:     #F1F5F9;  --badge-10k-br:     #CBD5E1;
+  --badge-18k-fg:     #92400E;  --badge-18k-bg:     #FFFBEB;  --badge-18k-br:     #FDE68A;
+  --badge-foncier-fg: #166534;  --badge-foncier-bg: #F0FDF4;  --badge-foncier-br: #BBF7D0;
+  --badge-neutral-fg: var(--on-surface-variant);
+  --badge-neutral-bg: var(--surface-container-low);
+  --badge-neutral-br: var(--outline-variant);
 
   /* Typographie */
   --font-headline: 'Manrope', system-ui, sans-serif;
@@ -318,23 +328,73 @@ header span {
   font-size: .88rem;
 }
 
-/* Niche markers */
-.niche-marker {
-  font-size: .70rem;
-  font-weight: 500;
-  padding: 2px 7px;
-  border-radius: 99px;
+/* ─────────────────────────────────────────────
+   BADGES (paniers niches & catégories) — composant unifié
+   3 anciennes familles (.niche-marker, .lbadge, .preco-cat-badge)
+   convergent ici sur le MÊME langage visuel et la MÊME palette
+   sémantique par catégorie. Une catégorie = une couleur partout.
+───────────────────────────────────────────── */
+.niche-marker,
+.lbadge,
+.preco-cat-badge {
   display: inline-block;
-  line-height: 1.6;
-  letter-spacing: 0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: .7rem;
+  font-weight: 500;
+  letter-spacing: .2px;
+  line-height: 1.5;
   white-space: nowrap;
+  border: 1px solid var(--badge-neutral-br);
+  background: var(--badge-neutral-bg);
+  color: var(--badge-neutral-fg);
 }
-.niche-10k    { color: var(--outline);   background: var(--surface-container-low); border: 1px solid var(--outline-variant); }
-.niche-18k    { color: #6B5000;          background: #FFF8E0;                       border: 1px solid #E8D58A; }
-.niche-18k-44 { color: #6B5000;          background: #FFF8E0;                       border: 1px solid #E8D58A; }
-.niche-18k-34 { color: #6B5000;          background: #FFF8E0;                       border: 1px solid #E8D58A; }
-.niche-hors   { color: #7B1200;          background: #FFE8E4;                       border: 1px solid #F5C4B8; }
-.niche-plaf   { color: var(--outline);   background: transparent;                   font-size: .67rem; font-weight: 400; padding: 0 2px; }
+/* Variante "hors plafond niches" — bleu sobre */
+.niche-hors,
+.lbadge-hors,
+.preco-cat-hors {
+  color: var(--badge-hors-fg);
+  background: var(--badge-hors-bg);
+  border-color: var(--badge-hors-br);
+}
+/* Variante "niche 10 000 €" — gris neutre */
+.niche-10k,
+.lbadge-10k,
+.preco-cat-niche10 {
+  color: var(--badge-10k-fg);
+  background: var(--badge-10k-bg);
+  border-color: var(--badge-10k-br);
+}
+/* Variante "niche 18 000 € majorée" — ambre (Girardin/SOFICA) */
+.niche-18k,
+.niche-18k-44,
+.niche-18k-34,
+.lbadge-18k,
+.preco-cat-niche18 {
+  color: var(--badge-18k-fg);
+  background: var(--badge-18k-bg);
+  border-color: var(--badge-18k-br);
+}
+/* Variante "déduction foncière" (assiette foncière, hors panier niches) — vert */
+.preco-cat-foncier {
+  color: var(--badge-foncier-fg);
+  background: var(--badge-foncier-bg);
+  border-color: var(--badge-foncier-br);
+}
+/* Variante "déduction du revenu" (Leviers fiscaux) — neutre par défaut */
+.lbadge-deduct {
+  /* hérite du style neutre de la base — pas de modifier nécessaire */
+}
+
+/* Étiquette plafond/info (texte d'info, pas un badge) */
+.niche-plaf {
+  color: var(--outline);
+  background: transparent;
+  font-size: .67rem;
+  font-weight: 400;
+  padding: 0 2px;
+}
 
 .niche-cell { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
 
@@ -599,19 +659,9 @@ header span {
 }
 .leviers-section-title:first-of-type { margin-top: 0; }
 
-/* Badges */
-.lbadge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 99px;
-  font-size: .70rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.lbadge-hors   { background: #E8F0FE; color: #1a3fa0; border: 1px solid #b0c4f8; }
-.lbadge-10k    { background: #E6F4EA; color: #1e6b35; border: 1px solid #9fd4ac; }
-.lbadge-18k    { background: #FEF3E2; color: #b45309; border: 1px solid #f8d89e; }
-.lbadge-deduct { background: var(--surface-container-low); color: var(--on-surface-variant); border: 1px solid var(--outline-variant); }
+/* Badges leviers — style unifié plus haut (cf. .niche-marker, .lbadge, .preco-cat-badge).
+   Les variantes .lbadge-hors / -10k / -18k / -deduct sont définies dans le bloc
+   commun pour partager les couleurs avec les autres familles. */
 
 /* .levier-card : card accordéon, alignée sur .section-card.
    Pas de liseré coloré ni d'ombre lourde (cf. tasks/design-system-spec.md). */
@@ -1244,24 +1294,12 @@ body.mode-simple .advanced { display: none !important; }
   font-style: italic;
 }
 
-/* ─── Pastille catégorie (Niche 10k / 18k / Hors / Foncier) ─── */
+/* Pastille catégorie Préco — style unifié plus haut (cf. .niche-marker, .lbadge,
+   .preco-cat-badge). Conserve juste son margin-left contextuel. */
 .preco-cat-badge {
-  display: inline-block;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background: #f1f5f9;
-  font-size: 0.72em;
-  font-weight: 500;
   margin-left: 6px;
   vertical-align: middle;
-  white-space: nowrap;
-  color: #64748b;
 }
-/* Différenciation discrète par couleur de texte uniquement, fond identique */
-.preco-cat-niche10 { color: #1e40af; }
-.preco-cat-niche18 { color: #92400e; }
-.preco-cat-hors    { color: #475569; }
-.preco-cat-foncier { color: #166534; }
 
 /* Colonne "Plafond individuel" centrée — la coche ✓ tombe au milieu */
 .preco-table-section th:nth-child(5),
