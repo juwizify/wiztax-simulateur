@@ -258,7 +258,7 @@ const LEVIERS_CATALOGUE = [
   // Source unique : PARAMS.plafondsDispositifs (cf. tasks/d3.1-irpme-spec.md)
   {
     id: 'irPme', label: 'IR-PME — PME standard (18 %)',
-    levier: 2, cat: 'niche10', mode: 'taux', taux: PD.irPme.taux, inputKey: 'irPme',
+    levier: 2, cat: 'niche10', mode: 'versement-direct', taux: PD.irPme.taux, inputKey: 'irPme',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription au capital d\'une PME non cotée (cas général). Réduction 18 % (le « boost 25 % » de 2024-2025 a expiré). Plafond 50 000 € (célibataire) / 100 000 € (couple). Conservation 5 ans. Art. 199 terdecies-0 A CGI.',
     sectionGroup: 'investissement-financier',
@@ -281,7 +281,7 @@ const LEVIERS_CATALOGUE = [
   },
   {
     id: 'irPmeEsus', label: 'IR-PME — ESUS / SFS (25 %)',
-    levier: 2, cat: 'niche10', mode: 'taux', taux: PD.irPmeEsus.taux, inputKey: 'irPmeEsus',
+    levier: 2, cat: 'niche10', mode: 'versement-direct', taux: PD.irPmeEsus.taux, inputKey: 'irPmeEsus',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription au capital d\'une Entreprise Solidaire d\'Utilité Sociale (ESUS) ou Société Foncière Solidaire (SFS). Réduction 25 %. Plafond 50 000 € / 100 000 €. Validité versements 28/06/2024 → 30/09/2026 ; au-delà du 1/10/2026 subordonné à validation Commission européenne.',
     sectionGroup: 'investissement-financier',
@@ -305,7 +305,7 @@ const LEVIERS_CATALOGUE = [
   },
   {
     id: 'irPmeMH', label: 'IR-PME — Monuments historiques (25 %)',
-    levier: 2, cat: 'niche10', mode: 'taux', taux: PD.irPmeMH.taux, inputKey: 'irPmeMH',
+    levier: 2, cat: 'niche10', mode: 'versement-direct', taux: PD.irPmeMH.taux, inputKey: 'irPmeMH',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription au capital d\'une société foncière de monuments historiques (immeubles protégés, sites, parcs, jardins). Réduction 25 %. Plafond 50 000 € / 100 000 €. Validité depuis le 28/09/2025.',
     sectionGroup: 'investissement-financier',
@@ -328,7 +328,7 @@ const LEVIERS_CATALOGUE = [
   },
   {
     id: 'irPmeJei', label: 'IR-PME — JEI direct (30 %)',
-    levier: 2, cat: 'hors', mode: 'taux', taux: PD.irPmeJei.taux, inputKey: 'irPmeJei',
+    levier: 2, cat: 'hors', mode: 'versement-direct', taux: PD.irPmeJei.taux, inputKey: 'irPmeJei',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription directe au capital d\'une Jeune Entreprise Innovante (JEI). Réduction 30 %. Plafond ANNUEL 75 000 € / 150 000 € PARTAGÉ avec FCPI-JEI (cumul des deux ≤ ce plafond). Plafond pluri-annuel : RI cumulée JEI+JEIR ≤ 50 000 € sur 2024-2028. Hors plafond niches 10 k (art. 200-0 A exclut 199 terdecies-0 A bis). Conservation 5 ans.',
     sectionGroup: 'investissement-financier',
@@ -352,7 +352,7 @@ const LEVIERS_CATALOGUE = [
   },
   {
     id: 'fcpiJei', label: 'IR-PME — FCPI investi en JEI (30 %)',
-    levier: 2, cat: 'hors', mode: 'taux', taux: PD.fcpiJei.taux, inputKey: 'fcpiJei',
+    levier: 2, cat: 'hors', mode: 'versement-direct', taux: PD.fcpiJei.taux, inputKey: 'fcpiJei',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription de parts de FCPI investissant en Jeunes Entreprises Innovantes (au quota prévu par le règlement du fonds). Réduction 30 %. Plafond ANNUEL 75 000 € / 150 000 € PARTAGÉ avec IR-PME JEI direct. Hors plafond niches 10 k. Validité depuis le 21/02/2026 — les FCPI classiques ne sont plus éligibles.',
     sectionGroup: 'investissement-financier',
@@ -376,7 +376,7 @@ const LEVIERS_CATALOGUE = [
   },
   {
     id: 'irPmeJeii', label: 'IR-PME — JEII (40 %)',
-    levier: 2, cat: 'hors', mode: 'taux', taux: PD.irPmeJeii.taux, inputKey: 'irPmeJeii',
+    levier: 2, cat: 'hors', mode: 'versement-direct', taux: PD.irPmeJeii.taux, inputKey: 'irPmeJeii',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription au capital d\'une Jeune Entreprise Innovante à Impact (JEII). Réduction 40 %. Plafond 50 000 € / 100 000 €. Validité 21/02/2026 → 31/12/2028 (LF 2026, nouvel article).',
     sectionGroup: 'investissement-financier',
@@ -400,7 +400,7 @@ const LEVIERS_CATALOGUE = [
   },
   {
     id: 'irPmeJeir', label: 'IR-PME — JEIR (50 %)',
-    levier: 2, cat: 'hors', mode: 'taux', taux: PD.irPmeJeir.taux, inputKey: 'irPmeJeir',
+    levier: 2, cat: 'hors', mode: 'versement-direct', taux: PD.irPmeJeir.taux, inputKey: 'irPmeJeir',
     nature: 'versement-annuel', budget: 'cash',
     info: 'Souscription au capital d\'une Jeune Entreprise Innovante de Rupture (JEIR). Réduction 50 %. Plafond 50 000 € / 100 000 €. Plafond pluri-annuel : RI cumulée JEI+JEIR ≤ 50 000 € sur 2024-2028. Hors plafond niches. Validité 1/1/2024 → 31/12/2028. Art. 199 terdecies-0 A ter CGI.',
     sectionGroup: 'investissement-financier',

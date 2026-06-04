@@ -575,18 +575,19 @@ const CASES = [
   },
 
   // -------------------------------------------------------------------
-  // 7XS / 7UN / 7CF — FIP Corse, GFI, IR-PME
-  // 3 dispositifs niche 10 000 € (l'utilisateur saisit le montant de
-  // la réduction calculée, pas l'assiette).
+  // FIP Corse + GFI + IR-PME : sémantique mixte (legacy + post-F4)
+  // - fipCorse, gfi : saisie en RI directe (sémantique non encore migrée)
+  // - irPme         : sémantique post-F4 = MONTANT INVESTI
   // -------------------------------------------------------------------
   {
-    name: 'FIP Corse + GFI + IR-PME : 100k sal + 3k+2k+2k réductions sous niche',
+    name: 'FIP Corse 3k RI + GFI 2k RI + IR-PME 2k investi → 360 € RI',
     input: makeInput({ sal1: 100000, fipCorse: 3000, gfi: 2000, irPme: 2000 }),
-    // sal net 90k → tranches : 1 977.69 + (84 577-29 579)×0.30 + (90 000-84 577)×0.41
-    //   = 1 977.69 + 16 499.40 + 2 223.43 = 20 700.52 → 20 701 (tranche 41 % active)
-    // total nouvelles réductions = 7 000 < niche 10 000 → appliquée intégralement
-    // impôt net = 20 701 - 7 000 = 13 701, TMI = 41 %
-    expected: { impotNet: 13701, revenuReference: 90000, tmi: 0.41 },
+    // sal net 90k → impôt brut tranche 41 % = 20 701.
+    // RI : fipCorse 3 000 (RI directe) + gfi 2 000 (RI directe)
+    //   + irPme 2 000 invest × 18 % = 360 € de RI.
+    // Total RI niche10 = 5 360 < plafond 10 000 → appliquée intégralement.
+    // impôt net = 20 701 - 5 360 = 15 341 (arrondi).
+    expected: { impotNet: 15341, revenuReference: 90000, tmi: 0.41 },
   },
 
   // -------------------------------------------------------------------
@@ -923,14 +924,12 @@ const CASES = [
     expected: { impotNet: 1204, revenuReference: 45000, tmi: 0.30 },
   },
   {
-    name: 'FCPI-JEI single — saisie 10k de RI sous cap 22 500 € (75k × 30%)',
+    name: 'FCPI-JEI single — 10k investis → 3k RI (post-F4 sémantique investissement)',
     input: makeInput({ sal1: 100000, fcpiJei: 10000 }),
-    // Post-LF 2026 : plafond FCPI-JEI relevé à 75 000 €/célib (partagé avec
-    // irPmeJei). capRiMax.fcpiJei (single) = 75 000 × 30 % = 22 500 €.
-    // Saisie 10 000 € < cap individuel → RI entièrement appliquée.
-    // Le panier niche10 (10 000 €) est saturé exactement : pas de RI perdue.
-    // impôt brut = 20 701, impôt net = 20 701 - 10 000 = 10 701.
-    expected: { impotNet: 10701, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+    // Sémantique post-F4 : input = MONTANT INVESTI. RI = invest × 0,30.
+    // 10 000 × 30 % = 3 000 € de RI. FCPI-JEI hors plafond niches (ri10=0).
+    // impôt brut sal 100k = 20 701, impôt net = 20 701 - 3 000 = 17 701.
+    expected: { impotNet: 17701, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
   },
   {
     name: 'Cap individuel Malraux — sal 500k + Malraux 200k → RI tronquée à 30 000 €',
@@ -994,34 +993,34 @@ const CASES = [
   // -------------------------------------------------------------------
   // IR-PME — 7 sous-dispositifs post-LF 2026 (cf. tasks/d3.1-irpme-spec.md)
   // -------------------------------------------------------------------
+  // Sémantique post-F4 : input = MONTANT INVESTI (€), moteur calcule RI = invest × taux
   {
-    name: 'IR-PME JEI direct — célib sal 100k, 5k RI hors plafond niches',
-    input: makeInput({ situation: 'celibataire', sal1: 100000, irPmeJei: 5000 }),
-    // capRiMax.irPmeJei (single) = 75 000 × 30 % = 22 500 → 5 000 < cap, RI entière
-    // JEI HORS plafond niches (art. 200-0 A exclut 199 terdecies-0 A bis)
-    // → ne contribue PAS au panier niche10 (ri10Panier = 0)
-    // impôt brut sal 100k = 20 701, impôt net = 20 701 - 5 000 = 15 701
-    expected: { impotNet: 15701, revenuReference: 90000, tmi: 0.41 },
+    name: 'IR-PME JEI direct — célib sal 100k, 50k investis → 15k RI hors niches',
+    input: makeInput({ situation: 'celibataire', sal1: 100000, irPmeJei: 50000 }),
+    // Plafond JEI single = 75 000 € → invest 50k < cap, retenu entier.
+    // RI = 50 000 × 30 % = 15 000 €. JEI HORS plafond niches (ri10Panier=0).
+    // impôt brut sal 100k = 20 701, net = 20 701 - 15 000 = 5 701.
+    expected: { impotNet: 5701, revenuReference: 90000, tmi: 0.41 },
   },
   {
-    name: 'IR-PME plafond ANNUEL partagé JEI+FCPI-JEI saturé',
-    input: makeInput({ situation: 'celibataire', sal1: 200000, irPmeJei: 15000, fcpiJei: 10000 }),
-    // capRiMax (single, partagé) = 75 000 × 30 % = 22 500
-    // cumul saisi RI = 15 000 + 10 000 = 25 000 → surplus 2 500
-    // Politique : tronquer fcpiJei en priorité → fcpiJei retenu = 10 000 - 2 500 = 7 500
-    // RI JEI totale retenue = 15 000 + 7 500 = 22 500 (cap respecté)
+    name: 'IR-PME plafond ANNUEL partagé JEI+FCPI-JEI saturé (90k → 75k)',
+    input: makeInput({ situation: 'celibataire', sal1: 200000, irPmeJei: 50000, fcpiJei: 40000 }),
+    // Cumul invest JEI direct + FCPI-JEI = 90 000 > 75 000 (plafond commun single).
+    // Politique : irPmeJei allouée d'abord → 50 000 retenu (RI 15 000).
+    // fcpiJei retenu = min(40 000, 75 000 - 50 000) = 25 000 (RI 7 500).
+    // RI JEI totale = 22 500 (cap respecté).
     expected: { impotNet: 37474, revenuReference: 185445, tmi: 0.45 },
   },
   {
-    name: 'IR-PME plafond PLURI-ANNUEL JEI+JEIR saturé (30k imputé)',
-    input: makeInput({ situation: 'celibataire', sal1: 500000, irPmeJei: 20000, irPmeJeir: 35000,
+    name: 'IR-PME plafond PLURI-ANNUEL JEI+JEIR saturé (30k RI imputée 2024-2025)',
+    input: makeInput({ situation: 'celibataire', sal1: 500000, irPmeJei: 50000, irPmeJeir: 50000,
                       irPmeJeiJeirImputeAnterieur: 30000 }),
-    // capRiMax.irPmeJei = 22 500 → 20 000 OK, redIrPmeJei = 20 000
-    // capRiMax.irPmeJeir (single) = 50 000 × 50 % = 25 000 → 35 000 tronqué à 25 000
-    // Plafond pluri-annuel restant = 50 000 - 30 000 = 20 000
-    // Cumul 2026 candidat = 20 000 (JEI) + 25 000 (JEIR cap'd) = 45 000 > 20 000
-    // Politique : tronquer JEIR → JEIR retenu = max(0, 25 000 - 25 000) = 0
-    // RI JEI+JEIR appliquée 2026 = 20 000 (= plafond restant)
+    // irPmeJei : invest 50k → RI 15 000 (cap 75k OK).
+    // irPmeJeir : invest 50k cappé à 50k × 50 % = 25 000 € de RI candidate.
+    // Plafond pluri-annuel restant = 50 000 - 30 000 = 20 000.
+    // Cumul JEI+JEIR candidat = 15 000 + 25 000 = 40 000 > 20 000.
+    // Politique : tronquer JEIR → JEIR retenu = 25 000 - 20 000 = 5 000.
+    // RI cumulée 2026 = 15 000 + 5 000 = 20 000 (= plafond restant).
     expected: { impotNet: 182037, revenuReference: 485445, tmi: 0.45 },
   },
 ];

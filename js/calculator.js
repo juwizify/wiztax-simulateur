@@ -421,31 +421,42 @@ function calculerIR(input) {
   det.redGirardinPD  = input.girardinPD;        // Girardin : pas de cap individuel, limité par panier majoré.
   det.redGirardinAG  = input.girardinAG;
   det.redFCPI        = Math.min(input.fcpi || 0,         capRiMax.fcpi);
-  det.redFcpiJei     = Math.min(input.fcpiJei || 0,      capRiMax.fcpiJei);
   det.redFipCorse    = Math.min(input.fipCorse || 0,     capRiMax.fipCorse);
   det.redGfi         = Math.min(input.gfi || 0,          capRiMax.gfi);
-  det.redIrPme       = Math.min(input.irPme || 0,        capRiMax.irPme);
-  det.redIrPmeEsus   = Math.min(input.irPmeEsus || 0,    capRiMax.irPmeEsus);
-  det.redIrPmeMH     = Math.min(input.irPmeMH || 0,      capRiMax.irPmeMH);
-  det.redIrPmeJei    = Math.min(input.irPmeJei || 0,     capRiMax.irPmeJei);
-  det.redIrPmeJeii   = Math.min(input.irPmeJeii || 0,    capRiMax.irPmeJeii);
-  det.redIrPmeJeir   = Math.min(input.irPmeJeir || 0,    capRiMax.irPmeJeir);
+
+  // ─── IR-PME : saisie = MONTANT INVESTI (€), moteur calcule la RI ───
+  // Sémantique 2026 (F4-IRPME.a) : l'utilisateur saisit ce qui figure sur sa
+  // déclaration (versement effectué), pas un calcul intermédiaire.
+  // RI = min(invest, versementMax) × taux. Le cap absolu côté RI reste capRiMax.xxx.
+  const versPme       = versCouple(PD.irPme);
+  const versPmeEsus   = versCouple(PD.irPmeEsus);
+  const versPmeMH     = versCouple(PD.irPmeMH);
+  const versPmeJei    = versCouple(PD.irPmeJei);
+  const versPmeJeii   = versCouple(PD.irPmeJeii);
+  const versPmeJeir   = versCouple(PD.irPmeJeir);
+  const versFcpiJei   = versCouple(PD.fcpiJei);
+
+  det.redIrPme       = Math.min(input.irPme     || 0, versPme)     * PD.irPme.taux;
+  det.redIrPmeEsus   = Math.min(input.irPmeEsus || 0, versPmeEsus) * PD.irPmeEsus.taux;
+  det.redIrPmeMH     = Math.min(input.irPmeMH   || 0, versPmeMH)   * PD.irPmeMH.taux;
+  det.redIrPmeJeii   = Math.min(input.irPmeJeii || 0, versPmeJeii) * PD.irPmeJeii.taux;
+  det.redIrPmeJeir   = Math.min(input.irPmeJeir || 0, versPmeJeir) * PD.irPmeJeir.taux;
 
   // ─── Plafond annuel PARTAGÉ irPmeJei + fcpiJei (art. 199 terdecies-0 A bis) ───
-  // Le cumul des versements (donc des RI à taux 30 % identique) doit rester sous
-  // le plafond commun 75k/150k × 30 %. Politique : si dépassement, on tronque
-  // fcpiJei en priorité (l'utilisateur peut ajuster ses saisies pour préférer
-  // une autre répartition s'il le souhaite).
-  const cumulJeiAnnuel = det.redIrPmeJei + det.redFcpiJei;
-  if (cumulJeiAnnuel > capRiMax.irPmeJei) {
-    const surplus = cumulJeiAnnuel - capRiMax.irPmeJei;
-    det.redFcpiJei = Math.max(0, det.redFcpiJei - surplus);
-  }
+  // Le cumul des INVESTISSEMENTS direct JEI + FCPI-JEI ne peut dépasser le
+  // plafond commun 75 000 € / 150 000 €. Politique : on alloue d'abord à
+  // l'IR-PME JEI direct, le solde du plafond va à FCPI-JEI.
+  const investJeiSaisi   = Math.max(0, input.irPmeJei || 0);
+  const investFcpiSaisi  = Math.max(0, input.fcpiJei  || 0);
+  const investJeiRetenu  = Math.min(investJeiSaisi, versPmeJei);
+  const investFcpiRetenu = Math.min(investFcpiSaisi, Math.max(0, versPmeJei - investJeiRetenu));
+  det.redIrPmeJei = investJeiRetenu  * PD.irPmeJei.taux;
+  det.redFcpiJei  = investFcpiRetenu * PD.fcpiJei.taux;
 
   // ─── Plafond PLURI-ANNUEL JEI + JEIR (50k RI cumulée 2024-2028) ───
-  // Input optionnel irPmeJeiJeirImputeAnterieur (RI 2024-2025 déjà utilisée).
-  // Politique : si cumul 2026 > restant disponible, tronquer JEIR d'abord
-  // (taux 50 % le + élevé, son écrêtage protège le moins l'avantage moyen).
+  // S'applique sur les RI cumulées (pas les investissements). Input optionnel
+  // irPmeJeiJeirImputeAnterieur = RI 2024-2025 déjà utilisée.
+  // Politique : si dépassement, tronquer JEIR en priorité.
   const imputeAnt = input.irPmeJeiJeirImputeAnterieur || 0;
   const plafondPluriRestant = Math.max(0, PD.irPmeJeiJeirPlafondCumule - imputeAnt);
   const cumulJeiJeir = det.redIrPmeJei + det.redIrPmeJeir;

@@ -332,22 +332,32 @@ function oracleCalc(input) {
   const redGirPD = i.girardinPD;                              // pas de cap (panier majoré)
   const redGirAG = i.girardinAG;
   const redFCPI     = Math.min(i.fcpi || 0,        capFCPI);
-  let   redFcpiJei  = Math.min(i.fcpiJei || 0,     capFcpiJei);
   const redFipCorse = Math.min(i.fipCorse || 0,    capFipCorse);
   const redGfi      = Math.min(i.gfi || 0,         capGfi);
-  const redIrPme    = Math.min(i.irPme || 0,       capIrPme);
-  const redIrPmeEsus = Math.min(i.irPmeEsus || 0,  capIrPmeEsus);
-  const redIrPmeMH   = Math.min(i.irPmeMH   || 0,  capIrPmeMH);
-  let   redIrPmeJei  = Math.min(i.irPmeJei  || 0,  capIrPmeJei);
-  const redIrPmeJeii = Math.min(i.irPmeJeii || 0,  capIrPmeJeii);
-  let   redIrPmeJeir = Math.min(i.irPmeJeir || 0,  capIrPmeJeir);
 
-  // Plafond annuel PARTAGÉ irPmeJei + fcpiJei (miroir calculator.js)
-  const cumulJeiAnn = redIrPmeJei + redFcpiJei;
-  if (cumulJeiAnn > capIrPmeJei) {
-    redFcpiJei = Math.max(0, redFcpiJei - (cumulJeiAnn - capIrPmeJei));
-  }
-  // Plafond PLURI-ANNUEL JEI+JEIR (50k cumulé 2024-2028, miroir calculator.js)
+  // ─── IR-PME : sémantique post-F4 — input = MONTANT INVESTI (€) ───
+  // RI = min(invest, versementMax) × taux (miroir calculator.js).
+  const versPmeS      = cv(50000, 100000);
+  const versPmeEsusS  = cv(50000, 100000);
+  const versPmeMHS    = cv(50000, 100000);
+  const versPmeJeiS   = cv(75000, 150000);  // partagé JEI direct + FCPI-JEI
+  const versPmeJeiiS  = cv(50000, 100000);
+  const versPmeJeirS  = cv(50000, 100000);
+  const redIrPme     = Math.min(i.irPme     || 0, versPmeS)     * 0.18;
+  const redIrPmeEsus = Math.min(i.irPmeEsus || 0, versPmeEsusS) * 0.25;
+  const redIrPmeMH   = Math.min(i.irPmeMH   || 0, versPmeMHS)   * 0.25;
+  const redIrPmeJeii = Math.min(i.irPmeJeii || 0, versPmeJeiiS) * 0.40;
+  let   redIrPmeJeir = Math.min(i.irPmeJeir || 0, versPmeJeirS) * 0.50;
+
+  // Plafond annuel PARTAGÉ JEI direct + FCPI-JEI (sur invest)
+  const investJei  = Math.max(0, i.irPmeJei || 0);
+  const investFcpi = Math.max(0, i.fcpiJei  || 0);
+  const jeiRet     = Math.min(investJei,  versPmeJeiS);
+  const fcpiRet    = Math.min(investFcpi, Math.max(0, versPmeJeiS - jeiRet));
+  let   redIrPmeJei = jeiRet  * 0.30;
+  let   redFcpiJei  = fcpiRet * 0.30;
+
+  // Plafond PLURI-ANNUEL JEI+JEIR (RI cumulée 50k sur 2024-2028)
   const imputeAntOracle = i.irPmeJeiJeirImputeAnterieur || 0;
   const plafondPluri = Math.max(0, 50000 - imputeAntOracle);
   const cumulJeiJeirOracle = redIrPmeJei + redIrPmeJeir;
@@ -748,7 +758,7 @@ function testPreconisations(baseInput, baseResult, idx) {
   // Test 5 : structure appliquerPreconisations sur tous les modes
   const precoBatch = [
     { id: 1, leverId: 'per', montant: 3000 },                      // versement-direct
-    { id: 2, leverId: 'fcpiJei', montant: 1000 },                  // taux 0.30 → +300 sur fcpiJei
+    { id: 2, leverId: 'fcpiJei', montant: 1000 },                  // versement-direct (post-F4) → +1000 (montant investi)
     { id: 3, leverId: 'girardinPD', montant: 2000, paramValue: 1.13 }, // taux-libre 1.13 → +2260
     { id: 4, leverId: 'jeanbrun', montant: 6000, paramValue: 'social' }, // jeanbrun
   ];
@@ -756,8 +766,9 @@ function testPreconisations(baseInput, baseResult, idx) {
   if (merged.per !== (baseInput.per || 0) + 3000) {
     errs.push(`appliquerPreconisations PER: ${merged.per} ≠ ${(baseInput.per || 0) + 3000}`);
   }
-  if (Math.abs(merged.fcpiJei - ((baseInput.fcpiJei || 0) + 300)) > 0.001) {
-    errs.push(`appliquerPreconisations fcpiJei: ${merged.fcpiJei} ≠ ${(baseInput.fcpiJei || 0) + 300}`);
+  // fcpiJei post-F4 : versement-direct, input reçoit le montant brut investi
+  if (Math.abs(merged.fcpiJei - ((baseInput.fcpiJei || 0) + 1000)) > 0.001) {
+    errs.push(`appliquerPreconisations fcpiJei: ${merged.fcpiJei} ≠ ${(baseInput.fcpiJei || 0) + 1000}`);
   }
   if (Math.abs(merged.girardinPD - ((baseInput.girardinPD || 0) + 2260)) > 0.001) {
     errs.push(`appliquerPreconisations girardinPD: ${merged.girardinPD} ≠ ${(baseInput.girardinPD || 0) + 2260}`);

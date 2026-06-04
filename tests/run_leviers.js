@@ -82,28 +82,26 @@ const TESTS = [
   { id: 'gardeEnf', montant: 3000, key: 'gardeEnfants', expected: 3000, delta: 1500, deltaTol: 1 },
 
   // FCPI JEI : 5000 × 30% = 1500 → input.fcpiJei = 1500
-  { id: 'fcpiJei', montant: 5000, key: 'fcpiJei', expected: 1500, delta: 1500, deltaTol: 1 },
+  // ── IR-PME post-F4 : mode 'versement-direct' — l'input reçoit le MONTANT INVESTI,
+  //    le moteur calcule la RI = invest × taux. Donc :
+  //    expected (= merged[inputKey]) = montant brut, delta IR = montant × taux.
+  { id: 'fcpiJei',    montant: 5000, key: 'fcpiJei',    expected: 5000, delta: 1500, deltaTol: 1 },
 
-  // FIP Corse : 5000 × 30% = 1500
+  // FIP Corse : sémantique inchangée (saisie RI directe — à migrer dans une phase ultérieure)
   { id: 'fipCorse', montant: 5000, key: 'fipCorse', expected: 1500, delta: 1500, deltaTol: 1 },
 
-  // IR-PME PME standard : 5000 × 18% = 900 (taux corrigé post-LF 2026, le boost 25 % de 2024-2025 a expiré)
-  { id: 'irPme', montant: 5000, key: 'irPme', expected: 900, delta: 900, deltaTol: 1 },
-
-  // IR-PME ESUS/SFS : 5000 × 25% = 1250 (taux majoré, niche10)
-  { id: 'irPmeEsus', montant: 5000, key: 'irPmeEsus', expected: 1250, delta: 1250, deltaTol: 1 },
-
-  // IR-PME Monuments Historiques : 5000 × 25% = 1250 (niche10)
-  { id: 'irPmeMH', montant: 5000, key: 'irPmeMH', expected: 1250, delta: 1250, deltaTol: 1 },
-
-  // IR-PME JEI direct : 5000 × 30% = 1500 (HORS plafond niches, art. 199 terdecies-0 A bis)
-  { id: 'irPmeJei', montant: 5000, key: 'irPmeJei', expected: 1500, delta: 1500, deltaTol: 1 },
-
-  // IR-PME JEII : 5000 × 40% = 2000 (HORS plafond niches, LF 2026 nouvel article)
-  { id: 'irPmeJeii', montant: 5000, key: 'irPmeJeii', expected: 2000, delta: 2000, deltaTol: 1 },
-
-  // IR-PME JEIR : 5000 × 50% = 2500 (HORS plafond niches, art. 199 terdecies-0 A ter)
-  { id: 'irPmeJeir', montant: 5000, key: 'irPmeJeir', expected: 2500, delta: 2500, deltaTol: 1 },
+  // IR-PME PME standard : 5000 € investis → RI 5000 × 18 % = 900
+  { id: 'irPme',      montant: 5000, key: 'irPme',      expected: 5000, delta: 900,  deltaTol: 1 },
+  // IR-PME ESUS/SFS : 5000 € investis × 25 % = 1250
+  { id: 'irPmeEsus',  montant: 5000, key: 'irPmeEsus',  expected: 5000, delta: 1250, deltaTol: 1 },
+  // IR-PME Monuments historiques : 5000 € investis × 25 % = 1250
+  { id: 'irPmeMH',    montant: 5000, key: 'irPmeMH',    expected: 5000, delta: 1250, deltaTol: 1 },
+  // IR-PME JEI direct : 5000 € investis × 30 % = 1500 (HORS plafond niches)
+  { id: 'irPmeJei',   montant: 5000, key: 'irPmeJei',   expected: 5000, delta: 1500, deltaTol: 1 },
+  // IR-PME JEII : 5000 € investis × 40 % = 2000 (HORS)
+  { id: 'irPmeJeii',  montant: 5000, key: 'irPmeJeii',  expected: 5000, delta: 2000, deltaTol: 1 },
+  // IR-PME JEIR : 5000 € investis × 50 % = 2500 (HORS, plafond pluri-annuel)
+  { id: 'irPmeJeir',  montant: 5000, key: 'irPmeJeir',  expected: 5000, delta: 2500, deltaTol: 1 },
 
   // GFI : 5000 × 18% = 900
   { id: 'gfi', montant: 5000, key: 'gfi', expected: 900, delta: 900, deltaTol: 1 },
