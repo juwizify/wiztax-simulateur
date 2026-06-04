@@ -1143,6 +1143,7 @@ function refreshPreconisationsCalculs() {
   // Tableau comparatif
   setCmp('rni',   detAvant.revenuNetImposable, detApres.revenuNetImposable);
   setCmp('ibr',   detAvant.impotBrut,          detApres.impotBrut);
+  setCmp('decote', detAvant.decote,            detApres.decote, true);
   setCmp('red',   detAvant.reductionsAppliquees, detApres.reductionsAppliquees, true);
   setCmp('cr',    detAvant.creditsAppliques,   detApres.creditsAppliques, true);
   setCmp('csy',   detAvant.credSyndic,         detApres.credSyndic, true);
