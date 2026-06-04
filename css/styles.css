@@ -1216,12 +1216,6 @@ header span {
 .preco-cat-hors    { color: #475569; }
 .preco-cat-foncier { color: #166534; }
 
-/* Pastille "nature" — retirée des lignes (cf. fix surdim) mais classes
-   conservées au cas où on l'utilise ailleurs (récap surdim ci-dessous). */
-.preco-nat-rep      { color: #075985; }
-.preco-nat-perdu    { color: #9a3412; }
-.preco-nat-rembours { color: #166534; }
-
 /* Colonne "Plafond individuel" centrée — la coche ✓ tombe au milieu */
 .preco-table-section th:nth-child(5),
 .preco-table-section td:nth-child(5) {

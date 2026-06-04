@@ -451,32 +451,6 @@ function renderCatBadge(cat) {
   return ` <span class="preco-cat-badge preco-cat-${cat}">${label}</span>`;
 }
 
-// Pastille indiquant le sort de l'EXCÉDENT (= ce qui dépasse l'impôt ou le
-// plafond) pour ce dispositif : perdu ? reportable N années ? remboursé ?
-// Affichée à côté du badge de catégorie sur chaque ligne.
-function renderNaturePastille(lev) {
-  if (!lev) return '';
-  const reportables = {
-    per:           'Reportable 3 ans',
-    deficitFoncier:'Reportable 10 ans (foncier)',
-    girardinPD:    'Reportable 5 ans',
-    girardinAG:    'Reportable 5 ans',
-    irPme:         'Reportable 4 ans',
-    dons7UD:       'Reportable 5 ans',
-    dons7UF:       'Reportable 5 ans',
-  };
-  if (reportables[lev.id]) {
-    return ` <span class="preco-cat-badge preco-nat-rep">${reportables[lev.id]}</span>`;
-  }
-  if (lev.levier === 2) {
-    return ` <span class="preco-cat-badge preco-nat-perdu">Perdu si dépassement</span>`;
-  }
-  if (lev.levier === 3) {
-    return ` <span class="preco-cat-badge preco-nat-rembours">Remboursable</span>`;
-  }
-  return '';
-}
-
 // Quel pourcentage d'1 € saisi dans la ligne préco entre dans le panier
 // niches ? Dépend du mode du levier :
 //   - 'taux'         : lev.taux       (FCPI 30 %, IR-PME 25 %, etc.)
@@ -1280,18 +1254,3 @@ function setJauge(name, used, cap) {
   val.textContent = fmt(used) + ' / ' + (cap > 0 ? fmt(cap) : '—');
 }
 
-function groupedLeviersOptions(leviers) {
-  const groups = {
-    hors:    { label: 'Hors plafond niches',          opts: [] },
-    niche10: { label: 'Niche 10 000 €',                opts: [] },
-    niche18: { label: 'Niche 18 000 € (majorée)',      opts: [] },
-    foncier: { label: 'Déduction d\'assiette foncière',opts: [] },
-  };
-  leviers.forEach(l => {
-    if (groups[l.cat]) groups[l.cat].opts.push(`<option value="${l.id}">${l.label}</option>`);
-  });
-  return Object.values(groups)
-    .filter(g => g.opts.length)
-    .map(g => `<optgroup label="${g.label}">${g.opts.join('')}</optgroup>`)
-    .join('');
-}
