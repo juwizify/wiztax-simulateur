@@ -74,6 +74,12 @@ function makeInput(overrides = {}) {
     fipCorse: 0,
     gfi: 0,
     irPme: 0,
+    irPmeEsus: 0,
+    irPmeMH: 0,
+    irPmeJei: 0,
+    irPmeJeii: 0,
+    irPmeJeir: 0,
+    irPmeJeiJeirImputeAnterieur: 0,
     malraux: 0,
     locAvantages: 0,
     sofica: 0,
@@ -983,6 +989,40 @@ const CASES = [
     // Crédit = min(14 000, 12 000) × 0.50 = 6 000. Confirme la non-régression
     // pour les foyers sans enfant (comportement identique à avant le fix).
     expected: { impotNet: 604, revenuReference: 45000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // IR-PME — 7 sous-dispositifs post-LF 2026 (cf. tasks/d3.1-irpme-spec.md)
+  // -------------------------------------------------------------------
+  {
+    name: 'IR-PME JEI direct — célib sal 100k, 5k RI hors plafond niches',
+    input: makeInput({ situation: 'celibataire', sal1: 100000, irPmeJei: 5000 }),
+    // capRiMax.irPmeJei (single) = 75 000 × 30 % = 22 500 → 5 000 < cap, RI entière
+    // JEI HORS plafond niches (art. 200-0 A exclut 199 terdecies-0 A bis)
+    // → ne contribue PAS au panier niche10 (ri10Panier = 0)
+    // impôt brut sal 100k = 20 701, impôt net = 20 701 - 5 000 = 15 701
+    expected: { impotNet: 15701, revenuReference: 90000, tmi: 0.41 },
+  },
+  {
+    name: 'IR-PME plafond ANNUEL partagé JEI+FCPI-JEI saturé',
+    input: makeInput({ situation: 'celibataire', sal1: 200000, irPmeJei: 15000, fcpiJei: 10000 }),
+    // capRiMax (single, partagé) = 75 000 × 30 % = 22 500
+    // cumul saisi RI = 15 000 + 10 000 = 25 000 → surplus 2 500
+    // Politique : tronquer fcpiJei en priorité → fcpiJei retenu = 10 000 - 2 500 = 7 500
+    // RI JEI totale retenue = 15 000 + 7 500 = 22 500 (cap respecté)
+    expected: { impotNet: 37474, revenuReference: 185445, tmi: 0.45 },
+  },
+  {
+    name: 'IR-PME plafond PLURI-ANNUEL JEI+JEIR saturé (30k imputé)',
+    input: makeInput({ situation: 'celibataire', sal1: 500000, irPmeJei: 20000, irPmeJeir: 35000,
+                      irPmeJeiJeirImputeAnterieur: 30000 }),
+    // capRiMax.irPmeJei = 22 500 → 20 000 OK, redIrPmeJei = 20 000
+    // capRiMax.irPmeJeir (single) = 50 000 × 50 % = 25 000 → 35 000 tronqué à 25 000
+    // Plafond pluri-annuel restant = 50 000 - 30 000 = 20 000
+    // Cumul 2026 candidat = 20 000 (JEI) + 25 000 (JEIR cap'd) = 45 000 > 20 000
+    // Politique : tronquer JEIR → JEIR retenu = max(0, 25 000 - 25 000) = 0
+    // RI JEI+JEIR appliquée 2026 = 20 000 (= plafond restant)
+    expected: { impotNet: 182037, revenuReference: 485445, tmi: 0.45 },
   },
 ];
 

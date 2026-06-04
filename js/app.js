@@ -54,7 +54,17 @@ function defaultInputs() {
     csgDeductible: 0, autresCharges: 0,
     // Réductions
     dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
-    fcpi: 0, fcpiJei: 0, fipCorse: 0, gfi: 0, irPme: 0,
+    fcpi: 0, fcpiJei: 0, fipCorse: 0, gfi: 0,
+    // IR-PME — 7 sous-dispositifs (cf. tasks/d3.1-irpme-spec.md)
+    irPme: 0,        // PME standard 18 %         → niche10
+    irPmeEsus: 0,    // ESUS / SFS 25 %           → niche10
+    irPmeMH: 0,      // Monuments historiques 25%  → niche10
+    irPmeJei: 0,     // JEI direct 30 %           → HORS plafond niches
+    irPmeJeii: 0,    // JEII 40 %                 → HORS
+    irPmeJeir: 0,    // JEIR 50 %                 → HORS
+    // Plafond pluri-annuel JEI+JEIR (50k RI cumulée 2024-2028) : RI déjà
+    // imputée 2024-2025 (input optionnel pour les investisseurs récurrents).
+    irPmeJeiJeirImputeAnterieur: 0,
     malraux: 0, malrauxTravaux: 0, malrauxZone: 'spr-non',
     locAvantages: 0, locAvantagesDepenses: 0, locAvantagesPalier: 'loc1',
     sofica: 0, autresReductions: 0,

@@ -90,6 +90,21 @@ const TESTS = [
   // IR-PME PME standard : 5000 × 18% = 900 (taux corrigé post-LF 2026, le boost 25 % de 2024-2025 a expiré)
   { id: 'irPme', montant: 5000, key: 'irPme', expected: 900, delta: 900, deltaTol: 1 },
 
+  // IR-PME ESUS/SFS : 5000 × 25% = 1250 (taux majoré, niche10)
+  { id: 'irPmeEsus', montant: 5000, key: 'irPmeEsus', expected: 1250, delta: 1250, deltaTol: 1 },
+
+  // IR-PME Monuments Historiques : 5000 × 25% = 1250 (niche10)
+  { id: 'irPmeMH', montant: 5000, key: 'irPmeMH', expected: 1250, delta: 1250, deltaTol: 1 },
+
+  // IR-PME JEI direct : 5000 × 30% = 1500 (HORS plafond niches, art. 199 terdecies-0 A bis)
+  { id: 'irPmeJei', montant: 5000, key: 'irPmeJei', expected: 1500, delta: 1500, deltaTol: 1 },
+
+  // IR-PME JEII : 5000 × 40% = 2000 (HORS plafond niches, LF 2026 nouvel article)
+  { id: 'irPmeJeii', montant: 5000, key: 'irPmeJeii', expected: 2000, delta: 2000, deltaTol: 1 },
+
+  // IR-PME JEIR : 5000 × 50% = 2500 (HORS plafond niches, art. 199 terdecies-0 A ter)
+  { id: 'irPmeJeir', montant: 5000, key: 'irPmeJeir', expected: 2500, delta: 2500, deltaTol: 1 },
+
   // GFI : 5000 × 18% = 900
   { id: 'gfi', montant: 5000, key: 'gfi', expected: 900, delta: 900, deltaTol: 1 },
 

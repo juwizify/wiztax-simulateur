@@ -304,13 +304,18 @@ function oracleCalc(input) {
   // SOFICA double plafond : min(18 000, 25 % RNG) × 48 %
   const versSoficaEff = Math.min(18000, rni * 0.25);
   const capSofica   = versSoficaEff * 0.48;
-  const capFCPI     = cv(12000, 24000) * 0.18;       // 2 160 / 4 320
-  const capFcpiJei  = cv(12000, 24000) * 0.30;       // 3 600 / 7 200
-  const capFipCorse = cv(12000, 24000) * 0.30;       // 3 600 / 7 200
-  const capIrPme    = cv(50000, 100000) * 0.25;      // 12 500 / 25 000
-  const capGfi      = cv(50000, 100000) * 0.18;      //  9 000 / 18 000
-  const capMalraux  = 100000 * 0.30;                 // 30 000
-  const capLocAv    = 10000 * 0.65;                  //  6 500
+  const capFCPI       = cv(12000, 24000)  * 0.18;       // 2 160 / 4 320 (dispositif retiré 21/02/2026)
+  const capFcpiJei    = cv(75000, 150000) * 0.30;       // 22 500 / 45 000 (plafond PARTAGÉ avec irPmeJei)
+  const capFipCorse   = cv(12000, 24000)  * 0.30;       // 3 600 / 7 200
+  const capIrPme      = cv(50000, 100000) * 0.18;       // 9 000 / 18 000 (PME standard, taux corrigé post-LF 2026)
+  const capIrPmeEsus  = cv(50000, 100000) * 0.25;       // 12 500 / 25 000 (ESUS/SFS)
+  const capIrPmeMH    = cv(50000, 100000) * 0.25;       // 12 500 / 25 000 (Monuments historiques)
+  const capIrPmeJei   = cv(75000, 150000) * 0.30;       // 22 500 / 45 000 (JEI direct, plafond PARTAGÉ avec fcpiJei)
+  const capIrPmeJeii  = cv(50000, 100000) * 0.40;       // 20 000 / 40 000 (JEII LF 2026)
+  const capIrPmeJeir  = cv(50000, 100000) * 0.50;       // 25 000 / 50 000 (JEIR art. 199 terdecies-0 A ter)
+  const capGfi        = cv(50000, 100000) * 0.18;       //  9 000 / 18 000
+  const capMalraux    = 100000 * 0.30;                  // 30 000
+  const capLocAv      = 10000 * 0.65;                   //  6 500
 
   // Malraux — mode "travaux + zone" prioritaire, sinon fallback legacy
   let redMalraux;
@@ -326,11 +331,29 @@ function oracleCalc(input) {
   const redPinel = i.pinel;                                   // pas de cap V1
   const redGirPD = i.girardinPD;                              // pas de cap (panier majoré)
   const redGirAG = i.girardinAG;
-  const redFCPI = Math.min(i.fcpi || 0,         capFCPI);
-  const redFcpiJei = Math.min(i.fcpiJei || 0,   capFcpiJei);
-  const redFipCorse = Math.min(i.fipCorse || 0, capFipCorse);
-  const redGfi = Math.min(i.gfi || 0,           capGfi);
-  const redIrPme = Math.min(i.irPme || 0,       capIrPme);
+  const redFCPI     = Math.min(i.fcpi || 0,        capFCPI);
+  let   redFcpiJei  = Math.min(i.fcpiJei || 0,     capFcpiJei);
+  const redFipCorse = Math.min(i.fipCorse || 0,    capFipCorse);
+  const redGfi      = Math.min(i.gfi || 0,         capGfi);
+  const redIrPme    = Math.min(i.irPme || 0,       capIrPme);
+  const redIrPmeEsus = Math.min(i.irPmeEsus || 0,  capIrPmeEsus);
+  const redIrPmeMH   = Math.min(i.irPmeMH   || 0,  capIrPmeMH);
+  let   redIrPmeJei  = Math.min(i.irPmeJei  || 0,  capIrPmeJei);
+  const redIrPmeJeii = Math.min(i.irPmeJeii || 0,  capIrPmeJeii);
+  let   redIrPmeJeir = Math.min(i.irPmeJeir || 0,  capIrPmeJeir);
+
+  // Plafond annuel PARTAGÉ irPmeJei + fcpiJei (miroir calculator.js)
+  const cumulJeiAnn = redIrPmeJei + redFcpiJei;
+  if (cumulJeiAnn > capIrPmeJei) {
+    redFcpiJei = Math.max(0, redFcpiJei - (cumulJeiAnn - capIrPmeJei));
+  }
+  // Plafond PLURI-ANNUEL JEI+JEIR (50k cumulé 2024-2028, miroir calculator.js)
+  const imputeAntOracle = i.irPmeJeiJeirImputeAnterieur || 0;
+  const plafondPluri = Math.max(0, 50000 - imputeAntOracle);
+  const cumulJeiJeirOracle = redIrPmeJei + redIrPmeJeir;
+  if (cumulJeiJeirOracle > plafondPluri) {
+    redIrPmeJeir = Math.max(0, redIrPmeJeir - (cumulJeiJeirOracle - plafondPluri));
+  }
   // Loc'Avantages — mode "dépenses + palier" prioritaire, sinon fallback legacy
   let redLocAv;
   if ((i.locAvantagesDepenses || 0) > 0) {
@@ -345,8 +368,10 @@ function oracleCalc(input) {
   const redAutres = i.autresReductions;
 
   const totalReductions = redDons + redPinel + redGirPD + redGirAG
-    + redFCPI + redFcpiJei + redFipCorse + redGfi + redIrPme + redLocAv
-    + redSofica + redAutres;
+    + redFCPI + redFcpiJei + redFipCorse + redGfi
+    + redIrPme + redIrPmeEsus + redIrPmeMH
+    + redIrPmeJei + redIrPmeJeii + redIrPmeJeir
+    + redLocAv + redSofica + redAutres;
 
   // --- Étape 9 : crédits ---
   // Emploi à domicile : plafond 12 000 € + 1500/enfant + 750/garde alt, capé à 15 000 €
@@ -369,8 +394,11 @@ function oracleCalc(input) {
   // --- Étape 10 : niches — 2 POCHES (art. 200-0 A CGI) ---
   // Poche 1 (10 000 €) : accessible à tous (niche10 + niche18)
   // Poche 2 (+8 000 €) : RÉSERVÉE aux niche18 (Girardin × quote-part + SOFICA)
+  // IR-PME : seuls irPme/irPmeEsus/irPmeMH dans niche10.
+  // JEI direct, JEII, JEIR, FCPI-JEI sont HORS plafond niches (art. 200-0 A).
   const ri10Panier = redPinel
-    + redFCPI + redFcpiJei + redFipCorse + redGfi + redIrPme
+    + redFCPI + redFipCorse + redGfi
+    + redIrPme + redIrPmeEsus + redIrPmeMH
     + redLocAv + redAutres
     + credDom + credGarde + credAutres;
   const ri18Panier = redGirPD * 0.44 + redGirAG * 0.34 + redSofica;
@@ -391,14 +419,18 @@ function oracleCalc(input) {
   const facteur18 = ri18Panier > 0 ? (poche1_18 + poche2_18) / ri18Panier : 1;
 
   // --- Étape 11 : impôt net ---
-  const redNiche10Retenue = (redPinel + redFCPI + redFcpiJei + redFipCorse
-    + redGfi + redIrPme + redLocAv + redAutres) * facteur10;
+  // IR-PME : seuls irPme/irPmeEsus/irPmeMH passent par le facteur niche10.
+  // JEI direct / JEII / JEIR / FCPI-JEI sont HORS plafond niches (art. 200-0 A).
+  const redNiche10Retenue = (redPinel + redFCPI + redFipCorse + redGfi
+    + redIrPme + redIrPmeEsus + redIrPmeMH
+    + redLocAv + redAutres) * facteur10;
   const redNiche18Retenue = (redGirPD + redGirAG + redSofica) * facteur18;
+  const redIrPmeHors = redIrPmeJei + redIrPmeJeii + redIrPmeJeir + redFcpiJei;
 
   const redApp = Math.min(
     impotApresDecote + irMobilier,
     redDons + fraisScol + redEhpad + redMalraux
-    + redNiche10Retenue + redNiche18Retenue
+    + redNiche10Retenue + redNiche18Retenue + redIrPmeHors
   );
 
   const credEff = (credDom + credGarde + credAutres) * facteur10;

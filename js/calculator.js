@@ -389,10 +389,15 @@ function calculerIR(input) {
   );
   const capRiMax = {
     sofica:       versSoficaEffectif * tauxMax(PD.sofica),                         // min(18k, 25%RNG) × 48 %
-    fcpi:         versCouple(PD.fcpi) * PD.fcpi.taux,                              // 12k/24k × 18 %
-    fcpiJei:      versCouple(PD.fcpiJei) * PD.fcpiJei.taux,                        // 12k/24k × 30 %
+    fcpi:         versCouple(PD.fcpi) * PD.fcpi.taux,                              // 12k/24k × 18 % (dispositif retiré 21/02/2026)
+    fcpiJei:      versCouple(PD.fcpiJei) * PD.fcpiJei.taux,                        // 75k/150k × 30 % (plafond PARTAGÉ avec irPmeJei)
     fipCorse:     versCouple(PD.fipCorse) * PD.fipCorse.taux,                      // 12k/24k × 30 %
-    irPme:        versCouple(PD.irPme) * PD.irPme.taux,                            // 50k/100k × 25 %
+    irPme:        versCouple(PD.irPme) * PD.irPme.taux,                            // 50k/100k × 18 % (PME standard)
+    irPmeEsus:    versCouple(PD.irPmeEsus) * PD.irPmeEsus.taux,                    // 50k/100k × 25 % (ESUS/SFS)
+    irPmeMH:      versCouple(PD.irPmeMH)   * PD.irPmeMH.taux,                      // 50k/100k × 25 % (Monuments Historiques)
+    irPmeJei:     versCouple(PD.irPmeJei)  * PD.irPmeJei.taux,                     // 75k/150k × 30 % (JEI, plafond PARTAGÉ avec fcpiJei)
+    irPmeJeii:    versCouple(PD.irPmeJeii) * PD.irPmeJeii.taux,                    // 50k/100k × 40 % (JEII, LF 2026)
+    irPmeJeir:    versCouple(PD.irPmeJeir) * PD.irPmeJeir.taux,                    // 50k/100k × 50 % (JEIR, art 199 terdecies-0 A ter)
     gfi:          versCouple(PD.gfi) * PD.gfi.taux,                                // 50k/100k × 18 %
     malraux:      PD.malraux.depensesParAnMax * tauxMax(PD.malraux),               // 100 000 × 30 % = 30 000
     locAvantages: PD.locAvantages.depensesMax * tauxMax(PD.locAvantages),          // 10 000 × 65 % = 6 500
@@ -420,6 +425,34 @@ function calculerIR(input) {
   det.redFipCorse    = Math.min(input.fipCorse || 0,     capRiMax.fipCorse);
   det.redGfi         = Math.min(input.gfi || 0,          capRiMax.gfi);
   det.redIrPme       = Math.min(input.irPme || 0,        capRiMax.irPme);
+  det.redIrPmeEsus   = Math.min(input.irPmeEsus || 0,    capRiMax.irPmeEsus);
+  det.redIrPmeMH     = Math.min(input.irPmeMH || 0,      capRiMax.irPmeMH);
+  det.redIrPmeJei    = Math.min(input.irPmeJei || 0,     capRiMax.irPmeJei);
+  det.redIrPmeJeii   = Math.min(input.irPmeJeii || 0,    capRiMax.irPmeJeii);
+  det.redIrPmeJeir   = Math.min(input.irPmeJeir || 0,    capRiMax.irPmeJeir);
+
+  // ─── Plafond annuel PARTAGÉ irPmeJei + fcpiJei (art. 199 terdecies-0 A bis) ───
+  // Le cumul des versements (donc des RI à taux 30 % identique) doit rester sous
+  // le plafond commun 75k/150k × 30 %. Politique : si dépassement, on tronque
+  // fcpiJei en priorité (l'utilisateur peut ajuster ses saisies pour préférer
+  // une autre répartition s'il le souhaite).
+  const cumulJeiAnnuel = det.redIrPmeJei + det.redFcpiJei;
+  if (cumulJeiAnnuel > capRiMax.irPmeJei) {
+    const surplus = cumulJeiAnnuel - capRiMax.irPmeJei;
+    det.redFcpiJei = Math.max(0, det.redFcpiJei - surplus);
+  }
+
+  // ─── Plafond PLURI-ANNUEL JEI + JEIR (50k RI cumulée 2024-2028) ───
+  // Input optionnel irPmeJeiJeirImputeAnterieur (RI 2024-2025 déjà utilisée).
+  // Politique : si cumul 2026 > restant disponible, tronquer JEIR d'abord
+  // (taux 50 % le + élevé, son écrêtage protège le moins l'avantage moyen).
+  const imputeAnt = input.irPmeJeiJeirImputeAnterieur || 0;
+  const plafondPluriRestant = Math.max(0, PD.irPmeJeiJeirPlafondCumule - imputeAnt);
+  const cumulJeiJeir = det.redIrPmeJei + det.redIrPmeJeir;
+  if (cumulJeiJeir > plafondPluriRestant) {
+    const surplus = cumulJeiJeir - plafondPluriRestant;
+    det.redIrPmeJeir = Math.max(0, det.redIrPmeJeir - surplus);
+  }
   // Loc'Avantages — 2 modes acceptés :
   //   * NOUVEAU (Phase 2.4) : input.locAvantagesDepenses + input.locAvantagesPalier
   //     → moteur calcule la RI = min(dépenses, 10 000 €) × taux palier (15/35/65 %).
@@ -444,14 +477,21 @@ function calculerIR(input) {
     fcpiJei:      Math.max(0, (input.fcpiJei || 0)      - det.redFcpiJei),
     fipCorse:     Math.max(0, (input.fipCorse || 0)     - det.redFipCorse),
     irPme:        Math.max(0, (input.irPme || 0)        - det.redIrPme),
+    irPmeEsus:    Math.max(0, (input.irPmeEsus || 0)    - det.redIrPmeEsus),
+    irPmeMH:      Math.max(0, (input.irPmeMH || 0)      - det.redIrPmeMH),
+    irPmeJei:     Math.max(0, (input.irPmeJei || 0)     - det.redIrPmeJei),
+    irPmeJeii:    Math.max(0, (input.irPmeJeii || 0)    - det.redIrPmeJeii),
+    irPmeJeir:    Math.max(0, (input.irPmeJeir || 0)    - det.redIrPmeJeir),
     gfi:          Math.max(0, (input.gfi || 0)          - det.redGfi),
     malraux:      Math.max(0, (input.malraux || 0)      - det.redMalraux),
     locAvantages: Math.max(0, (input.locAvantages || 0) - det.redLocAvantages),
   };
 
   det.totalReductions = det.redDons + det.redPinel + det.redGirardinPD + det.redGirardinAG
-    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
-    + det.redSofica + det.redAutres;
+    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi
+    + det.redIrPme + det.redIrPmeEsus + det.redIrPmeMH
+    + det.redIrPmeJei + det.redIrPmeJeii + det.redIrPmeJeir
+    + det.redLocAvantages + det.redSofica + det.redAutres;
 
   // ============================================================
   // ÉTAPE 9 : CRÉDITS D'IMPÔT
@@ -504,8 +544,12 @@ function calculerIR(input) {
   // ============================================================
 
   // RI panier par catégorie
+  // IR-PME : seuls irPme / irPmeEsus / irPmeMH entrent en niche10.
+  // Les variantes JEI direct, JEII, JEIR et FCPI-JEI sont HORS plafond niches
+  // (art. 200-0 A exclut 199 terdecies-0 A bis et ter) → ne PAS les inclure ici.
   const ri10Panier = det.redPinel
-    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme
+    + det.redFCPI + det.redFipCorse + det.redGfi
+    + det.redIrPme + det.redIrPmeEsus + det.redIrPmeMH
     + det.redLocAvantages + det.redAutres
     + det.credDomicile + det.credGarde + det.credAutres;
   const ri18Panier = det.redGirardinPD * P.niches.girardinPdQuotePart
@@ -547,16 +591,20 @@ function calculerIR(input) {
   // ÉTAPE 11 : IMPÔT NET FINAL (hors CEHR)
   // ============================================================
   // Application des réductions avec plafonnement niches par catégorie.
-  // Hors panier niches (toujours retenus) : dons, fraisScol, EHPAD, Malraux.
+  // Hors panier niches (toujours retenus) : dons, fraisScol, EHPAD, Malraux,
+  // et les variantes IR-PME JEI direct / JEII / JEIR / FCPI-JEI
+  // (art. 200-0 A CGI exclut explicitement 199 terdecies-0 A bis et ter).
   const redNiche10Retenue = (det.redPinel
-    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme
+    + det.redFCPI + det.redFipCorse + det.redGfi
+    + det.redIrPme + det.redIrPmeEsus + det.redIrPmeMH
     + det.redLocAvantages + det.redAutres) * facteur10;
   const redNiche18Retenue = (det.redGirardinPD + det.redGirardinAG + det.redSofica) * facteur18;
+  const redIrPmeHors = det.redIrPmeJei + det.redIrPmeJeii + det.redIrPmeJeir + det.redFcpiJei;
 
   det.reductionsAppliquees = Math.min(
     det.impotApresDecote + det.irMobilier,
     det.redDons + det.fraisScol + det.redEhpad + det.redMalraux
-    + redNiche10Retenue + redNiche18Retenue
+    + redNiche10Retenue + redNiche18Retenue + redIrPmeHors
   );
 
   // Crédits : tous cat. niche10 (emploi domicile, garde, autres crédits).
