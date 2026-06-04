@@ -482,20 +482,27 @@ function calculerIR(input) {
   det.redAutres      = input.autresReductions;  // catch-all, pas de cap
 
   // Surplus écrasés par les caps individuels (pour affichage UI)
+  // ATTENTION : la sémantique de capExcedents.xxx dépend de celle de input.xxx :
+  // - input = RI directe (legacy) : surplus = input − RI retenue (= ce qui dépasse)
+  // - input = INVESTISSEMENT (post-F4 pour IR-PME) : surplus = input − versementMax
+  //   (= ce qui dépasse le plafond d'investissement annuel)
   det.capExcedents = {
     sofica:       Math.max(0, (input.sofica || 0)       - det.redSofica),
     fcpi:         Math.max(0, (input.fcpi || 0)         - det.redFCPI),
-    fcpiJei:      Math.max(0, (input.fcpiJei || 0)      - det.redFcpiJei),
     fipCorse:     Math.max(0, (input.fipCorse || 0)     - det.redFipCorse),
-    irPme:        Math.max(0, (input.irPme || 0)        - det.redIrPme),
-    irPmeEsus:    Math.max(0, (input.irPmeEsus || 0)    - det.redIrPmeEsus),
-    irPmeMH:      Math.max(0, (input.irPmeMH || 0)      - det.redIrPmeMH),
-    irPmeJei:     Math.max(0, (input.irPmeJei || 0)     - det.redIrPmeJei),
-    irPmeJeii:    Math.max(0, (input.irPmeJeii || 0)    - det.redIrPmeJeii),
-    irPmeJeir:    Math.max(0, (input.irPmeJeir || 0)    - det.redIrPmeJeir),
     gfi:          Math.max(0, (input.gfi || 0)          - det.redGfi),
     malraux:      Math.max(0, (input.malraux || 0)      - det.redMalraux),
     locAvantages: Math.max(0, (input.locAvantages || 0) - det.redLocAvantages),
+    // IR-PME (sémantique investissement) : surplus = invest saisi − plafond d'invest annuel
+    irPme:        Math.max(0, (input.irPme || 0)        - versPme),
+    irPmeEsus:    Math.max(0, (input.irPmeEsus || 0)    - versPmeEsus),
+    irPmeMH:      Math.max(0, (input.irPmeMH || 0)      - versPmeMH),
+    irPmeJeii:    Math.max(0, (input.irPmeJeii || 0)    - versPmeJeii),
+    irPmeJeir:    Math.max(0, (input.irPmeJeir || 0)    - versPmeJeir),
+    // Plafond partagé JEI+FCPI-JEI : on expose le surplus d'investissement
+    // cumulé qui dépasse le plafond commun
+    irPmeJei:     Math.max(0, (input.irPmeJei || 0)     - investJeiRetenu),
+    fcpiJei:      Math.max(0, (input.fcpiJei || 0)      - investFcpiRetenu),
   };
 
   det.totalReductions = det.redDons + det.redPinel + det.redGirardinPD + det.redGirardinAG
