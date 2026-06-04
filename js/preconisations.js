@@ -45,13 +45,17 @@ const PD = P.plafondsDispositifs;
 // CATALOGUE DES LEVIERS
 // ─────────────────────────────────────────────
 // Modes :
-//   - 'versement-direct' : le moteur attend déjà un montant versé
-//     → on additionne directement à l'inputKey
-//   - 'taux' : conversion versement → RI = versement × taux
-//     → on additionne (versement × taux) à l'inputKey (qui est une RI dans le moteur)
-//   - 'taux-variable' : taux dépend d'un paramètre additionnel
-//     → params[0].options[].taux
-//   - 'jeanbrun' : amortissement spécifique foncier (pas IR direct)
+//   - 'versement-direct' : input du moteur = montant saisi (INVESTISSEMENT pour
+//     les véhicules cash, ou DÉPENSE pour Loc'Avantages/Malraux). Le moteur
+//     calcule la RI via plafond × taux. Tous les véhicules « cash sortant »
+//     (IR-PME, SOFICA, FIP Corse, GFI) sont en versement-direct depuis D3.3.
+//   - 'taux-variable' : taux dépend d'un paramètre additionnel listé dans
+//     `params[0].options[].taux` (Loc'Avantages palier, Malraux zone).
+//   - 'taux-libre' : rendement saisi par l'utilisateur (Girardin PD/AG).
+//   - 'deficit-foncier' : les travaux saisis viennent en déficit foncier
+//     (input.foncierReel négatif), pas en RI.
+//   - 'jeanbrun' : amortissement spécifique foncier (pas un avantage IR direct).
+// Mode 'taux' retiré en D3.5 (plus aucun usager après migration FIP/GFI).
 
 // Schéma cible (Phase 3.1) — chaque levier a un champ `levier: 1|2|3` qui
 // pilote son groupement dans la nouvelle UI 3 sections :
@@ -810,9 +814,8 @@ function appliquerPreconisations(input, precos) {
         out[lev.paramKey] = p.paramValue;
       }
     }
-    else if (lev.mode === 'taux') {
-      out[lev.inputKey] = (out[lev.inputKey] || 0) + p.montant * lev.taux;
-    }
+    // Mode 'taux' retiré en D3.5 — plus aucun usager après migration des
+    // derniers leviers (fipCorse + gfi → 'versement-direct' en D3.3).
     else if (lev.mode === 'taux-variable') {
       const opt = lev.params[0].options.find(o => o.value === p.paramValue);
       if (opt) out[lev.inputKey] = (out[lev.inputKey] || 0) + p.montant * opt.taux;
@@ -845,9 +848,7 @@ function avantageEstime(p, inputAvant) {
   const lev = LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
   if (!lev || !p.montant) return 0;
 
-  if (lev.mode === 'taux') {
-    return p.montant * lev.taux;
-  }
+  // Mode 'taux' retiré en D3.5 (cf. appliquerPreconisations).
   if (lev.mode === 'taux-variable') {
     const opt = lev.params[0].options.find(o => o.value === p.paramValue);
     return opt ? p.montant * opt.taux : 0;

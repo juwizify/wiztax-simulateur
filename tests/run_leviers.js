@@ -168,8 +168,9 @@ for (const t of TESTS) {
   // D3.2 : SOFICA est passé en 'versement-direct' (+ paramKey 'soficaTaux').
   // On l'inclut explicitement dans le check avantageEstime (avantage IR =
   // montant × taux choisi, cf. branche dédiée dans preconisations.js).
-  const inclusAvantage = lev.mode === 'taux' || lev.mode === 'taux-variable'
-    || lev.id === 'sofica';
+  // Mode 'taux' retiré en D3.5 — seuls 'taux-variable' (Loc'Av/Malraux paramKey
+  // + opt.taux) et SOFICA (id-gated) entrent dans le check avantageEstime.
+  const inclusAvantage = lev.mode === 'taux-variable' || lev.id === 'sofica';
   if (inclusAvantage) {
     // Pour SOFICA (sémantique investissement), expected = montant brut souscrit ;
     // l'avantage IR attendu est dans t.delta. Pour les autres taux-variable / taux,
