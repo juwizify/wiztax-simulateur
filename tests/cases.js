@@ -946,6 +946,41 @@ const CASES = [
     // TMI : pas de plafonnement, qf 9000 < 11600 → tranche 0%
     expected: { impotNet: -1750, revenuReference: 13500, tmi: 0 },
   },
+
+  // -------------------------------------------------------------------
+  // Emploi à domicile — majoration enfants (art. 199 sexdecies-I-2° CGI)
+  // Plafond base 12 000 €, +1 500 €/enfant, +750 €/garde alternée, cap 15 000 €.
+  // -------------------------------------------------------------------
+  {
+    name: 'Emploi dom. — couple + 2 enfants, dépenses 20k : plafond majoré à 15k',
+    input: makeInput({ situation: 'marie-pacse', nbEnfants: 2, sal1: 60000, sal2: 40000, emploiDomicile: 20000 }),
+    // 3 parts. RNI = 90 000. Plafond emploi dom = min(12 000 + 2×1 500, 15 000) = 15 000.
+    // Crédit = 15 000 × 0.50 = 7 500 (au lieu de 6 000 avant le fix → +1 500 €)
+    expected: { impotNet: 2094, revenuReference: 90000, tmi: 0.30 },
+  },
+  {
+    name: 'Emploi dom. — célib + 5 enfants, dépenses 30k : cap absolu 15 000 €',
+    input: makeInput({ situation: 'celibataire', nbEnfants: 5, sal1: 80000, emploiDomicile: 30000 }),
+    // 5 parts (1 + 0.5+0.5+1+1+1). Plafond calculé = 12 000 + 5×1 500 = 19 500
+    // → capé à 15 000 (emploiDomMaxMajore). Crédit = 7 500.
+    // Vérifie que le cap absolu fonctionne quand les majo dépasseraient 15k.
+    expected: { impotNet: -6160, revenuReference: 72000, tmi: 0.11 },
+  },
+  {
+    name: 'Emploi dom. — couple + 1 enfant garde alternée, dépenses 14k',
+    input: makeInput({ situation: 'marie-pacse', gardeAlternee: 1, sal1: 35000, sal2: 25000, emploiDomicile: 14000 }),
+    // 2.25 parts (2 + 0.25 garde alt). Plafond = 12 000 + 1×750 = 12 750.
+    // Crédit = min(14 000, 12 750) × 0.50 = 6 375. Vérifie le taux garde alternée.
+    expected: { impotNet: -3400, revenuReference: 54000, tmi: 0.11 },
+  },
+  {
+    name: 'Emploi dom. — célib sans enfant (baseline non-régression)',
+    input: makeInput({ situation: 'celibataire', sal1: 50000, emploiDomicile: 14000 }),
+    // Pas d'enfant → plafond reste 12 000 (aucune majoration appliquée).
+    // Crédit = min(14 000, 12 000) × 0.50 = 6 000. Confirme la non-régression
+    // pour les foyers sans enfant (comportement identique à avant le fix).
+    expected: { impotNet: 604, revenuReference: 45000, tmi: 0.30 },
+  },
 ];
 
 if (typeof module !== 'undefined') module.exports = { CASES, makeInput };

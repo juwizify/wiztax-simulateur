@@ -349,7 +349,11 @@ function oracleCalc(input) {
     + redSofica + redAutres;
 
   // --- Étape 9 : crédits ---
-  const credDom = Math.min(i.emploiDomicile, 12000) * 0.50;
+  // Emploi à domicile : plafond 12 000 € + 1500/enfant + 750/garde alt, capé à 15 000 €
+  // (art. 199 sexdecies-I-2° CGI, miroir de calculator.js)
+  const majoEnfDom = 1500 * i.nbEnfants + 750 * i.gardeAlternee;
+  const plafondDom = Math.min(12000 + majoEnfDom, 15000);
+  const credDom = Math.min(i.emploiDomicile, plafondDom) * 0.50;
   const gardeMax = 3500 * Math.max(1, i.nbEnfants);
   const credGarde = Math.min(i.gardeEnfants, gardeMax) * 0.50;
   const credAutres = i.autresCredits;

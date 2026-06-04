@@ -195,9 +195,18 @@ const PARAMS = {
     cotSyndicalesTaux:    0.66,
     cotSyndicalesPlafondPct: 0.01,
 
-    // Emploi à domicile & garde enfants
+    // Emploi à domicile (art. 199 sexdecies-I-2° CGI) — crédit d'impôt 50 %
+    // Plafond de base 12 000 € majoré de 1 500 € par enfant à charge
+    // (750 € en garde alternée), dans la limite globale de 15 000 €.
+    // Note : majorations seniors ≥ 65 ans dans le foyer et présence d'invalide
+    // (plafond 20 000 €) non modélisées — inputs absents de l'UI actuelle.
     emploiDomTaux:        0.50,
-    emploiDomMax:         12000,
+    emploiDomMax:         12000,   // plafond de base
+    emploiDomMajEnfant:   1500,    // par enfant à charge plein
+    emploiDomMajGardeAlt: 750,     // par enfant en garde alternée
+    emploiDomMaxMajore:   15000,   // cap absolu avec majorations
+
+    // Garde enfants < 6 ans
     gardeEnfantsTaux:     0.50,
     gardeEnfantsMax:      3500,    // par enfant < 6 ans — multiplié par nbEnfants
   },

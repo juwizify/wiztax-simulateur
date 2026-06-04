@@ -456,7 +456,16 @@ function calculerIR(input) {
   // ============================================================
   // ÉTAPE 9 : CRÉDITS D'IMPÔT
   // ============================================================
-  det.credDomicile = Math.min(input.emploiDomicile, P.plafonds.emploiDomMax) * P.plafonds.emploiDomTaux;
+  // Emploi à domicile (art. 199 sexdecies-I-2° CGI) : plafond de base 12 000 €
+  // majoré par enfant à charge (+1 500 €) et par enfant en garde alternée (+750 €),
+  // capé à 15 000 €. Majorations seniors/invalidité non modélisées.
+  const majoEnfantsDom = P.plafonds.emploiDomMajEnfant * input.nbEnfants
+                      + P.plafonds.emploiDomMajGardeAlt * input.gardeAlternee;
+  const plafondEmploiDom = Math.min(
+    P.plafonds.emploiDomMax + majoEnfantsDom,
+    P.plafonds.emploiDomMaxMajore
+  );
+  det.credDomicile = Math.min(input.emploiDomicile, plafondEmploiDom) * P.plafonds.emploiDomTaux;
   // Garde enfants : plafond de 3 500 € de dépenses PAR enfant < 6 ans
   // On utilise nbEnfants comme approximation du nombre d'enfants éligibles
   const gardeMax = P.plafonds.gardeEnfantsMax * Math.max(1, input.nbEnfants);
