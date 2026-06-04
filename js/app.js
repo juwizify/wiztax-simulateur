@@ -184,7 +184,10 @@ function fmtParts(n) {
 // ─────────────────────────────────────────────
 // MISE À JOUR DES RÉSULTATS (panneau de droite)
 // ─────────────────────────────────────────────
-function updateResults(d) {
+function updateResults(d, input) {
+  // input est optionnel pour compat ; certaines jauges (PER, Dons) ont besoin
+  // de la saisie utilisateur courante pour exprimer « utilisé / plafond ».
+  input = input || {};
   const set = (id, val) => {
     const el = document.getElementById(id);
     if (el) el.textContent = val;
@@ -209,9 +212,14 @@ function updateResults(d) {
   // Plafond PER live (sous le champ de saisie)
   set('per-cap-live',    fmt(d.perCap));
 
-  // Niches : 2 lignes claires (poche commune + supplément majorée)
-  set('res-poche1', fmt(d.poche1Utilisee || 0) + ' / 10 000 €');
-  set('res-poche2', fmt(d.poche2Utilisee || 0) + ' / 8 000 €');
+  // Jauges plafonds visuelles (état ACTUEL — sans préco appliquées).
+  // Pattern symétrique avec l'onglet Préco qui affiche les mêmes jauges
+  // mais sur la situation PROJETÉE (detApres). Cf. Phase G.
+  const donsTotalSim = (input.dons || 0) + (input.dons7UD || 0);
+  setJauge('SimPer',    input.per || 0,         d.perCap || 0);
+  setJauge('SimDons',   donsTotalSim,           (d.revenuNetImposable || 0) * 0.20);
+  setJauge('SimPoche1', d.ri10Panier || 0,      10000);
+  setJauge('SimPoche2', (d.ri10Panier || 0) + (d.ri18Panier || 0), 18000);
   // Ligne "niches perdues" affichée seulement si > 0
   const perduesRow = document.getElementById('res-niches-perdues-row');
   if (perduesRow) {
@@ -366,7 +374,7 @@ function toggleLevier(header) {
 function recalculer() {
   const input = getInputs();
   const det = calculerIR(input);
-  updateResults(det);
+  updateResults(det, input);
   updateCalcDetaille(det);
   // Met à jour aussi l'onglet préconisations (calculs uniquement, sans toucher aux inputs)
   if (typeof refreshPreconisationsCalculs === 'function') refreshPreconisationsCalculs();

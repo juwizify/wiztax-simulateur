@@ -1535,33 +1535,54 @@ body.mode-simple .advanced { display: none !important; }
   color: #64748b;
   font-weight: 600;
 }
-.preco-sidebar .recap-jauge {
+/* Composant .recap-jauge — utilisé dans sidebar Préco ET dans panneau Résultats
+   du Simulateur (Phase G). Sélecteurs élargis pour couvrir les deux contextes. */
+.preco-sidebar .recap-jauge,
+.results-panel .recap-jauge {
   margin-bottom: 6px;
 }
-.preco-sidebar .recap-jauge-label {
+.preco-sidebar .recap-jauge-label,
+.results-panel .recap-jauge-label {
   display: block;
   font-size: 0.78em;
   color: #475569;
   margin-bottom: 2px;
 }
-.preco-sidebar .recap-jauge-bar {
+.preco-sidebar .recap-jauge-bar,
+.results-panel .recap-jauge-bar {
   height: 4px;
   background: #e2e8f0;
   border-radius: 2px;
   overflow: hidden;
 }
-.preco-sidebar .recap-jauge-fill {
+.preco-sidebar .recap-jauge-fill,
+.results-panel .recap-jauge-fill {
   height: 100%;
   background: var(--accent);
   transition: width 0.2s ease, background 0.2s ease;
 }
-.preco-sidebar .recap-jauge-val {
+.preco-sidebar .recap-jauge-val,
+.results-panel .recap-jauge-val {
   font-size: 0.72em;
   font-variant-numeric: tabular-nums;
   color: #64748b;
   display: block;
   text-align: right;
   margin-top: 2px;
+}
+
+/* Wrapper du bloc jauges dans le panneau Résultats du Simulateur */
+.results-panel .res-jauges {
+  padding: 8px 20px 12px;
+}
+.results-panel .res-jauges-title {
+  font-family: var(--font-headline);
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--on-surface-variant);
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
 /* Sur écrans étroits : layout passe en 1 colonne, sidebar empilée en bas

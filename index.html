@@ -760,8 +760,29 @@
         <div class="res-row"><span class="res-label">PS dus via avis IR</span><span class="res-val" id="res-ps">—</span></div>
         <div class="res-row"><span class="res-label">CEHR hauts revenus</span><span class="res-val" id="res-cehr">—</span></div>
         <div class="res-row separator"></div>
-        <div class="res-row"><span class="res-label">Niche 10 000 € (commune)</span><span class="res-val" id="res-poche1">—</span></div>
-        <div class="res-row"><span class="res-label">Supplément niche 18 000 € (Girardin / SOFICA)</span><span class="res-val" id="res-poche2">—</span></div>
+        <div class="res-jauges">
+          <div class="res-jauges-title">Plafonds & enveloppes</div>
+          <div class="recap-jauge">
+            <span class="recap-jauge-label">Plafond PER</span>
+            <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugeSimPerFill"></div></div>
+            <span class="recap-jauge-val" id="jaugeSimPerVal">— / —</span>
+          </div>
+          <div class="recap-jauge">
+            <span class="recap-jauge-label">Dons (20 % RNI)</span>
+            <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugeSimDonsFill"></div></div>
+            <span class="recap-jauge-val" id="jaugeSimDonsVal">— / —</span>
+          </div>
+          <div class="recap-jauge" title="Cap 10 000 € — toutes les réductions et crédits dans le panier niches (hors Girardin et SOFICA qui ouvrent une 2e poche).">
+            <span class="recap-jauge-label">Plafond niches normales</span>
+            <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugeSimPoche1Fill"></div></div>
+            <span class="recap-jauge-val" id="jaugeSimPoche1Val">— / 10 000 €</span>
+          </div>
+          <div class="recap-jauge" title="Cap 18 000 € — total du panier majoré (supplément 8 000 € réservé à Girardin et SOFICA).">
+            <span class="recap-jauge-label">Plafond majoré (Girardin / SOFICA)</span>
+            <div class="recap-jauge-bar"><div class="recap-jauge-fill" id="jaugeSimPoche2Fill"></div></div>
+            <span class="recap-jauge-val" id="jaugeSimPoche2Val">— / 18 000 €</span>
+          </div>
+        </div>
         <div class="res-row" id="res-niches-perdues-row" style="display:none"><span class="res-label">Niches perdues</span><span class="res-val warning" id="res-niches-perdues">—</span></div>
         <div class="res-row"><span class="res-label">Total réductions retenues</span><span class="res-val" id="res-reductions">—</span></div>
         <div class="res-row"><span class="res-label">Total crédits retenus</span><span class="res-val" id="res-credits">—</span></div>
