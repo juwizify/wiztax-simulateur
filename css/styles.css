@@ -190,21 +190,21 @@ header span {
 ───────────────────────────────────────────── */
 .section-card {
   background: var(--surface-lowest);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-arch);
-  margin-bottom: 16px;
-  overflow: hidden;   /* contient le border-top coloré */
-  border-top: 3px solid var(--accent);
+  border: 1px solid var(--surface-container-high);
+  border-radius: 8px;
+  margin-bottom: 14px;
+  overflow: hidden;
 }
 .section-card h2 {
   font-family: var(--font-headline);
-  font-size: .78rem;
-  font-weight: 700;
+  font-size: .72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .7px;
-  color: var(--on-surface);
-  padding: 14px 20px;
-  background: var(--surface-container-low);
+  letter-spacing: .6px;
+  color: var(--on-surface-variant);
+  padding: 12px 20px;
+  background: transparent;
+  border-bottom: 1px solid var(--surface-container-high);
 }
 
 /* ─────────────────────────────────────────────
@@ -227,11 +227,11 @@ header span {
 }
 .form-subsection h3 {
   font-family: var(--font-headline);
-  font-size: .78rem;
-  font-weight: 700;
-  color: var(--accent);
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: .5px;
   margin: 0;
 }
 
