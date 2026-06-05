@@ -37,27 +37,12 @@
  */
 
 // ─── Accès aux paramètres fiscaux : browser (global) ou Node (require) ───
-// Idem pour les helpers de formatage : exposés en global côté navigateur
-// (params.js), importés via require côté Node.
-const __paramsMod = (typeof PARAMS !== 'undefined')
-  ? { PARAMS, formatPct, formatEur, formatNum }
-  : require('./params.js');
-const P  = __paramsMod.PARAMS;
+const P  = (typeof PARAMS !== 'undefined') ? PARAMS : require('./params.js').PARAMS;
 const PD = P.plafondsDispositifs;
-const formatPct_ = __paramsMod.formatPct;
-const formatEur_ = __paramsMod.formatEur;
-// alias locaux pour rester proches du DSL (utilisés dans les templates `info`).
-// Si on est en navigateur, formatPct/formatEur sont déjà globaux ; en Node
-// on les rebind ici pour que les templates fonctionnent dans les deux contextes.
-if (typeof formatPct === 'undefined')  globalThis.formatPct  = formatPct_;
-if (typeof formatEur === 'undefined')  globalThis.formatEur  = formatEur_;
 
-// ─── Helpers de formatage ───
-// pct(0.18) → '18 %'    pct(0.185) → '18,5 %'
-// eur(50000) → '50 000 €'
-// Évite la duplication des chiffres dans les meta[] / options[].label
-// (qui sont déjà définis dans params.js). Si un paramètre change, le texte
-// affiché se met à jour automatiquement → cf. PR-E.
+// ─── Helpers de formatage (lecture catalogue + templates `info`) ───
+// pct(0.18) → '18 %' · pct(0.185) → '18,5 %' · eur(50000) → '50 000 €'
+// Évite la duplication des chiffres entre catalogue et params.js (cf. PR-E).
 const pct = (n) => (n * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %';
 const eur = (n) => n.toLocaleString('fr-FR') + ' €';
 
@@ -107,7 +92,7 @@ const LEVIERS_CATALOGUE = [
         inSimpleMode: false,    // sous-champ avancé même si PER principal est en mode simple
       },
     ],
-    info: `Saisir le versement volontaire de l'année (cases 6NS / 6NT). Vient diminuer le revenu imposable, économie ≈ versement × TMI.\n\nPlafond automatique : 10 % des revenus pro, avec un plancher de ${formatEur(P.plafonds.perPlancher)} et un plafond max de ${formatEur(P.plafonds.perMaxSalarie)}.\n\nLe report des plafonds non utilisés des 3 années précédentes n'est pas pris en compte ici. Si tu connais ton vrai plafond (avis d'imposition), saisis-le dans le sous-champ pour écraser le calcul auto.\n\n⚠ Versements non déductibles à partir de 70 ans (LF 2026).`,
+    info: `Saisir le versement volontaire de l'année (cases 6NS / 6NT). Vient diminuer le revenu imposable, économie ≈ versement × TMI.\n\nPlafond automatique : 10 % des revenus pro, avec un plancher de ${eur(P.plafonds.perPlancher)} et un plafond max de ${eur(P.plafonds.perMaxSalarie)}.\n\nLe report des plafonds non utilisés des 3 années précédentes n'est pas pris en compte ici. Si tu connais ton vrai plafond (avis d'imposition), saisis-le dans le sous-champ pour écraser le calcul auto.\n\n⚠ Versements non déductibles à partir de 70 ans (LF 2026).`,
     // ── Enrichissement pour l'onglet Leviers fiscaux (générateur F3) ──
     sectionGroup: 'epargne-retraite',
     tagType: 'Déduction du revenu imposable',
@@ -138,7 +123,7 @@ const LEVIERS_CATALOGUE = [
     levier: 1, cat: 'foncier', mode: 'deficit-foncier', inputKey: 'foncierReel',
     nature: 'depenses-annuelles', budget: 'cash',
     inSimpleMode: true,   // PR-V — cas courant dans la liste « Type de charge »
-    info: `Saisir le montant du déficit foncier. Vient diminuer le revenu global, plafonné à ${formatEur(P.plafonds.deficitFoncierMax)}/an. Économie = montant retenu × TMI.`,
+    info: `Saisir le montant du déficit foncier. Vient diminuer le revenu global, plafonné à ${eur(P.plafonds.deficitFoncierMax)}/an. Économie = montant retenu × TMI.`,
     sectionGroup: 'immobilier-locatif',
     tagType: 'Déduction du revenu foncier (et partiel sur revenu global)',
     titleLong: 'Déficit foncier — travaux sur bien locatif nu',
@@ -173,7 +158,7 @@ const LEVIERS_CATALOGUE = [
     showNicheCell: false,
     titleLong: 'Déficit Jeanbrun annuel — bailleur privé (LF 2026)',
     nature: 'amortissement-annuel', budget: 'exclu',
-    info: `Saisir le montant du déficit Jeanbrun de l'année. Vient diminuer le revenu imposable, dans la limite du plafond de la catégorie de loyer choisie : ${formatEur(P.plafonds.jeanbrunPlafondInter)} (intermédiaire), ${formatEur(P.plafonds.jeanbrunPlafondSocial)} (social), ${formatEur(P.plafonds.jeanbrunPlafondTresSoc)} (très social). Économie = montant retenu × TMI.\n\nPlafond commun avec le déficit foncier classique : ${formatEur(P.plafonds.deficitFoncierMax)}/an au total.`,
+    info: `Saisir le montant du déficit Jeanbrun de l'année. Vient diminuer le revenu imposable, dans la limite du plafond de la catégorie de loyer choisie : ${eur(P.plafonds.jeanbrunPlafondInter)} (intermédiaire), ${eur(P.plafonds.jeanbrunPlafondSocial)} (social), ${eur(P.plafonds.jeanbrunPlafondTresSoc)} (très social). Économie = montant retenu × TMI.\n\nPlafond commun avec le déficit foncier classique : ${eur(P.plafonds.deficitFoncierMax)}/an au total.`,
     sectionGroup: 'immobilier-locatif',
     tagType: 'Déduction du revenu foncier (amortissement)',
     titleLong: 'Dispositif Jeanbrun — amortissement du logement loué nu',
@@ -220,7 +205,7 @@ const LEVIERS_CATALOGUE = [
     nature: 'versement-annuel', budget: 'cash',
     inSimpleMode: true,
     nichePlafLabel: '75 % ≤ 2 000 € · surplus → 7UF',
-    info: `Saisir le montant des dons versés à un organisme d'aide aux personnes en difficulté (Restos du Cœur, Croix-Rouge, Secours Populaire, Banque alimentaire…) ou aux victimes de violences domestiques. Réduction d'impôt de ${formatPct(P.plafonds.dons75Taux)} sur les premiers ${formatEur(P.plafonds.dons75Plafond)} ; au-delà, l'excédent bascule automatiquement en régime classique à ${formatPct(P.plafonds.dons66Taux)}. Hors plafond niches.`,
+    info: `Saisir le montant des dons versés à un organisme d'aide aux personnes en difficulté (Restos du Cœur, Croix-Rouge, Secours Populaire, Banque alimentaire…) ou aux victimes de violences domestiques. Réduction d'impôt de ${pct(P.plafonds.dons75Taux)} sur les premiers ${eur(P.plafonds.dons75Plafond)} ; au-delà, l'excédent bascule automatiquement en régime classique à ${pct(P.plafonds.dons66Taux)}. Hors plafond niches.`,
     sectionGroup: 'dons',
     tagType: 'Réduction d\'impôt',
     titleLong: 'Dons aux organismes d\'aide aux personnes (Coluche)',
@@ -250,7 +235,7 @@ const LEVIERS_CATALOGUE = [
     nature: 'versement-annuel', budget: 'cash',
     inSimpleMode: true,
     nichePlafLabel: '66 % · plafond 20 % du RNI',
-    info: `Saisir le montant des dons versés à un organisme d'intérêt général : associations sportives, culturelles, environnementales, écoles, fondations reconnues d'utilité publique, etc. Réduction d'impôt de ${formatPct(P.plafonds.dons66Taux)}, plafonnée à ${formatPct(P.plafonds.donsPlafondRNI)} du revenu net imposable. Hors plafond niches. Le surplus est reportable 5 ans (non simulé ici).`,
+    info: `Saisir le montant des dons versés à un organisme d'intérêt général : associations sportives, culturelles, environnementales, écoles, fondations reconnues d'utilité publique, etc. Réduction d'impôt de ${pct(P.plafonds.dons66Taux)}, plafonnée à ${pct(P.plafonds.donsPlafondRNI)} du revenu net imposable. Hors plafond niches. Le surplus est reportable 5 ans (non simulé ici).`,
     sectionGroup: 'dons',
     tagType: 'Réduction d\'impôt',
     titleLong: 'Dons aux œuvres et organismes d\'intérêt général',
@@ -293,7 +278,7 @@ const LEVIERS_CATALOGUE = [
         inSimpleMode: false,
       },
     ],
-    info: `Saisir le montant total facturé par l'EHPAD pour un ascendant : hébergement + dépendance (hors frais médicaux). Crédit d'impôt de ${formatPct(P.plafonds.ehpadTaux)}, plafonné à ${formatEur(P.plafonds.ehpadPlafondParPers)} de dépenses par personne hébergée — soit un crédit max de ${formatEur(P.plafonds.ehpadPlafondParPers * P.plafonds.ehpadTaux)}/personne. Hors plafond niches.`,
+    info: `Saisir le montant total facturé par l'EHPAD pour un ascendant : hébergement + dépendance (hors frais médicaux). Crédit d'impôt de ${pct(P.plafonds.ehpadTaux)}, plafonné à ${eur(P.plafonds.ehpadPlafondParPers)} de dépenses par personne hébergée — soit un crédit max de ${eur(P.plafonds.ehpadPlafondParPers * P.plafonds.ehpadTaux)}/personne. Hors plafond niches.`,
     sectionGroup: 'famille-quotidien',
     tagType: 'Réduction d\'impôt',
     titleLong: 'Frais EHPAD pour ascendants (25 %)',
@@ -327,7 +312,7 @@ const LEVIERS_CATALOGUE = [
     levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'malrauxTravaux',
     paramKey: 'malrauxZone',
     nature: 'depenses-annuelles', budget: 'exclu',
-    info: `Saisir le montant des travaux Malraux engagés dans l'année (restauration d'immeubles patrimoniaux loués nus 9 ans).\n\nRéduction = travaux retenus × taux de la zone :\n· 22 % en SPR sans PSMV (Site Patrimonial Remarquable « simple »)\n· 30 % en SPR avec PSMV, ou en Quartier Ancien Dégradé (QAD)\n\nSPR = Site Patrimonial Remarquable (ancien « secteur sauvegardé »). PSMV = Plan de Sauvegarde et de Mise en Valeur, document d'urbanisme renforcé qui couvre la partie la plus protégée du SPR — sa présence (ou un QAD) ouvre droit au taux majoré 30 %.\n\nPlafond annuel : ${formatEur(PD.malraux.depensesParAnMax)}/an. Plafond pluri-annuel : ${formatEur(PD.malraux.depensesPluriAnMax)} sur 4 ans glissants — saisir le cumul des 3 années précédentes dans le sous-champ pour que le moteur applique le bon reliquat.\n\nHors plafond niches : c'est l'atout majeur du dispositif.`,
+    info: `Saisir le montant des travaux Malraux engagés dans l'année (restauration d'immeubles patrimoniaux loués nus 9 ans).\n\nRéduction = travaux retenus × taux de la zone :\n· 22 % en SPR sans PSMV (Site Patrimonial Remarquable « simple »)\n· 30 % en SPR avec PSMV, ou en Quartier Ancien Dégradé (QAD)\n\nSPR = Site Patrimonial Remarquable (ancien « secteur sauvegardé »). PSMV = Plan de Sauvegarde et de Mise en Valeur, document d'urbanisme renforcé qui couvre la partie la plus protégée du SPR — sa présence (ou un QAD) ouvre droit au taux majoré 30 %.\n\nPlafond annuel : ${eur(PD.malraux.depensesParAnMax)}/an. Plafond pluri-annuel : ${eur(PD.malraux.depensesPluriAnMax)} sur 4 ans glissants — saisir le cumul des 3 années précédentes dans le sous-champ pour que le moteur applique le bon reliquat.\n\nHors plafond niches : c'est l'atout majeur du dispositif.`,
     sectionGroup: 'immobilier-locatif',
     tagType: 'Réduction d\'impôt',
     titleLong: 'Loi Malraux — restauration en Site Patrimonial Remarquable',
@@ -658,7 +643,7 @@ const LEVIERS_CATALOGUE = [
     levier: 2, cat: 'niche10', mode: 'versement-direct', inputKey: 'locAvantagesDepenses',
     paramKey: 'locAvantagesPalier',
     nature: 'depenses-annuelles', budget: 'exclu',
-    info: `Saisir les dépenses de l'année liées à une location à loyer modéré (ex-Cosse).\n\nRéduction = min(dépenses, ${formatEur(PD.locAvantages.depensesMax)}) × taux du palier :\n· Loc 1 (décote 15 %) : 15 % sans intermédiation / 20 % avec\n· Loc 2 (décote 30 %) : 35 % sans / 40 % avec\n· Loc 3 (décote 45 %) : 65 % (intermédiation obligatoire, déjà incluse)\n\nIntermédiation locative = gestion confiée à une association agréée (type Solibail) qui garantit loyer et charges. En contrepartie, taux fiscal majoré de +5 points.`,
+    info: `Saisir les dépenses de l'année liées à une location à loyer modéré (ex-Cosse).\n\nRéduction = min(dépenses, ${eur(PD.locAvantages.depensesMax)}) × taux du palier :\n· Loc 1 (décote 15 %) : 15 % sans intermédiation / 20 % avec\n· Loc 2 (décote 30 %) : 35 % sans / 40 % avec\n· Loc 3 (décote 45 %) : 65 % (intermédiation obligatoire, déjà incluse)\n\nIntermédiation locative = gestion confiée à une association agréée (type Solibail) qui garantit loyer et charges. En contrepartie, taux fiscal majoré de +5 points.`,
     sectionGroup: 'immobilier-locatif',
     tagType: 'Réduction d\'impôt',
     titleLong: 'Loc\'Avantages — location à loyer modéré',
@@ -759,14 +744,14 @@ const LEVIERS_CATALOGUE = [
     paramKey: 'denormandieDuree',
     nature: 'investissement-immobilier', budget: 'exclu',
     inSimpleMode: true,   // PR-V — catégorie « Immobilier » de la capture utilisateur
-    info: `Saisir le montant total investi dans l'année (prix d'acquisition + travaux). Les travaux doivent représenter au moins 25 % du coût total. La réduction d'impôt s'étale sur la durée d'engagement de location choisie.\n\nRI annuelle = min(invest, ${formatEur(PD.denormandie.versementMax)}) × taux total / durée :\n· 6 ans : 12 % au total → 2 %/an\n· 9 ans : 18 % au total → 2 %/an\n· 12 ans : 21 % au total → 1,75 %/an\n\nPrix au m² plafonné à 5 500 €. Le bien doit se trouver dans une commune labellisée « Action Cœur de Ville » ou couverte par une Opération de Revitalisation du Territoire (ORT). Dans le plafond niches 10 000 €.\n\nAcquisitions éligibles jusqu'au 31/12/2027.`,
+    info: `Saisir le montant total investi dans l'année (prix d'acquisition + travaux). Les travaux doivent représenter au moins 25 % du coût total. La réduction d'impôt s'étale sur la durée d'engagement de location choisie.\n\nRI annuelle = min(invest, ${eur(PD.denormandie.versementMax)}) × taux total / durée :\n· 6 ans : 12 % au total → 2 %/an\n· 9 ans : 18 % au total → 2 %/an\n· 12 ans : 21 % au total → 1,75 %/an\n\nPrix au m² plafonné à 5 500 €. Le bien doit se trouver dans une commune labellisée « Action Cœur de Ville » ou couverte par une Opération de Revitalisation du Territoire (ORT). Dans le plafond niches 10 000 €.\n\nAcquisitions éligibles jusqu'au 31/12/2027.`,
     sectionGroup: 'immobilier-locatif',
     tagType: 'Réduction d\'impôt',
     titleLong: 'Denormandie — investissement locatif dans l\'ancien rénové',
     meta: [
       { label: 'Taux total — 6 ans / 9 ans / 12 ans',           value: '12 % · 18 % · 21 %' },
-      { label: 'Plafond annuel d\'investissement',              value: `${formatEur(PD.denormandie.versementMax)}` },
-      { label: 'Plafond au m²',                                 value: `${formatEur(PD.denormandie.prixMaxM2)}/m²` },
+      { label: 'Plafond annuel d\'investissement',              value: `${eur(PD.denormandie.versementMax)}` },
+      { label: 'Plafond au m²',                                 value: `${eur(PD.denormandie.prixMaxM2)}/m²` },
       { label: 'Travaux minimum (% coût total)',                value: '25 %' },
       { label: 'Communes éligibles',                            value: 'Action Cœur de Ville + ORT' },
       { label: 'Acquisitions éligibles',                        value: 'Jusqu\'au 31/12/2027 (LF 2026 art. 47)' },
@@ -810,7 +795,7 @@ const LEVIERS_CATALOGUE = [
     nichePlafLabel: 'quote-part plafond : × 44 %',
     nature: 'versement-annuel', budget: 'cash',
     rendementDefaut: 1.10, rendementMin: 1.00, rendementMax: 1.30, rendementStep: 0.005,
-    info: `Saisir le montant investi dans le programme Girardin Plein Droit (versement à l'opérateur, à fonds perdus). Mécanique one-shot : la réduction d'impôt majorée est encaissée l'année suivante. Quote-part de ${formatPct(P.niches.girardinPdQuotePart)} dans le plafond niches majoré 18 k€.\n\nRendement = ratio RI / investissement. Marché 2026 typiquement 108-115 %. Ajuster avec les boutons ± 0,5 % ou la saisie directe.`,
+    info: `Saisir le montant investi dans le programme Girardin Plein Droit (versement à l'opérateur, à fonds perdus). Mécanique one-shot : la réduction d'impôt majorée est encaissée l'année suivante. Quote-part de ${pct(P.niches.girardinPdQuotePart)} dans le plafond niches majoré 18 k€.\n\nRendement = ratio RI / investissement. Marché 2026 typiquement 108-115 %. Ajuster avec les boutons ± 0,5 % ou la saisie directe.`,
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt — investissement à fonds perdus',
     titleLong: 'Girardin Industriel — Plein Droit',
@@ -842,7 +827,7 @@ const LEVIERS_CATALOGUE = [
     nichePlafLabel: 'quote-part plafond : × 34 %',
     nature: 'versement-annuel', budget: 'cash',
     rendementDefaut: 1.08, rendementMin: 1.00, rendementMax: 1.25, rendementStep: 0.005,
-    info: `Saisir le montant investi dans le programme Girardin avec Agrément (versement à l'opérateur, à fonds perdus). Identique au Plein Droit mais réservé aux programmes > 250 k€ ayant reçu l'agrément ministériel. Quote-part de ${formatPct(P.niches.girardinAgQuotePart)} dans le plafond niches majoré 18 k€.\n\nRendement = ratio RI / investissement. Marché 2026 typiquement 105-112 %.`,
+    info: `Saisir le montant investi dans le programme Girardin avec Agrément (versement à l'opérateur, à fonds perdus). Identique au Plein Droit mais réservé aux programmes > 250 k€ ayant reçu l'agrément ministériel. Quote-part de ${pct(P.niches.girardinAgQuotePart)} dans le plafond niches majoré 18 k€.\n\nRendement = ratio RI / investissement. Marché 2026 typiquement 105-112 %.`,
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt — investissement à fonds perdus',
     titleLong: 'Girardin Industriel — Avec Agrément',
@@ -876,7 +861,7 @@ const LEVIERS_CATALOGUE = [
     nature: 'depenses-annuelles', budget: 'cash',
     inSimpleMode: true,
     nichePlafLabel: 'crédit 50 % · plaf. dép. 12 000 € (+ majo enfants, max 15 000 €)',
-    info: `Saisir le montant total des dépenses (salaires + charges sociales) pour l'emploi d'un salarié à domicile : ménage, jardinage, soutien scolaire, aide à la personne, garde d'enfants à domicile, etc.\n\nCrédit d'impôt de ${formatPct(P.plafonds.emploiDomTaux)}, remboursable même si l'impôt est nul. Plafond de base ${formatEur(P.plafonds.emploiDomMax)}, majoré de ${formatEur(P.plafonds.emploiDomMajEnfant)} par enfant à charge (${formatEur(P.plafonds.emploiDomMajGardeAlt)} en garde alternée), sans dépasser ${formatEur(P.plafonds.emploiDomMaxMajore)}.\n\nDans le plafond niches 10 000 €.`,
+    info: `Saisir le montant total des dépenses (salaires + charges sociales) pour l'emploi d'un salarié à domicile : ménage, jardinage, soutien scolaire, aide à la personne, garde d'enfants à domicile, etc.\n\nCrédit d'impôt de ${pct(P.plafonds.emploiDomTaux)}, remboursable même si l'impôt est nul. Plafond de base ${eur(P.plafonds.emploiDomMax)}, majoré de ${eur(P.plafonds.emploiDomMajEnfant)} par enfant à charge (${eur(P.plafonds.emploiDomMajGardeAlt)} en garde alternée), sans dépasser ${eur(P.plafonds.emploiDomMaxMajore)}.\n\nDans le plafond niches 10 000 €.`,
     sectionGroup: 'famille-quotidien',
     tagType: 'Crédit d\'impôt',
     titleLong: 'Emploi à domicile (50 %)',
@@ -907,7 +892,7 @@ const LEVIERS_CATALOGUE = [
     nature: 'depenses-annuelles', budget: 'cash',
     inSimpleMode: true,
     nichePlafLabel: 'crédit 50 % · plaf. dép. 3 500 €/enfant',
-    info: `Saisir le montant total des dépenses pour la garde des enfants de moins de 6 ans au 1er janvier, hors du domicile : crèche, halte-garderie, assistante maternelle agréée, garderie périscolaire.\n\nCrédit d'impôt de ${formatPct(P.plafonds.gardeEnfantsTaux)}, remboursable. Plafond ${formatEur(P.plafonds.gardeEnfantsMax)} de dépenses par enfant (${formatEur(P.plafonds.gardeEnfantsMax / 2)} en garde alternée).\n\nDans le plafond niches 10 000 €.`,
+    info: `Saisir le montant total des dépenses pour la garde des enfants de moins de 6 ans au 1er janvier, hors du domicile : crèche, halte-garderie, assistante maternelle agréée, garderie périscolaire.\n\nCrédit d'impôt de ${pct(P.plafonds.gardeEnfantsTaux)}, remboursable. Plafond ${eur(P.plafonds.gardeEnfantsMax)} de dépenses par enfant (${eur(P.plafonds.gardeEnfantsMax / 2)} en garde alternée).\n\nDans le plafond niches 10 000 €.`,
     sectionGroup: 'famille-quotidien',
     tagType: 'Crédit d\'impôt',
     titleLong: 'Garde d\'enfants < 6 ans (50 %)',
@@ -936,7 +921,7 @@ const LEVIERS_CATALOGUE = [
     levier: 3, cat: 'hors', mode: 'versement-direct', inputKey: 'cotSyndicales',
     nature: 'versement-annuel', budget: 'cash',
     nichePlafLabel: 'crédit 66 % · plafond 1 % des revenus',
-    info: `Saisir le montant de la cotisation annuelle versée à un syndicat (CGT, CFDT, FO, CFTC, Sud…) par un salarié, retraité ou demandeur d'emploi. Crédit d'impôt de ${formatPct(P.plafonds.cotSyndicalesTaux)}, remboursable si supérieur à l'impôt dû. Plafond automatique : ${formatPct(P.plafonds.cotSyndicalesPlafondPct)} des salaires + allocations chômage + pensions. Hors plafond niches.`,
+    info: `Saisir le montant de la cotisation annuelle versée à un syndicat (CGT, CFDT, FO, CFTC, Sud…) par un salarié, retraité ou demandeur d'emploi. Crédit d'impôt de ${pct(P.plafonds.cotSyndicalesTaux)}, remboursable si supérieur à l'impôt dû. Plafond automatique : ${pct(P.plafonds.cotSyndicalesPlafondPct)} des salaires + allocations chômage + pensions. Hors plafond niches.`,
     sectionGroup: 'famille-quotidien',
     tagType: 'Crédit d\'impôt',
     titleLong: 'Cotisations syndicales (66 %)',
@@ -973,8 +958,6 @@ let nextRowId = 1;
 // quelle section UI la ligne apparaît, même si leverId n'est pas encore choisi.
 // Si leverId est fourni, on en déduit le levier réel pour assignedLevier.
 function addLever(opts = {}) {
-  // Compat ancienne signature : addLever('per') ou addLever()
-  if (typeof opts === 'string') opts = { leverId: opts };
   const lev = opts.leverId
     ? LEVIERS_CATALOGUE.find(l => l.id === opts.leverId)
     : null;
@@ -1049,12 +1032,6 @@ function appliquerPreconisations(input, precos) {
         out[lev.paramKey] = p.paramValue;
       }
     }
-    // Mode 'taux' retiré en D3.5 — plus aucun usager après migration des
-    // derniers leviers (fipCorse + gfi → 'versement-direct' en D3.3).
-    else if (lev.mode === 'taux-variable') {
-      const opt = lev.params[0].options.find(o => o.value === p.paramValue);
-      if (opt) out[lev.inputKey] = (out[lev.inputKey] || 0) + p.montant * opt.taux;
-    }
     else if (lev.mode === 'taux-libre') {
       // Rendement saisi directement par l'utilisateur (Girardin PD/AG).
       // p.paramValue est un nombre décimal (1.10 = 110 %).
@@ -1083,11 +1060,6 @@ function avantageEstime(p, inputAvant) {
   const lev = LEVIERS_CATALOGUE.find(l => l.id === p.leverId);
   if (!lev || !p.montant) return 0;
 
-  // Mode 'taux' retiré en D3.5 (cf. appliquerPreconisations).
-  if (lev.mode === 'taux-variable') {
-    const opt = lev.params[0].options.find(o => o.value === p.paramValue);
-    return opt ? p.montant * opt.taux : 0;
-  }
   if (lev.mode === 'taux-libre') {
     const rendement = parseFloat(p.paramValue) || lev.rendementDefaut;
     return p.montant * rendement;
@@ -1250,7 +1222,6 @@ function checkPlafond(p, inputAvant, detSeul, inputSeul) {
 //   { type, level: 'info'|'warning'|'error', leverId|null, message, amount }
 function computeWarnings(det) {
   const warnings = [];
-  const fmt = n => Math.round(n).toLocaleString('fr-FR');
 
   // 0. Plafond déficit foncier (10 700 €/an, art. 156-I-3° CGI) partagé entre
   //    déficit foncier classique et amortissement Jeanbrun. Si l'utilisateur
@@ -1261,7 +1232,7 @@ function computeWarnings(det) {
       type: 'deficit-foncier-cap',
       level: 'warning',
       section: 'L1',
-      message: `Plafond déficit foncier dépassé de ${fmt(det.deficitFoncierSurplus)} €. Le déficit imputable sur le revenu global est plafonné à ${fmt(P.plafonds.deficitFoncierMax)} €/an, partagé entre le déficit foncier classique et l'amortissement Jeanbrun (art. 156-I-3° CGI). Le surplus est ignoré dans le calcul courant (reportable 10 ans sur revenus fonciers, non simulé).`,
+      message: `Plafond déficit foncier dépassé de ${fmtEur(det.deficitFoncierSurplus)} €. Le déficit imputable sur le revenu global est plafonné à ${fmtEur(P.plafonds.deficitFoncierMax)} €/an, partagé entre le déficit foncier classique et l'amortissement Jeanbrun (art. 156-I-3° CGI). Le surplus est ignoré dans le calcul courant (reportable 10 ans sur revenus fonciers, non simulé).`,
       amount: det.deficitFoncierSurplus,
     });
   }
@@ -1284,7 +1255,7 @@ function computeWarnings(det) {
           type: 'cap-indiv',
           level: 'warning',
           leverId: disp,
-          message: `${fmt(surplus)} € au-delà du plafond fiscal ${labels[disp] || disp}, ignorés dans le calcul.`,
+          message: `${fmtEur(surplus)} € au-delà du plafond fiscal ${labels[disp] || disp}, ignorés dans le calcul.`,
           amount: surplus,
         });
       }
@@ -1297,7 +1268,7 @@ function computeWarnings(det) {
       type: 'panier-niches',
       level: 'warning',
       leverId: null,
-      message: `${fmt(det.nichesPerdues)} € de réductions perdues (panier niches 10k+8k saturé).`,
+      message: `${fmtEur(det.nichesPerdues)} € de réductions perdues (panier niches 10k+8k saturé).`,
       amount: det.nichesPerdues,
     });
   }
@@ -1316,7 +1287,7 @@ function computeWarnings(det) {
       type: 'surdimensionnement',
       level: 'info',
       leverId: null,
-      message: `${fmt(excedent)} € de réductions L2 au-delà de l'impôt restant.`,
+      message: `${fmtEur(excedent)} € de réductions L2 au-delà de l'impôt restant.`,
       amount: excedent,
     });
   }
