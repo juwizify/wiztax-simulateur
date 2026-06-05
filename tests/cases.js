@@ -81,8 +81,7 @@ function makeInput(overrides = {}) {
     irPmeJeii: 0,
     irPmeJeir: 0,
     irPmeJeiJeirImputeAnterieur: 0,
-    malraux: 0, malrauxTravauxAnterieurs: 0,   // PR-C : cumul 4 ans
-    locAvantages: 0,
+    malrauxTravauxAnterieurs: 0,   // PR-C : cumul 4 ans
     sofica: 0, soficaTaux: '36',   // D3.2 : sémantique investissement
     autresReductions: 0,
 
@@ -599,19 +598,9 @@ const CASES = [
 
   // -------------------------------------------------------------------
   // 7NX / 7NY — Loi Malraux (réduction HORS plafond niches)
-  // 2 modes acceptés par le moteur :
-  //   * NOUVEAU (Phase 2.5) : malrauxTravaux + malrauxZone → RI calculée
-  //   * LEGACY : malraux (RI saisie directement)
+  // Sémantique investissement : malrauxTravaux + malrauxZone → RI calculée
+  // = min(travaux, cap annuel 100k, cap pluri 400k) × taux zone.
   // -------------------------------------------------------------------
-  {
-    name: 'Malraux legacy : 60k sal + RI 5 000 € saisie directement',
-    input: makeInput({ sal1: 60000, malraux: 5000 }),
-    // sal net 54k → tranches 1 977.69 + (54k-29 579)×0.30 = 1 977.69 + 7 326.30
-    //   = 9 303.99 → 9 304
-    // - réduction Malraux 5 000 (hors niches, plafonnée à l'impôt dû)
-    // impôt net = 9 304 - 5 000 = 4 304
-    expected: { impotNet: 4304, revenuReference: 54000, tmi: 0.30 },
-  },
   {
     name: 'Malraux mode travaux SPR-non 22 % : sal 500k + 50k travaux → RI 11 000 €',
     input: makeInput({ sal1: 500000, malrauxTravaux: 50000, malrauxZone: 'spr-non' }),
@@ -632,18 +621,9 @@ const CASES = [
   // -------------------------------------------------------------------
   // 7QO/7QP/7QR — Loc'Avantages
   // 2 modes acceptés par le moteur :
-  //   * NOUVEAU (Phase 2.4) : locAvantagesDepenses + locAvantagesPalier → RI calculée
-  //   * LEGACY : locAvantages (RI saisie directement)
+  // Sémantique investissement : locAvantagesDepenses + locAvantagesPalier → RI
+  // = min(dépenses, 10 000 €) × taux palier (15/35/65 %).
   // -------------------------------------------------------------------
-  {
-    name: "Loc'Avantages legacy : 60k sal + RI 3 000 € saisie directement",
-    input: makeInput({ sal1: 60000, locAvantages: 3000 }),
-    // sal net 54k → impôt baseline 9 304
-    // RI 3 000 € directe (legacy), capée par capRiMax.locAvantages = 6 500
-    // 3 000 < 10 000 niche → réduction appliquée intégralement
-    // impôt net = 9 304 - 3 000 = 6 304
-    expected: { impotNet: 6304, revenuReference: 54000, tmi: 0.30 },
-  },
   {
     name: "Loc'Avantages mode dépenses Loc 2 : 100k sal + 8k dépenses → RI 2 800 €",
     input: makeInput({ sal1: 100000, locAvantagesDepenses: 8000, locAvantagesPalier: 'loc2' }),
@@ -1005,11 +985,12 @@ const CASES = [
     expected: { impotNet: 17701, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
   },
   {
-    name: 'Cap individuel Malraux — sal 500k + Malraux 200k → RI tronquée à 30 000 €',
-    input: makeInput({ sal1: 500000, malraux: 200000 }),
-    // Sal 500k → impôt brut 202 037 (hors plafond niches, Malraux est hors panier)
-    // capRiMax.malraux = 100 000 × 30 % = 30 000 €
-    // impôt net = 202 037 - 30 000 = 172 037
+    name: 'Cap individuel Malraux — sal 500k + 200k travaux SPR-oui → RI tronquée à 30 000 €',
+    input: makeInput({ sal1: 500000, malrauxTravaux: 200000, malrauxZone: 'spr-oui' }),
+    // Sal 500k → impôt brut 202 037 (hors plafond niches, Malraux est hors panier).
+    // Travaux 200 000 saisis, cap annuel 100 000 € → travaux retenus 100 000.
+    // RI = 100 000 × 30 % (SPR-oui) = 30 000 €.
+    // impôt net = 202 037 - 30 000 = 172 037.
     // Démontre que le cap individuel s'applique aussi aux dispositifs HORS panier.
     expected: { impotNet: 172037, revenuReference: 485445, tmi: 0.45 },
   },

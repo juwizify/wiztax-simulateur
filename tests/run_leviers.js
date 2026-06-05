@@ -38,7 +38,7 @@ function makeInput(o = {}) {
     csgDeductible: 0, autresCharges: 0,
     dons: 0, dons7UD: 0, pinel: 0, denormandie: 0, denormandieDuree: '9', girardinPD: 0, girardinAG: 0,
     fcpi: 0, fcpiJei: 0, fipCorse: 0, gfi: 0, irPme: 0,
-    malraux: 0, locAvantages: 0, sofica: 0, autresReductions: 0,
+    sofica: 0, autresReductions: 0,
     emploiDomicile: 0, gardeEnfants: 0, cotSyndicales: 0,
     fraisScolCollege: 0, fraisScolLycee: 0, fraisScolSup: 0,
     ehpadFrais: 0, ehpadNbPers: 1, autresCredits: 0,

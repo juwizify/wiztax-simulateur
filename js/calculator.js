@@ -474,36 +474,33 @@ function calculerIR(input) {
     // GFI — pas dans capRiMax depuis D3.3 : sémantique = INVESTISSEMENT.
     // tauxMax(PD.gfi) = 25 % (zone éligible) ; RI max effective dépend de l'input.
     gfiRiMax:     versCouple(PD.gfi) * tauxMax(PD.gfi),                            // 50k/100k × 25 % — info UI seule (zone éligible)
-    malraux:      PD.malraux.depensesParAnMax * tauxMax(PD.malraux),               // 100 000 × 30 % = 30 000
-    locAvantages: PD.locAvantages.depensesMax * tauxMax(PD.locAvantages),          // 10 000 × 65 % = 6 500
+    // malraux / locAvantages — retirés (sémantique investissement, plus de RI directe).
+    // Les surplus éventuels sont exposés via det.capExcedents.{malraux,locAvantages}.
   };
 
-  // Malraux — 2 modes acceptés :
-  //   * NOUVEAU (Phase 2.5) : input.malrauxTravaux + input.malrauxZone
-  //     → RI = travaux retenus × taux zone (22 % SPR sans PSMV / 30 % SPR-PSMV ou QAD).
-  //   * LEGACY : input.malraux directement (RI saisie), conservé pour rétro-compat.
+  // Malraux — sémantique investissement (CGI art. 199 tervicies) :
+  //   * input.malrauxTravaux  : montant de travaux engagés (cash)
+  //   * input.malrauxZone     : 'spr-non' (22 %) ou 'spr-oui' (30 %)
+  //   * input.malrauxTravauxAnterieurs : cumul travaux des 3 années précédentes
   //
-  // PR-C : double plafonnement des travaux retenus (CGI art. 199 tervicies II al. 3) :
-  //   - Cap annuel : 100 000 € de travaux/an
-  //   - Cap pluri-annuel : 400 000 € sur 4 ans glissants. L'utilisateur saisit
-  //     dans `input.malrauxTravauxAnterieurs` le cumul des 3 années précédentes ;
-  //     le moteur tronque l'année courante à `400 000 − cumul antérieur`.
+  // Double plafonnement (art. 199 tervicies II al. 3) :
+  //   - Cap annuel       : 100 000 € de travaux/an
+  //   - Cap pluri-annuel : 400 000 € sur 4 ans glissants → l'année courante
+  //     est tronquée à `400 000 − cumul antérieur`.
   if ((input.malrauxTravaux || 0) > 0) {
     const zone = input.malrauxZone || PD.malraux.tauxDefaut;
     const tauxZone = PD.malraux.taux[zone] || PD.malraux.taux[PD.malraux.tauxDefaut];
-    // Cap pluri-annuel : ce qui reste sur la fenêtre 4 ans glissants
     const cumulAnt = input.malrauxTravauxAnterieurs || 0;
     const restantPluri = Math.max(0, PD.malraux.depensesPluriAnMax - cumulAnt);
-    // Travaux retenus = min(saisis, cap annuel 100k, restant pluri-annuel)
     const travauxRetenus = Math.min(
       input.malrauxTravaux,
       PD.malraux.depensesParAnMax,
       restantPluri
     );
     det.redMalraux = travauxRetenus * tauxZone;
-    det.malrauxTravauxRetenus = travauxRetenus;   // info UI (pour signaler les troncatures)
+    det.malrauxTravauxRetenus = travauxRetenus;
   } else {
-    det.redMalraux = Math.min(input.malraux || 0, capRiMax.malraux);
+    det.redMalraux = 0;
     det.malrauxTravauxRetenus = 0;
   }
 
@@ -579,11 +576,10 @@ function calculerIR(input) {
     const surplus = cumulJeiJeir - plafondPluriRestant;
     det.redIrPmeJeir = Math.max(0, det.redIrPmeJeir - surplus);
   }
-  // Loc'Avantages — 2 modes acceptés :
-  //   * NOUVEAU (Phase 2.4) : input.locAvantagesDepenses + input.locAvantagesPalier
-  //     → moteur calcule la RI = min(dépenses, 10 000 €) × taux palier (15/35/65 %).
-  //   * LEGACY : input.locAvantages directement (RI saisie), conservé pour rétro-compat
-  //     des tests et de toute UI/intégration existante.
+  // Loc'Avantages — sémantique investissement (CGI art. 199 tricies, ex-Cosse) :
+  //   * input.locAvantagesDepenses : dépenses éligibles (cash)
+  //   * input.locAvantagesPalier   : 'loc1'/'loc1-im'/'loc2'/'loc2-im'/'loc3'
+  //   RI = min(dépenses, 10 000 €) × taux palier (15 à 65 %).
   if ((input.locAvantagesDepenses || 0) > 0) {
     const palier = input.locAvantagesPalier || PD.locAvantages.tauxDefaut;
     const tauxPalier = PD.locAvantages.taux[palier]
@@ -591,7 +587,7 @@ function calculerIR(input) {
     const depensesRetenues = Math.min(input.locAvantagesDepenses, PD.locAvantages.depensesMax);
     det.redLocAvantages = depensesRetenues * tauxPalier;
   } else {
-    det.redLocAvantages = Math.min(input.locAvantages || 0, capRiMax.locAvantages);
+    det.redLocAvantages = 0;
   }
   // SOFICA — sémantique investissement (post-D3.2)
   //   * input.sofica       = MONTANT SOUSCRIT dans l'année (cash sortant)
@@ -604,21 +600,17 @@ function calculerIR(input) {
   det.redSofica      = versSoficaRetenu * _tauxSofica;
   det.redAutres      = input.autresReductions;  // catch-all, pas de cap
 
-  // Surplus écrasés par les caps individuels (pour affichage UI)
-  // ATTENTION : la sémantique de capExcedents.xxx dépend de celle de input.xxx :
-  // - input = RI directe (legacy) : surplus = input − RI retenue (= ce qui dépasse)
-  // - input = INVESTISSEMENT (post-F4 pour IR-PME) : surplus = input − versementMax
-  //   (= ce qui dépasse le plafond d'investissement annuel)
+  // Surplus écrasés par les caps individuels (pour affichage UI).
+  // Sémantique INVESTISSEMENT uniforme : surplus = montant saisi − ce qui a
+  // été retenu (ou plafonné).
   det.capExcedents = {
-    // SOFICA en sémantique investissement (D3.2) : surplus = montant souscrit
-    // au-delà du versement effectif (min 18k / 25%RNG). Cohérent IR-PME.
     sofica:       Math.max(0, (input.sofica || 0)       - versSoficaEffectif),
-    // FIP Corse / GFI — sémantique investissement (D3.3) : surplus = invest
-    // saisi au-delà du plafond annuel de souscription.
     fipCorse:     Math.max(0, (input.fipCorse || 0)     - versFipCorseEff),
     gfi:          Math.max(0, (input.gfi || 0)          - versGfiEff),
-    malraux:      Math.max(0, (input.malraux || 0)      - det.redMalraux),
-    locAvantages: Math.max(0, (input.locAvantages || 0) - det.redLocAvantages),
+    // Malraux : `malrauxTravauxRetenus` intègre cap annuel 100k + cap pluri 400k.
+    malraux:      Math.max(0, (input.malrauxTravaux || 0)      - det.malrauxTravauxRetenus),
+    // Loc'Av : cap annuel `depensesMax` (10 000 €).
+    locAvantages: Math.max(0, (input.locAvantagesDepenses || 0) - PD.locAvantages.depensesMax),
     // IR-PME (sémantique investissement) : surplus = invest saisi − plafond d'invest annuel
     irPme:        Math.max(0, (input.irPme || 0)        - versPme),
     irPmeEsus:    Math.max(0, (input.irPmeEsus || 0)    - versPmeEsus),

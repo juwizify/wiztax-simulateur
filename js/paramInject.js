@@ -23,7 +23,7 @@
  *
  * Lieux où les tokens sont résolus :
  *   - textContent de tout élément descendant de <body>
- *   - attribut data-tip (tooltips i.tip)
+ *   - tous les attributs HTML qui contiennent `{{` (data-tip, title, etc.)
  *   - innerHTML de <span data-param-html> (cas avancé avec balisage)
  *
  * Résolution une seule fois au DOMContentLoaded. Si PARAMS change à
@@ -71,15 +71,17 @@
     });
   }
 
-  // Parcours tous les nœuds texte d'un sous-arbre + les data-tip / data-param-html.
+  // Parcours tous les attributs + nœuds texte d'un sous-arbre + data-param-html.
   function injectParams(root) {
     if (!root) return;
 
-    // 1. Attributs data-tip (tooltips)
-    root.querySelectorAll('[data-tip]').forEach(el => {
-      const t = el.getAttribute('data-tip');
-      if (t && t.indexOf('{{') !== -1) {
-        el.setAttribute('data-tip', resolveTokens(t));
+    // 1. Tous les attributs HTML contenant `{{` (data-tip, title, aria-label, alt, …).
+    //    Scanne tous les éléments du sous-arbre pour ne pas oublier un attribut.
+    root.querySelectorAll('*').forEach(el => {
+      for (const attr of el.attributes) {
+        if (attr.value && attr.value.indexOf('{{') !== -1) {
+          el.setAttribute(attr.name, resolveTokens(attr.value));
+        }
       }
     });
 

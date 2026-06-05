@@ -67,8 +67,7 @@ function makeInput(o = {}) {
     csgDeductible: 0, autresCharges: 0,
     dons: 0, dons7UD: 0, pinel: 0, denormandie: 0, denormandieDuree: '9', girardinPD: 0, girardinAG: 0,
     fcpiJei: 0, fipCorse: 0, gfi: 0, gfiZone: 'standard', irPme: 0,    // fcpi retiré D3.4 ; gfiZone PR-C
-    malraux: 0, malrauxTravauxAnterieurs: 0,   // PR-C : cumul 4 ans
-    locAvantages: 0,
+    malrauxTravauxAnterieurs: 0,   // PR-C : cumul 4 ans
     sofica: 0, soficaTaux: '36',         // D3.2 : sémantique investissement
     autresReductions: 0,
     emploiDomicile: 0, gardeEnfants: 0, cotSyndicales: 0,
@@ -340,13 +339,10 @@ function oracleCalc(input) {
   const capIrPmeJeir  = cv(50000, 100000) * 0.50;       // 25 000 / 50 000 (JEIR art. 199 terdecies-0 A ter)
   // GFI — D3.3 sémantique investissement : RI = min(invest, versCouple) × 18 %
   const versGfiEff      = cv(50000, 100000);            // 50k / 100k
-  const capMalraux    = 100000 * 0.30;                  // 30 000
-  const capLocAv      = 10000 * 0.65;                   //  6 500
 
-  // Malraux — mode "travaux + zone" prioritaire, sinon fallback legacy.
-  // PR-C : cap pluri-annuel 400 000 € sur 4 ans glissants, troncature par
-  // malrauxTravauxAnterieurs (cumul N-1 + N-2 + N-3).
-  let redMalraux;
+  // Malraux — sémantique investissement : travaux + zone + cap pluri 400k
+  // sur 4 ans glissants (malrauxTravauxAnterieurs = cumul N-1 + N-2 + N-3).
+  let redMalraux = 0;
   if ((i.malrauxTravaux || 0) > 0) {
     const tauxMalrauxZone = { 'spr-non': 0.22, 'spr-oui': 0.30 };
     const zone = i.malrauxZone || 'spr-non';
@@ -354,8 +350,6 @@ function oracleCalc(input) {
     const restantPluri = Math.max(0, 400000 - cumulAnt);
     const travRet = Math.min(i.malrauxTravaux, 100000, restantPluri);
     redMalraux = travRet * (tauxMalrauxZone[zone] || tauxMalrauxZone['spr-non']);
-  } else {
-    redMalraux = Math.min(i.malraux || 0, capMalraux);
   }
 
   const redPinel = i.pinel;                                   // pas de cap V1
@@ -402,15 +396,13 @@ function oracleCalc(input) {
   if (cumulJeiJeirOracle > plafondPluri) {
     redIrPmeJeir = Math.max(0, redIrPmeJeir - (cumulJeiJeirOracle - plafondPluri));
   }
-  // Loc'Avantages — mode "dépenses + palier" prioritaire, sinon fallback legacy
-  let redLocAv;
+  // Loc'Avantages — sémantique investissement : dépenses × taux palier.
+  let redLocAv = 0;
   if ((i.locAvantagesDepenses || 0) > 0) {
     const tauxLocAv = { loc1: 0.15, loc2: 0.35, loc3: 0.65 };
     const palier = i.locAvantagesPalier || 'loc1';
     const depRet = Math.min(i.locAvantagesDepenses, 10000);
     redLocAv = depRet * (tauxLocAv[palier] || tauxLocAv.loc1);
-  } else {
-    redLocAv = Math.min(i.locAvantages || 0, capLocAv);
   }
   const redSofica = Math.min(i.sofica || 0, versSoficaEff) * tauxSoficaOr;
   const redAutres = i.autresReductions;
@@ -638,7 +630,7 @@ function generateProfile(idx) {
     profile.soficaTaux = tauxOpts[Math.floor(rand() * 3)];
   }
   if (rand() < 0.06) profile.fcpiJei = randInt(200, 2000);
-  if (rand() < 0.05) profile.malraux = randInt(1000, 6000);
+  if (rand() < 0.05) profile.malrauxTravaux = randInt(5000, 25000);
 
   // Crédits
   if (rand() < 0.15) profile.emploiDomicile = randInt(500, 14000);

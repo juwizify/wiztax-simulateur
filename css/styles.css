@@ -1093,7 +1093,7 @@ header span {
   background: var(--surface-lowest);
   border-radius: var(--radius-input);
   /* PAS d'overflow:hidden — couperait les tooltips qui sortent du tableau */
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-arch);
 }
 .preco-table th {
   text-align: left;
@@ -1208,7 +1208,7 @@ header span {
   border-radius: var(--radius-input);
   padding: 18px 22px;
   margin-bottom: 24px;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-arch);
 }
 .preco-jauges h3 {
   font-family: var(--font-headline);
@@ -1287,7 +1287,7 @@ header span {
   background: var(--surface-lowest);
   border-radius: var(--radius-input);
   padding: 18px 22px;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-arch);
 }
 .preco-comparison h3 {
   font-family: var(--font-headline);
