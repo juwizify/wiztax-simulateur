@@ -11,8 +11,8 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
-const paramsSrc = fs.readFileSync(path.join(ROOT, 'js/params.js'), 'utf8');
-const calculatorSrc = fs.readFileSync(path.join(ROOT, 'js/calculator.js'), 'utf8');
+const paramsSrc = fs.readFileSync(path.join(ROOT, 'core/params.js'), 'utf8');
+const calculatorSrc = fs.readFileSync(path.join(ROOT, 'core/calculator.js'), 'utf8');
 const { CASES } = require('./cases.js');
 
 const ctx = vm.createContext({});
