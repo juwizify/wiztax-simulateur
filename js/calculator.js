@@ -292,9 +292,9 @@ function calculerIR(input) {
   const abat75  = Math.min(av75,  avAbat - abat128);
   det.avAbattement = abat128 + abat75;
   det.avImposable  = (av128 - abat128) + (av75 - abat75);
-  det.irAV = (av128 - abat128) * 0.128 + (av75 - abat75) * 0.075;
+  det.irAV = (av128 - abat128) * P.ps.pfuIr + (av75 - abat75) * P.ps.avIr75;
   // PFNL AV prélevé à la source — crédit d'impôt
-  det.pfnlAV = av75 * 0.075 + av128 * 0.128;
+  det.pfnlAV = av75 * P.ps.avIr75 + av128 * P.ps.pfuIr;
   const avProduits = av75 + av128;
 
   // ============================================================
@@ -350,7 +350,7 @@ function calculerIR(input) {
   const base66Cap    = Math.min(surplus7UD + dons7UF, Math.max(0, plafondRNI - base7UD75Cap));
 
   det.donsBase = base7UD75Cap + base66Cap;
-  det.redDons  = base7UD75Cap * 0.75 + base66Cap * 0.66;
+  det.redDons  = base7UD75Cap * P.plafonds.dons75Taux + base66Cap * P.plafonds.dons66Taux;
 
   // Frais de scolarité enfants (7EA/7EC/7EF) — réduction forfaitaire HORS niches
   det.fraisScol = (input.fraisScolCollege || 0) * P.plafonds.fraisScolCollege
@@ -385,14 +385,26 @@ function calculerIR(input) {
   // après charges déductibles).
   const versSoficaEffectif = Math.min(
     PD.sofica.versementMax,
-    det.revenuNetImposable * 0.25
+    det.revenuNetImposable * PD.sofica.plafondAssiettePctRng
   );
   const capRiMax = {
-    sofica:       versSoficaEffectif * tauxMax(PD.sofica),                         // min(18k, 25%RNG) × 48 %
-    fcpiJei:      versCouple(PD.fcpiJei) * PD.fcpiJei.taux,                        // 12k/24k × 30 %
-    fipCorse:     versCouple(PD.fipCorse) * PD.fipCorse.taux,                      // 12k/24k × 30 %
-    irPme:        versCouple(PD.irPme) * PD.irPme.taux,                            // 50k/100k × 25 %
-    gfi:          versCouple(PD.gfi) * PD.gfi.taux,                                // 50k/100k × 18 %
+    // SOFICA — pas dans capRiMax depuis D3.2 : sémantique = INVESTISSEMENT.
+    // La RI est calculée plus bas avec le taux choisi par l'utilisateur
+    // (versSoficaEffectif sert de cap d'investissement). versSoficaEffectif
+    // × tauxMax(PD.sofica) = 8 640 € reste utile pour les jauges plafonds UI.
+    soficaRiMax:  versSoficaEffectif * tauxMax(PD.sofica),                         // min(18k, 25%RNG) × 48 % — info UI
+    fcpiJei:      versCouple(PD.fcpiJei) * PD.fcpiJei.taux,                        // 75k/150k × 30 % (plafond PARTAGÉ avec irPmeJei)
+    // FIP Corse — pas dans capRiMax depuis D3.3 : sémantique = INVESTISSEMENT
+    // (cf. IR-PME / SOFICA). La RI est calculée plus bas via versement × taux.
+    fipCorseRiMax: versCouple(PD.fipCorse) * PD.fipCorse.taux,                     // 12k/24k × 30 % — info UI seule
+    irPme:        versCouple(PD.irPme) * PD.irPme.taux,                            // 50k/100k × 18 % (PME standard)
+    irPmeEsus:    versCouple(PD.irPmeEsus) * PD.irPmeEsus.taux,                    // 50k/100k × 25 % (ESUS/SFS)
+    irPmeMH:      versCouple(PD.irPmeMH)   * PD.irPmeMH.taux,                      // 50k/100k × 25 % (Monuments Historiques)
+    irPmeJei:     versCouple(PD.irPmeJei)  * PD.irPmeJei.taux,                     // 75k/150k × 30 % (JEI, plafond PARTAGÉ avec fcpiJei)
+    irPmeJeii:    versCouple(PD.irPmeJeii) * PD.irPmeJeii.taux,                    // 50k/100k × 40 % (JEII, LF 2026)
+    irPmeJeir:    versCouple(PD.irPmeJeir) * PD.irPmeJeir.taux,                    // 50k/100k × 50 % (JEIR, art 199 terdecies-0 A ter)
+    // GFI — pas dans capRiMax depuis D3.3 : sémantique = INVESTISSEMENT.
+    gfiRiMax:     versCouple(PD.gfi) * PD.gfi.taux,                                // 50k/100k × 18 % — info UI seule
     malraux:      PD.malraux.depensesParAnMax * tauxMax(PD.malraux),               // 100 000 × 30 % = 30 000
     locAvantages: PD.locAvantages.depensesMax * tauxMax(PD.locAvantages),          // 10 000 × 65 % = 6 500
   };
@@ -414,12 +426,59 @@ function calculerIR(input) {
   det.redPinel       = input.pinel;             // Pinel : retiré du périmètre (fermé fin 2024). Pas de cap V1.
   det.redGirardinPD  = input.girardinPD;        // Girardin : pas de cap individuel, limité par panier majoré.
   det.redGirardinAG  = input.girardinAG;
-  // det.redFCPI retiré — FCPI classique supprimé au 21/02/2026 (LF 2026).
-  // Seul FCPI-JEI subsiste (taux 30 %, art. 199 terdecies-0 A bis).
-  det.redFcpiJei     = Math.min(input.fcpiJei || 0,      capRiMax.fcpiJei);
-  det.redFipCorse    = Math.min(input.fipCorse || 0,     capRiMax.fipCorse);
-  det.redGfi         = Math.min(input.gfi || 0,          capRiMax.gfi);
-  det.redIrPme       = Math.min(input.irPme || 0,        capRiMax.irPme);
+  // FCPI classique : RETIRÉ au 21/02/2026 (LF 2026). det.redFCPI supprimé — la
+  // mécanique FCPI ne subsiste que via det.redFcpiJei (taux 30 %, panier partagé
+  // avec IR-PME JEI direct), calculé plus haut.
+  // FIP Corse — sémantique investissement (post-D3.3) : input.fipCorse = MONTANT
+  // SOUSCRIT (cash). RI = min(invest, 12k/24k) × 30 %. Art. 199 terdecies-0 A bis CGI.
+  const versFipCorseEff = versCouple(PD.fipCorse);
+  det.redFipCorse    = Math.min(input.fipCorse || 0, versFipCorseEff) * PD.fipCorse.taux;
+  // GFI — sémantique investissement (post-D3.3) : input.gfi = MONTANT SOUSCRIT
+  // en parts de Groupement Forestier d'Investissement. RI = min(invest, 50k/100k) × 18 %.
+  // Art. 199 decies H CGI / BOI-IR-RICI-80.
+  const versGfiEff = versCouple(PD.gfi);
+  det.redGfi         = Math.min(input.gfi || 0, versGfiEff) * PD.gfi.taux;
+
+  // ─── IR-PME : saisie = MONTANT INVESTI (€), moteur calcule la RI ───
+  // Sémantique 2026 (F4-IRPME.a) : l'utilisateur saisit ce qui figure sur sa
+  // déclaration (versement effectué), pas un calcul intermédiaire.
+  // RI = min(invest, versementMax) × taux. Le cap absolu côté RI reste capRiMax.xxx.
+  const versPme       = versCouple(PD.irPme);
+  const versPmeEsus   = versCouple(PD.irPmeEsus);
+  const versPmeMH     = versCouple(PD.irPmeMH);
+  const versPmeJei    = versCouple(PD.irPmeJei);
+  const versPmeJeii   = versCouple(PD.irPmeJeii);
+  const versPmeJeir   = versCouple(PD.irPmeJeir);
+  const versFcpiJei   = versCouple(PD.fcpiJei);
+
+  det.redIrPme       = Math.min(input.irPme     || 0, versPme)     * PD.irPme.taux;
+  det.redIrPmeEsus   = Math.min(input.irPmeEsus || 0, versPmeEsus) * PD.irPmeEsus.taux;
+  det.redIrPmeMH     = Math.min(input.irPmeMH   || 0, versPmeMH)   * PD.irPmeMH.taux;
+  det.redIrPmeJeii   = Math.min(input.irPmeJeii || 0, versPmeJeii) * PD.irPmeJeii.taux;
+  det.redIrPmeJeir   = Math.min(input.irPmeJeir || 0, versPmeJeir) * PD.irPmeJeir.taux;
+
+  // ─── Plafond annuel PARTAGÉ irPmeJei + fcpiJei (art. 199 terdecies-0 A bis) ───
+  // Le cumul des INVESTISSEMENTS direct JEI + FCPI-JEI ne peut dépasser le
+  // plafond commun 75 000 € / 150 000 €. Politique : on alloue d'abord à
+  // l'IR-PME JEI direct, le solde du plafond va à FCPI-JEI.
+  const investJeiSaisi   = Math.max(0, input.irPmeJei || 0);
+  const investFcpiSaisi  = Math.max(0, input.fcpiJei  || 0);
+  const investJeiRetenu  = Math.min(investJeiSaisi, versPmeJei);
+  const investFcpiRetenu = Math.min(investFcpiSaisi, Math.max(0, versPmeJei - investJeiRetenu));
+  det.redIrPmeJei = investJeiRetenu  * PD.irPmeJei.taux;
+  det.redFcpiJei  = investFcpiRetenu * PD.fcpiJei.taux;
+
+  // ─── Plafond PLURI-ANNUEL JEI + JEIR (50k RI cumulée 2024-2028) ───
+  // S'applique sur les RI cumulées (pas les investissements). Input optionnel
+  // irPmeJeiJeirImputeAnterieur = RI 2024-2025 déjà utilisée.
+  // Politique : si dépassement, tronquer JEIR en priorité.
+  const imputeAnt = input.irPmeJeiJeirImputeAnterieur || 0;
+  const plafondPluriRestant = Math.max(0, PD.irPmeJeiJeirPlafondCumule - imputeAnt);
+  const cumulJeiJeir = det.redIrPmeJei + det.redIrPmeJeir;
+  if (cumulJeiJeir > plafondPluriRestant) {
+    const surplus = cumulJeiJeir - plafondPluriRestant;
+    det.redIrPmeJeir = Math.max(0, det.redIrPmeJeir - surplus);
+  }
   // Loc'Avantages — 2 modes acceptés :
   //   * NOUVEAU (Phase 2.4) : input.locAvantagesDepenses + input.locAvantagesPalier
   //     → moteur calcule la RI = min(dépenses, 10 000 €) × taux palier (15/35/65 %).
@@ -434,28 +493,63 @@ function calculerIR(input) {
   } else {
     det.redLocAvantages = Math.min(input.locAvantages || 0, capRiMax.locAvantages);
   }
-  det.redSofica      = Math.min(input.sofica || 0,       capRiMax.sofica);
+  // SOFICA — sémantique investissement (post-D3.2)
+  //   * input.sofica       = MONTANT SOUSCRIT dans l'année (cash sortant)
+  //   * input.soficaTaux   = '30' | '36' | '48' (engagement de la SOFICA)
+  // Versement effectif retenu = min(souscription, 18 000 €, 25 %·RNG) puis
+  // RI = versement retenu × taux choisi. Art. 199 unvicies CGI / BOI-IR-RICI-180-20.
+  const _tauxSoficaCle  = input.soficaTaux || PD.sofica.tauxDefaut;
+  const _tauxSofica     = PD.sofica.taux[_tauxSoficaCle] || PD.sofica.taux[PD.sofica.tauxDefaut];
+  const versSoficaRetenu = Math.min(input.sofica || 0, versSoficaEffectif);
+  det.redSofica      = versSoficaRetenu * _tauxSofica;
   det.redAutres      = input.autresReductions;  // catch-all, pas de cap
 
   // Surplus écrasés par les caps individuels (pour affichage UI)
+  // ATTENTION : la sémantique de capExcedents.xxx dépend de celle de input.xxx :
+  // - input = RI directe (legacy) : surplus = input − RI retenue (= ce qui dépasse)
+  // - input = INVESTISSEMENT (post-F4 pour IR-PME) : surplus = input − versementMax
+  //   (= ce qui dépasse le plafond d'investissement annuel)
   det.capExcedents = {
-    sofica:       Math.max(0, (input.sofica || 0)       - det.redSofica),
-    fcpiJei:      Math.max(0, (input.fcpiJei || 0)      - det.redFcpiJei),
-    fipCorse:     Math.max(0, (input.fipCorse || 0)     - det.redFipCorse),
-    irPme:        Math.max(0, (input.irPme || 0)        - det.redIrPme),
-    gfi:          Math.max(0, (input.gfi || 0)          - det.redGfi),
+    // SOFICA en sémantique investissement (D3.2) : surplus = montant souscrit
+    // au-delà du versement effectif (min 18k / 25%RNG). Cohérent IR-PME.
+    sofica:       Math.max(0, (input.sofica || 0)       - versSoficaEffectif),
+    // FIP Corse / GFI — sémantique investissement (D3.3) : surplus = invest
+    // saisi au-delà du plafond annuel de souscription.
+    fipCorse:     Math.max(0, (input.fipCorse || 0)     - versFipCorseEff),
+    gfi:          Math.max(0, (input.gfi || 0)          - versGfiEff),
     malraux:      Math.max(0, (input.malraux || 0)      - det.redMalraux),
     locAvantages: Math.max(0, (input.locAvantages || 0) - det.redLocAvantages),
+    // IR-PME (sémantique investissement) : surplus = invest saisi − plafond d'invest annuel
+    irPme:        Math.max(0, (input.irPme || 0)        - versPme),
+    irPmeEsus:    Math.max(0, (input.irPmeEsus || 0)    - versPmeEsus),
+    irPmeMH:      Math.max(0, (input.irPmeMH || 0)      - versPmeMH),
+    irPmeJeii:    Math.max(0, (input.irPmeJeii || 0)    - versPmeJeii),
+    irPmeJeir:    Math.max(0, (input.irPmeJeir || 0)    - versPmeJeir),
+    // Plafond partagé JEI+FCPI-JEI : on expose le surplus d'investissement
+    // cumulé qui dépasse le plafond commun
+    irPmeJei:     Math.max(0, (input.irPmeJei || 0)     - investJeiRetenu),
+    fcpiJei:      Math.max(0, (input.fcpiJei || 0)      - investFcpiRetenu),
   };
 
   det.totalReductions = det.redDons + det.redPinel + det.redGirardinPD + det.redGirardinAG
-    + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
-    + det.redSofica + det.redAutres;
+    + det.redFcpiJei + det.redFipCorse + det.redGfi
+    + det.redIrPme + det.redIrPmeEsus + det.redIrPmeMH
+    + det.redIrPmeJei + det.redIrPmeJeii + det.redIrPmeJeir
+    + det.redLocAvantages + det.redSofica + det.redAutres;
 
   // ============================================================
   // ÉTAPE 9 : CRÉDITS D'IMPÔT
   // ============================================================
-  det.credDomicile = Math.min(input.emploiDomicile, P.plafonds.emploiDomMax) * P.plafonds.emploiDomTaux;
+  // Emploi à domicile (art. 199 sexdecies-I-2° CGI) : plafond de base 12 000 €
+  // majoré par enfant à charge (+1 500 €) et par enfant en garde alternée (+750 €),
+  // capé à 15 000 €. Majorations seniors/invalidité non modélisées.
+  const majoEnfantsDom = P.plafonds.emploiDomMajEnfant * input.nbEnfants
+                      + P.plafonds.emploiDomMajGardeAlt * input.gardeAlternee;
+  const plafondEmploiDom = Math.min(
+    P.plafonds.emploiDomMax + majoEnfantsDom,
+    P.plafonds.emploiDomMaxMajore
+  );
+  det.credDomicile = Math.min(input.emploiDomicile, plafondEmploiDom) * P.plafonds.emploiDomTaux;
   // Garde enfants : plafond de 3 500 € de dépenses PAR enfant < 6 ans
   // On utilise nbEnfants comme approximation du nombre d'enfants éligibles
   const gardeMax = P.plafonds.gardeEnfantsMax * Math.max(1, input.nbEnfants);
@@ -494,8 +588,12 @@ function calculerIR(input) {
   // ============================================================
 
   // RI panier par catégorie
+  // IR-PME : seuls irPme / irPmeEsus / irPmeMH entrent en niche10.
+  // Les variantes JEI direct, JEII, JEIR et FCPI-JEI sont HORS plafond niches
+  // (art. 200-0 A exclut 199 terdecies-0 A bis et ter) → ne PAS les inclure ici.
   const ri10Panier = det.redPinel
-    + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme
+    + det.redFipCorse + det.redGfi
+    + det.redIrPme + det.redIrPmeEsus + det.redIrPmeMH
     + det.redLocAvantages + det.redAutres
     + det.credDomicile + det.credGarde + det.credAutres;
   const ri18Panier = det.redGirardinPD * P.niches.girardinPdQuotePart
@@ -537,16 +635,20 @@ function calculerIR(input) {
   // ÉTAPE 11 : IMPÔT NET FINAL (hors CEHR)
   // ============================================================
   // Application des réductions avec plafonnement niches par catégorie.
-  // Hors panier niches (toujours retenus) : dons, fraisScol, EHPAD, Malraux.
+  // Hors panier niches (toujours retenus) : dons, fraisScol, EHPAD, Malraux,
+  // et les variantes IR-PME JEI direct / JEII / JEIR / FCPI-JEI
+  // (art. 200-0 A CGI exclut explicitement 199 terdecies-0 A bis et ter).
   const redNiche10Retenue = (det.redPinel
-    + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme
+    + det.redFipCorse + det.redGfi
+    + det.redIrPme + det.redIrPmeEsus + det.redIrPmeMH
     + det.redLocAvantages + det.redAutres) * facteur10;
   const redNiche18Retenue = (det.redGirardinPD + det.redGirardinAG + det.redSofica) * facteur18;
+  const redIrPmeHors = det.redIrPmeJei + det.redIrPmeJeii + det.redIrPmeJeir + det.redFcpiJei;
 
   det.reductionsAppliquees = Math.min(
     det.impotApresDecote + det.irMobilier,
     det.redDons + det.fraisScol + det.redEhpad + det.redMalraux
-    + redNiche10Retenue + redNiche18Retenue
+    + redNiche10Retenue + redNiche18Retenue + redIrPmeHors
   );
 
   // Crédits : tous cat. niche10 (emploi domicile, garde, autres crédits).
@@ -556,9 +658,18 @@ function calculerIR(input) {
   // PFNL (acompte 2CK déjà versé à la source par la banque) : crédit d'impôt
   // sans plafond niches, imputé sur l'IR final. Si supérieur à l'impôt dû,
   // l'excédent est remboursé (impôt net peut devenir négatif).
-  // - input.pfnlVerse : acompte 2CK saisi par l'utilisateur (div/intérêts)
+  // - input.pfnlVerse : SAISI EXPLICITEMENT par l'utilisateur, comme la case
+  //   2CK du formulaire officiel impots.gouv.fr. Choix de design délibéré :
+  //   le simulateur officiel ne devine pas non plus, et auto-imputer casserait
+  //   le cas dispense de prélèvement (RFR < 25/50k intérêts, < 50/75k
+  //   dividendes → banque ne prélève rien → aucun 2CK à créditer →
+  //   l'utilisateur laisse pfnlVerse vide).
+  //   `det.pfnl2CKAuto` exposé en INFO uniquement (jamais consommé par le
+  //   calcul) pour qu'une future UI puisse suggérer le montant à l'utilisateur.
   // - det.pfnlAV     : PFNL automatiquement prélevé sur les produits AV > 8 ans
-  det.pfnlVerse = input.pfnlVerse || 0;
+  //   (déjà géré plus haut). Auto-imputable car prélevé sans dispense possible.
+  det.pfnl2CKAuto = (input.dividendes + (input.interets || 0)) * P.ps.pfuIr;  // info, non utilisé
+  det.pfnlVerse   = input.pfnlVerse || 0;
 
   det.impotNet = Math.max(0,
     det.impotApresDecote + det.irMobilier + det.irAV - det.reductionsAppliquees

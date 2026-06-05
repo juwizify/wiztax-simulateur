@@ -59,7 +59,8 @@ const PARAMS = {
     mobilier: 0.186,  // dividendes, intérêts, PV mob — CSG 10.6% + CRDS 0.5% + sol. 7.5%
     foncier:  0.186,  // foncier nu, LMNP, micro-foncier — CFA LFSS 2026 inclus
     av:       0.172,  // AV > 8 ans — non concernée par la CFA, reste à 17,2 %
-    pfuIr:    0.128,  // PFU — part IR
+    pfuIr:    0.128,  // PFU — part IR (et IR sur AV > 8 ans avant abattement, art. 125-0 A CGI)
+    avIr75:   0.075,  // IR sur AV ≤ 8 ans (PFNL) avant abattement, art. 125-0 A CGI
     csgDeductible: 0.068,
   },
 
@@ -84,32 +85,90 @@ const PARAMS = {
     // SOFICA — art. 199 unvicies CGI, niche majorée 18 k
     sofica: {
       versementMax: 18000,
+      // Versement effectif retenu = min(versementMax, plafondAssiettePctRng × RNG)
+      plafondAssiettePctRng: 0.25,
       // Taux selon engagement de la SOFICA (production indépendante / langue régionale…)
       taux: { '30': 0.30, '36': 0.36, '48': 0.48 },
       tauxDefaut: '36',
     },
-    // FCPI JEI — LF 2026 (remplace le FCPI classique pour les souscriptions 2026+)
+    // FCPI investi en JEI — art. 199 terdecies-0 A bis (LF 2026 art. 199 terdecies-0 A bis)
+    // Taux 30 %, plafond ANNUEL PARTAGÉ avec irPmeJei (cumul fcpiJei + irPmeJei ≤ vMax).
+    // Hors plafond niches (art. 200-0 A exclut explicitement 199 terdecies-0 A bis).
+    // Validité : versements depuis le 21/02/2026 (LF 2026 / loi 2026-103).
     fcpiJei: {
-      versementMax:        12000,
-      versementMaxCouple:  24000,
+      versementMax:        75000,
+      versementMaxCouple: 150000,
       taux: 0.30,
+      panierPartage: 'irPmeJei',          // plafond commun avec irPmeJei
     },
-    // FCPI classique : RETIRÉ au 21/02/2026 (LF 2026 / loi 2026-103).
-    // Suppression complète du moteur. La mécanique FCPI subsiste uniquement
-    // via fcpiJei (FCPI investi en JEI, taux 30 %, art. 199 terdecies-0 A bis),
-    // qui reste un dispositif actif. Note historique conservée pour mémoire.
+    // FCPI classique : RETIRÉ au 21/02/2026 (LF 2026 / loi 2026-103). Suppression
+    // complète du moteur en D3.4 — la mécanique FCPI subsiste UNIQUEMENT via
+    // PD.fcpiJei (FCPI investi en JEI, taux 30 %, panier partagé avec IR-PME JEI).
     // FIP Corse / Outre-mer — art. 199 terdecies-0 A bis
     fipCorse: {
       versementMax:        12000,
       versementMaxCouple:  24000,
       taux: 0.30,
     },
-    // IR-PME / Madelin — art. 199 terdecies-0 A
+
+    // ── IR-PME (art. 199 terdecies-0 A CGI et variantes) ────────────────
+    // Source : Légifrance + BOFiP BOI-IR-RICI-90, post-LF 2026 (loi 2026-103
+    // du 19/02/2026). Cf. tasks/d3.1-irpme-spec.md pour la cartographie.
+
+    // IR-PME — PME standard (art. 199 terdecies-0 A)
+    // Taux 18 % (le « boost » 25 % de 2024-2025 a expiré au 31/12/2025).
+    // DANS le plafond niches 10 000 €.
     irPme: {
+      versementMax:        50000,
+      versementMaxCouple: 100000,
+      taux: 0.18,
+    },
+    // IR-PME — ESUS / SFS (Entreprise Solidaire d'Utilité Sociale / Société Foncière Solidaire)
+    // Taux majoré 25 % — versements 28/06/2024 → 30/09/2026.
+    // Au-delà du 30/09/2026 : subordonné à validation Commission européenne.
+    irPmeEsus: {
       versementMax:        50000,
       versementMaxCouple: 100000,
       taux: 0.25,
     },
+    // IR-PME — Sociétés foncières de monuments historiques
+    // Taux 25 %, depuis le 28/09/2025.
+    irPmeMH: {
+      versementMax:        50000,
+      versementMaxCouple: 100000,
+      taux: 0.25,
+    },
+    // IR-PME — JEI direct (art. 199 terdecies-0 A bis)
+    // Taux 30 %, plafond ANNUEL 75k/150k PARTAGÉ avec fcpiJei.
+    // Plafond pluri-annuel : RI cumulée irPmeJei + irPmeJeir ≤ 50 000 € sur 2024-2028.
+    // Hors plafond niches (art. 200-0 A exclut 199 terdecies-0 A bis).
+    irPmeJei: {
+      versementMax:        75000,
+      versementMaxCouple: 150000,
+      taux: 0.30,
+      panierPartage: 'fcpiJei',           // plafond commun avec fcpiJei
+    },
+    // IR-PME — JEII (Jeune Entreprise Innovante à Impact) — nouvel art. LF 2026
+    // Taux 40 %, validité 21/02/2026 → 31/12/2028.
+    irPmeJeii: {
+      versementMax:        50000,
+      versementMaxCouple: 100000,
+      taux: 0.40,
+    },
+    // IR-PME — JEIR (Jeune Entreprise Innovante de Rupture) — art. 199 terdecies-0 A ter
+    // Taux 50 %, validité 1/1/2024 → 31/12/2028.
+    // Plafond pluri-annuel partagé avec irPmeJei (cf. ci-dessus).
+    // Hors plafond niches (art. 200-0 A exclut 199 terdecies-0 A ter).
+    irPmeJeir: {
+      versementMax:        50000,
+      versementMaxCouple: 100000,
+      taux: 0.50,
+    },
+
+    // Plafond pluri-annuel commun JEI + JEIR : 50 000 € de RI cumulée sur 2024-2028
+    // (art. 199 terdecies-0 A bis et ter). Appliqué dans le moteur via input
+    // `irPmeJeiJeirImputeAnterieur` (RI déjà imputée 2024-2025, optionnel).
+    irPmeJeiJeirPlafondCumule: 50000,
     // GFI — art. 199 decies H CGI (Groupements Forestiers d'Investissement)
     gfi: {
       versementMax:        50000,
@@ -142,9 +201,11 @@ const PARAMS = {
 
   // --- PLAFONDS RÉDUCTIONS / CRÉDITS ---
   plafonds: {
-    // Dons
-    dons75Plafond:        2000,    // seuil taux 75% (LF 2026 art. 28)
-    donsPlafondRNI:       0.20,    // base totale dons plafonnée à 20% du RNI (art. 200 CGI)
+    // Dons (art. 200 CGI + LF 2026 art. 28 pour le seuil 75 %)
+    dons75Taux:           0.75,    // taux 7UD organismes d'aide aux personnes (Coluche)
+    dons66Taux:           0.66,    // taux 7UF intérêt général (cas standard)
+    dons75Plafond:        2000,    // seuil au-dessus duquel le 7UD bascule sur le régime 66 %
+    donsPlafondRNI:       0.20,    // base totale dons plafonnée à 20 % du RNI
 
     // PER — déduction plafonnée à 10% des revenus pro (art. 163 quatervicies CGI)
     // Note : le plafond réglementaire se calcule sur les revenus N-1.
@@ -193,9 +254,18 @@ const PARAMS = {
     cotSyndicalesTaux:    0.66,
     cotSyndicalesPlafondPct: 0.01,
 
-    // Emploi à domicile & garde enfants
+    // Emploi à domicile (art. 199 sexdecies-I-2° CGI) — crédit d'impôt 50 %
+    // Plafond de base 12 000 € majoré de 1 500 € par enfant à charge
+    // (750 € en garde alternée), dans la limite globale de 15 000 €.
+    // Note : majorations seniors ≥ 65 ans dans le foyer et présence d'invalide
+    // (plafond 20 000 €) non modélisées — inputs absents de l'UI actuelle.
     emploiDomTaux:        0.50,
-    emploiDomMax:         12000,
+    emploiDomMax:         12000,   // plafond de base
+    emploiDomMajEnfant:   1500,    // par enfant à charge plein
+    emploiDomMajGardeAlt: 750,     // par enfant en garde alternée
+    emploiDomMaxMajore:   15000,   // cap absolu avec majorations
+
+    // Garde enfants < 6 ans
     gardeEnfantsTaux:     0.50,
     gardeEnfantsMax:      3500,    // par enfant < 6 ans — multiplié par nbEnfants
   },
@@ -211,3 +281,7 @@ const PARAMS = {
     taux2: 0.04,
   },
 };
+
+// Compat Node (tests CommonJS). En navigateur, PARAMS reste exposé globalement
+// par le chargement <script> sans avoir à passer par exports.
+if (typeof module !== 'undefined') module.exports = { PARAMS };

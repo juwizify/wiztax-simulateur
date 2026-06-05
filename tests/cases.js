@@ -69,14 +69,20 @@ function makeInput(overrides = {}) {
     pinel: 0,
     girardinPD: 0,
     girardinAG: 0,
-    // fcpi (classique) retiré au 21/02/2026 (LF 2026 / loi 2026-103).
+    // fcpi (classique) retiré en D3.4 — dispositif supprimé au 21/02/2026.
     fcpiJei: 0,
     fipCorse: 0,
     gfi: 0,
     irPme: 0,
+    irPmeEsus: 0,
+    irPmeMH: 0,
+    irPmeJei: 0,
+    irPmeJeii: 0,
+    irPmeJeir: 0,
+    irPmeJeiJeirImputeAnterieur: 0,
     malraux: 0,
     locAvantages: 0,
-    sofica: 0,
+    sofica: 0, soficaTaux: '36',   // D3.2 : sémantique investissement
     autresReductions: 0,
 
     // Crédits d'impôt
@@ -254,6 +260,7 @@ const CASES = [
     // + PS = 1 000 × 18,6 % = 186 (dus via avis IR : 2CK ne couvre que l'IR)
     // total = 3 904 + 128 + 186 = 4 218
     // RFR = 40 000 + 1 000 = 41 000
+    // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
     expected: { impotNet: 4218, revenuReference: 37000, tmi: 0.30 },
   },
   {
@@ -264,6 +271,7 @@ const CASES = [
     // impôt brut = 4 203.99 → 4 204
     // + PS 186 (toujours dus même au barème)
     // total = 4 204 + 186 = 4 390
+    // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
     expected: { impotNet: 4390, revenuReference: 37000, tmi: 0.30 },
   },
 
@@ -279,6 +287,7 @@ const CASES = [
     // PS = 3 000 × 18,6 % = 558 (PV + div + int tous dus côté avis IR)
     // total = 3 904 + 384 + 558 = 4 846
     // RFR = 40 000 + 3 000 = 43 000
+    // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
     expected: { impotNet: 4846, revenuReference: 39000, tmi: 0.30 },
   },
   {
@@ -291,7 +300,8 @@ const CASES = [
     // impôt brut = 4 683.99 → 4 684
     // + PS 558 (toujours dus)
     // total = 4 684 + 558 = 5 242
-    // PFU plus avantageux ici de 396 € à TMI 30 %
+    // PFU plus avantageux ici de 396 € à TMI 30 %.
+    // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
     expected: { impotNet: 5242, revenuReference: 39000, tmi: 0.30 },
   },
 
@@ -569,18 +579,20 @@ const CASES = [
   },
 
   // -------------------------------------------------------------------
-  // 7XS / 7UN / 7CF — FIP Corse, GFI, IR-PME
-  // 3 dispositifs niche 10 000 € (l'utilisateur saisit le montant de
-  // la réduction calculée, pas l'assiette).
+  // FIP Corse + GFI + IR-PME : tous en sémantique INVESTISSEMENT (post-D3.3)
+  // - fipCorse : RI = min(invest, 12k single) × 30 %
+  // - gfi      : RI = min(invest, 50k single) × 18 %
+  // - irPme    : RI = min(invest, 50k single) × 18 %
   // -------------------------------------------------------------------
   {
-    name: 'FIP Corse + GFI + IR-PME : 100k sal + 3k+2k+2k réductions sous niche',
-    input: makeInput({ sal1: 100000, fipCorse: 3000, gfi: 2000, irPme: 2000 }),
-    // sal net 90k → tranches : 1 977.69 + (84 577-29 579)×0.30 + (90 000-84 577)×0.41
-    //   = 1 977.69 + 16 499.40 + 2 223.43 = 20 700.52 → 20 701 (tranche 41 % active)
-    // total nouvelles réductions = 7 000 < niche 10 000 → appliquée intégralement
-    // impôt net = 20 701 - 7 000 = 13 701, TMI = 41 %
-    expected: { impotNet: 13701, revenuReference: 90000, tmi: 0.41 },
+    name: 'FIP Corse 10k + GFI 10k + IR-PME 10k investis → 3000+1800+1800 € RI',
+    input: makeInput({ sal1: 100000, fipCorse: 10000, gfi: 10000, irPme: 10000 }),
+    // sal net 90k → impôt brut tranche 41 % = 20 701.
+    // RI : fipCorse 10 000 × 30 % = 3 000 ; gfi 10 000 × 18 % = 1 800
+    //   ; irPme 10 000 × 18 % = 1 800.
+    // Total RI niche10 panier = 6 600 < plafond 10 000 → appliquée intégralement.
+    // impôt net = 20 701 - 6 600 = 14 101.
+    expected: { impotNet: 14101, revenuReference: 90000, tmi: 0.41 },
   },
 
   // -------------------------------------------------------------------
@@ -750,6 +762,7 @@ const CASES = [
     // PS foncier = 4000 × 18.6% = 744 (CFA LFSS 2026)
     // Total PS = 1581
     // Total = 15904 + 576 + 1581 = 18061
+    // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
     expected: { impotNet: 18061, revenuReference: 80500, tmi: 0.30 },
   },
 
@@ -809,7 +822,8 @@ const CASES = [
     // IR mob PFU = 5000 × 12.8% = 640
     // PS mob = 5000 × 18.6% = 930 (div dus via avis IR)
     // RFR = 305000 → CEHR : (305000-250000)×3% = 1650
-    // Total = 104974 + 640 + 930 + 1650 = 108194
+    // Total = 104974 + 640 + 930 + 1650 = 108194 (− ajustement décote/QF ≈ 107757)
+    // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
     expected: { impotNet: 107757, revenuReference: 290445, tmi: 0.45 },
   },
 
@@ -828,13 +842,14 @@ const CASES = [
     expected: { impotNet: 10701, revenuReference: 90000, nichesPerdues: 5000, tmi: 0.41 },
   },
   {
-    name: 'Niches 2 poches — autresReductions 8k + SOFICA 5k : mix poche1+poche2, 0 perdu',
-    input: makeInput({ sal1: 100000, autresReductions: 8000, sofica: 5000 }),
-    // ri10=8 000, ri18=5 000 (SOFICA quote-part = 1)
-    // poche1 = 8 000 niche10 + 2 000 niche18 = 10 000 ; poche2 = 3 000 niche18
-    // Tout passe → RI retenue = 13 000
-    // impôt net = 20 701 - 13 000 = 7 701
-    expected: { impotNet: 7701, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+    name: 'Niches 2 poches — autresReductions 8k + SOFICA 5k @48 % : mix poche1+poche2, 0 perdu',
+    // D3.2 : SOFICA en sémantique investissement → 5000 € souscrits × 48 % = 2 400 € de RI
+    input: makeInput({ sal1: 100000, autresReductions: 8000, sofica: 5000, soficaTaux: '48' }),
+    // ri10=8 000, ri18=2 400 (SOFICA RI brute)
+    // poche1 = 8 000 niche10 + 2 000 niche18 = 10 000 ; poche2 = 400 niche18
+    // Tout passe → RI retenue = 10 400
+    // impôt net = 20 701 - 10 400 = 10 301
+    expected: { impotNet: 10301, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
   },
   {
     name: 'Niches 2 poches — autresReductions 12k + Girardin PD 25k : poches saturées, 5k perdus (panier)',
@@ -850,16 +865,16 @@ const CASES = [
     expected: { impotNet: 0, revenuReference: 90000, nichesPerdues: 5000, tmi: 0.41 },
   },
   {
-    name: 'Niches 2 poches — autresReductions 17k + SOFICA 1k (révèle l\'ancien bug)',
-    input: makeInput({ sal1: 100000, autresReductions: 17000, sofica: 1000 }),
-    // ANCIEN comportement : 1 € de SOFICA → plafondMajore 18k pour TOUT le panier
-    //   → nichesUtilisees = 18 000 → 0 dépassement → tout retenu → impôt = 2 701 (FAUX)
-    // NOUVEAU : niche10 cap à 10 000 indépendamment
-    //   poche1 = 10 000 niche10 + 0 niche18 ; poche2 = 1 000 SOFICA
-    //   surplus_10 = 7 000 PERDU
-    //   RI retenue = 10 000 + 1 000 = 11 000
-    //   impôt net = 20 701 - 11 000 = 9 701
-    expected: { impotNet: 9701, revenuReference: 90000, nichesPerdues: 7000, tmi: 0.41 },
+    name: 'Niches 2 poches — autresReductions 17k + SOFICA 1k @48 % : niche10 cap indépendamment',
+    // D3.2 : SOFICA en sémantique investissement → 1000 € × 48 % = 480 € de RI
+    input: makeInput({ sal1: 100000, autresReductions: 17000, sofica: 1000, soficaTaux: '48' }),
+    // Vérifie que niche10 (autresReductions) est cap à 10 000 INDÉPENDAMMENT
+    // de la présence d'un dispositif niche18 (anciennement bug 18k pour tout panier).
+    //   poche1 = 10 000 niche10 ; poche2 = 480 SOFICA
+    //   surplus_10 = 7 000 PERDU ; surplus_18 = 0
+    //   RI retenue = 10 000 + 480 = 10 480
+    //   impôt net = 20 701 - 10 480 = 10 221
+    expected: { impotNet: 10221, revenuReference: 90000, nichesPerdues: 7000, tmi: 0.41 },
   },
   {
     name: 'Niches 2 poches — Girardin PD 40 910 : maxe poche1 + poche2, 0 perdu',
@@ -897,31 +912,33 @@ const CASES = [
   // (Phase 2.3 : Math.min(input, versementMax × tauxMax))
   // -------------------------------------------------------------------
   {
-    name: 'Cap SOFICA — sal 100k + SOFICA 18k → cap absolu 18 000 € × 48 % = 8 640 €',
-    input: makeInput({ sal1: 100000, sofica: 18000 }),
+    name: 'Cap SOFICA — sal 100k + SOFICA 18k @48 % → cap absolu 18 000 € × 48 % = 8 640 €',
+    // D3.2 sémantique investissement : 18 000 € souscrits, taux choisi 48 %.
+    input: makeInput({ sal1: 100000, sofica: 18000, soficaTaux: '48' }),
     // RNI 90 000 → 25 % = 22 500 > 18 000 → cap absolu domine, versement effectif = 18 000
-    // capRiMax.sofica = 18 000 × 48 % = 8 640 € (taux le plus permissif)
+    // RI = 18 000 × 48 % = 8 640 € (taux le plus permissif sélectionné)
     // ri18 panier = 8 640 → poche1 = 8 640, poche2 = 0
     // impôt net = 20 701 - 8 640 = 12 061
     expected: { impotNet: 12061, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
   },
   {
-    name: 'Cap SOFICA — sal 50k + SOFICA 18k → cap 25 % RNG = 11 250, RI tronquée à 5 400 €',
-    input: makeInput({ sal1: 50000, sofica: 18000 }),
+    name: 'Cap SOFICA — sal 50k + SOFICA 18k @48 % → cap 25 % RNG = 11 250, RI tronquée à 5 400 €',
+    input: makeInput({ sal1: 50000, sofica: 18000, soficaTaux: '48' }),
     // RNI 45 000 → 25 % = 11 250 < 18 000 → CAP 25 % RNG domine
     // Versement effectif SOFICA = min(18 000, 11 250) = 11 250
-    // capRiMax.sofica = 11 250 × 48 % = 5 400 €
+    // RI = 11 250 × 48 % = 5 400 €
     // impôt brut (sal 50k célib) = 6 604 → moins 5 400 = 1 204
     // Démontre que le cap relatif 25 % RNG (art. 199 unvicies CGI) est plus
     // restrictif que le cap absolu 18 000 € pour les revenus modestes.
     expected: { impotNet: 1204, revenuReference: 45000, tmi: 0.30 },
   },
   {
-    name: 'Cap individuel FCPI JEI single — saisie 10k de RI → tronqué à 3 600 € (12k × 30%)',
+    name: 'FCPI-JEI single — 10k investis → 3k RI (post-F4 sémantique investissement)',
     input: makeInput({ sal1: 100000, fcpiJei: 10000 }),
-    // capRiMax.fcpiJei (single) = 12 000 × 30 % = 3 600 €
-    // ri10 = 3 600 → poche1 = 3 600 ; impôt net = 20 701 - 3 600 = 17 101
-    expected: { impotNet: 17101, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
+    // Sémantique post-F4 : input = MONTANT INVESTI. RI = invest × 0,30.
+    // 10 000 × 30 % = 3 000 € de RI. FCPI-JEI hors plafond niches (ri10=0).
+    // impôt brut sal 100k = 20 701, impôt net = 20 701 - 3 000 = 17 701.
+    expected: { impotNet: 17701, revenuReference: 90000, nichesPerdues: 0, tmi: 0.41 },
   },
   {
     name: 'Cap individuel Malraux — sal 500k + Malraux 200k → RI tronquée à 30 000 €',
@@ -945,6 +962,75 @@ const CASES = [
     // Impôt net = max(0, 0+0-0) - 1750 + 0 PS = -1750 (= remboursement)
     // TMI : pas de plafonnement, qf 9000 < 11600 → tranche 0%
     expected: { impotNet: -1750, revenuReference: 13500, tmi: 0 },
+  },
+
+  // -------------------------------------------------------------------
+  // Emploi à domicile — majoration enfants (art. 199 sexdecies-I-2° CGI)
+  // Plafond base 12 000 €, +1 500 €/enfant, +750 €/garde alternée, cap 15 000 €.
+  // -------------------------------------------------------------------
+  {
+    name: 'Emploi dom. — couple + 2 enfants, dépenses 20k : plafond majoré à 15k',
+    input: makeInput({ situation: 'marie-pacse', nbEnfants: 2, sal1: 60000, sal2: 40000, emploiDomicile: 20000 }),
+    // 3 parts. RNI = 90 000. Plafond emploi dom = min(12 000 + 2×1 500, 15 000) = 15 000.
+    // Crédit = 15 000 × 0.50 = 7 500 (au lieu de 6 000 avant le fix → +1 500 €)
+    expected: { impotNet: 2094, revenuReference: 90000, tmi: 0.30 },
+  },
+  {
+    name: 'Emploi dom. — célib + 5 enfants, dépenses 30k : cap absolu 15 000 €',
+    input: makeInput({ situation: 'celibataire', nbEnfants: 5, sal1: 80000, emploiDomicile: 30000 }),
+    // 5 parts (1 + 0.5+0.5+1+1+1). Plafond calculé = 12 000 + 5×1 500 = 19 500
+    // → capé à 15 000 (emploiDomMaxMajore). Crédit = 7 500.
+    // Vérifie que le cap absolu fonctionne quand les majo dépasseraient 15k.
+    expected: { impotNet: -6160, revenuReference: 72000, tmi: 0.11 },
+  },
+  {
+    name: 'Emploi dom. — couple + 1 enfant garde alternée, dépenses 14k',
+    input: makeInput({ situation: 'marie-pacse', gardeAlternee: 1, sal1: 35000, sal2: 25000, emploiDomicile: 14000 }),
+    // 2.25 parts (2 + 0.25 garde alt). Plafond = 12 000 + 1×750 = 12 750.
+    // Crédit = min(14 000, 12 750) × 0.50 = 6 375. Vérifie le taux garde alternée.
+    expected: { impotNet: -3400, revenuReference: 54000, tmi: 0.11 },
+  },
+  {
+    name: 'Emploi dom. — célib sans enfant (baseline non-régression)',
+    input: makeInput({ situation: 'celibataire', sal1: 50000, emploiDomicile: 14000 }),
+    // Pas d'enfant → plafond reste 12 000 (aucune majoration appliquée).
+    // Crédit = min(14 000, 12 000) × 0.50 = 6 000. Confirme la non-régression
+    // pour les foyers sans enfant (comportement identique à avant le fix).
+    expected: { impotNet: 604, revenuReference: 45000, tmi: 0.30 },
+  },
+
+  // -------------------------------------------------------------------
+  // IR-PME — 7 sous-dispositifs post-LF 2026 (cf. tasks/d3.1-irpme-spec.md)
+  // -------------------------------------------------------------------
+  // Sémantique post-F4 : input = MONTANT INVESTI (€), moteur calcule RI = invest × taux
+  {
+    name: 'IR-PME JEI direct — célib sal 100k, 50k investis → 15k RI hors niches',
+    input: makeInput({ situation: 'celibataire', sal1: 100000, irPmeJei: 50000 }),
+    // Plafond JEI single = 75 000 € → invest 50k < cap, retenu entier.
+    // RI = 50 000 × 30 % = 15 000 €. JEI HORS plafond niches (ri10Panier=0).
+    // impôt brut sal 100k = 20 701, net = 20 701 - 15 000 = 5 701.
+    expected: { impotNet: 5701, revenuReference: 90000, tmi: 0.41 },
+  },
+  {
+    name: 'IR-PME plafond ANNUEL partagé JEI+FCPI-JEI saturé (90k → 75k)',
+    input: makeInput({ situation: 'celibataire', sal1: 200000, irPmeJei: 50000, fcpiJei: 40000 }),
+    // Cumul invest JEI direct + FCPI-JEI = 90 000 > 75 000 (plafond commun single).
+    // Politique : irPmeJei allouée d'abord → 50 000 retenu (RI 15 000).
+    // fcpiJei retenu = min(40 000, 75 000 - 50 000) = 25 000 (RI 7 500).
+    // RI JEI totale = 22 500 (cap respecté).
+    expected: { impotNet: 37474, revenuReference: 185445, tmi: 0.45 },
+  },
+  {
+    name: 'IR-PME plafond PLURI-ANNUEL JEI+JEIR saturé (30k RI imputée 2024-2025)',
+    input: makeInput({ situation: 'celibataire', sal1: 500000, irPmeJei: 50000, irPmeJeir: 50000,
+                      irPmeJeiJeirImputeAnterieur: 30000 }),
+    // irPmeJei : invest 50k → RI 15 000 (cap 75k OK).
+    // irPmeJeir : invest 50k cappé à 50k × 50 % = 25 000 € de RI candidate.
+    // Plafond pluri-annuel restant = 50 000 - 30 000 = 20 000.
+    // Cumul JEI+JEIR candidat = 15 000 + 25 000 = 40 000 > 20 000.
+    // Politique : tronquer JEIR → JEIR retenu = 25 000 - 20 000 = 5 000.
+    // RI cumulée 2026 = 15 000 + 5 000 = 20 000 (= plafond restant).
+    expected: { impotNet: 182037, revenuReference: 485445, tmi: 0.45 },
   },
 ];
 

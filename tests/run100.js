@@ -66,8 +66,10 @@ function makeInput(o = {}) {
     per: 0, perPlafondManuel: 0, pensionsAlim: 0, nbBeneficiairesPA: 0,
     csgDeductible: 0, autresCharges: 0,
     dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
-    fcpi: 0, fcpiJei: 0, fipCorse: 0, gfi: 0, irPme: 0,
-    malraux: 0, locAvantages: 0, sofica: 0, autresReductions: 0,
+    fcpiJei: 0, fipCorse: 0, gfi: 0, irPme: 0,    // fcpi (classique) retiré D3.4
+    malraux: 0, locAvantages: 0,
+    sofica: 0, soficaTaux: '36',         // D3.2 : sémantique investissement
+    autresReductions: 0,
     emploiDomicile: 0, gardeEnfants: 0, cotSyndicales: 0,
     fraisScolCollege: 0, fraisScolLycee: 0, fraisScolSup: 0,
     ehpadFrais: 0, ehpadNbPers: 1, autresCredits: 0,
@@ -301,16 +303,26 @@ function oracleCalc(input) {
   // Couple : SOFICA = 18 000 × 48 % = 8 640 (pas de différence single/couple).
   const couple = i.situation === 'marie-pacse';
   const cv = (single, c) => couple && c !== undefined ? c : single;
-  // SOFICA double plafond : min(18 000, 25 % RNG) × 48 %
+  // SOFICA — D3.2 sémantique investissement :
+  //   versement effectif = min(18 000, 25 % RNG) — c'est le CAP D'INVESTISSEMENT
+  //   RI = versement effectif retenu × taux choisi (input.soficaTaux)
   const versSoficaEff = Math.min(18000, rni * 0.25);
-  const capSofica   = versSoficaEff * 0.48;
-  // capFCPI retiré — FCPI classique supprimé au 21/02/2026 (LF 2026).
-  const capFcpiJei  = cv(12000, 24000) * 0.30;       // 3 600 / 7 200
-  const capFipCorse = cv(12000, 24000) * 0.30;       // 3 600 / 7 200
-  const capIrPme    = cv(50000, 100000) * 0.25;      // 12 500 / 25 000
-  const capGfi      = cv(50000, 100000) * 0.18;      //  9 000 / 18 000
-  const capMalraux  = 100000 * 0.30;                 // 30 000
-  const capLocAv    = 10000 * 0.65;                  //  6 500
+  const TAUX_SOFICA   = { '30': 0.30, '36': 0.36, '48': 0.48 };
+  const tauxSoficaOr  = TAUX_SOFICA[i.soficaTaux] || TAUX_SOFICA['36'];
+  // capFCPI retiré en D3.4 — dispositif FCPI classique supprimé au 21/02/2026.
+  const capFcpiJei    = cv(75000, 150000) * 0.30;       // 22 500 / 45 000 (plafond PARTAGÉ avec irPmeJei)
+  // FIP Corse — D3.3 sémantique investissement : RI = min(invest, versCouple) × 30 %
+  const versFipCorseEff = cv(12000, 24000);             // 12k / 24k
+  const capIrPme      = cv(50000, 100000) * 0.18;       // 9 000 / 18 000 (PME standard, taux corrigé post-LF 2026)
+  const capIrPmeEsus  = cv(50000, 100000) * 0.25;       // 12 500 / 25 000 (ESUS/SFS)
+  const capIrPmeMH    = cv(50000, 100000) * 0.25;       // 12 500 / 25 000 (Monuments historiques)
+  const capIrPmeJei   = cv(75000, 150000) * 0.30;       // 22 500 / 45 000 (JEI direct, plafond PARTAGÉ avec fcpiJei)
+  const capIrPmeJeii  = cv(50000, 100000) * 0.40;       // 20 000 / 40 000 (JEII LF 2026)
+  const capIrPmeJeir  = cv(50000, 100000) * 0.50;       // 25 000 / 50 000 (JEIR art. 199 terdecies-0 A ter)
+  // GFI — D3.3 sémantique investissement : RI = min(invest, versCouple) × 18 %
+  const versGfiEff      = cv(50000, 100000);            // 50k / 100k
+  const capMalraux    = 100000 * 0.30;                  // 30 000
+  const capLocAv      = 10000 * 0.65;                   //  6 500
 
   // Malraux — mode "travaux + zone" prioritaire, sinon fallback legacy
   let redMalraux;
@@ -326,11 +338,39 @@ function oracleCalc(input) {
   const redPinel = i.pinel;                                   // pas de cap V1
   const redGirPD = i.girardinPD;                              // pas de cap (panier majoré)
   const redGirAG = i.girardinAG;
-  // redFCPI retiré — FCPI classique supprimé au 21/02/2026 (LF 2026).
-  const redFcpiJei = Math.min(i.fcpiJei || 0,   capFcpiJei);
-  const redFipCorse = Math.min(i.fipCorse || 0, capFipCorse);
-  const redGfi = Math.min(i.gfi || 0,           capGfi);
-  const redIrPme = Math.min(i.irPme || 0,       capIrPme);
+  // redFCPI retiré en D3.4 — dispositif FCPI classique supprimé au 21/02/2026.
+  const redFipCorse = Math.min(i.fipCorse || 0, versFipCorseEff) * 0.30;
+  const redGfi      = Math.min(i.gfi || 0,      versGfiEff)      * 0.18;
+
+  // ─── IR-PME : sémantique post-F4 — input = MONTANT INVESTI (€) ───
+  // RI = min(invest, versementMax) × taux (miroir calculator.js).
+  const versPmeS      = cv(50000, 100000);
+  const versPmeEsusS  = cv(50000, 100000);
+  const versPmeMHS    = cv(50000, 100000);
+  const versPmeJeiS   = cv(75000, 150000);  // partagé JEI direct + FCPI-JEI
+  const versPmeJeiiS  = cv(50000, 100000);
+  const versPmeJeirS  = cv(50000, 100000);
+  const redIrPme     = Math.min(i.irPme     || 0, versPmeS)     * 0.18;
+  const redIrPmeEsus = Math.min(i.irPmeEsus || 0, versPmeEsusS) * 0.25;
+  const redIrPmeMH   = Math.min(i.irPmeMH   || 0, versPmeMHS)   * 0.25;
+  const redIrPmeJeii = Math.min(i.irPmeJeii || 0, versPmeJeiiS) * 0.40;
+  let   redIrPmeJeir = Math.min(i.irPmeJeir || 0, versPmeJeirS) * 0.50;
+
+  // Plafond annuel PARTAGÉ JEI direct + FCPI-JEI (sur invest)
+  const investJei  = Math.max(0, i.irPmeJei || 0);
+  const investFcpi = Math.max(0, i.fcpiJei  || 0);
+  const jeiRet     = Math.min(investJei,  versPmeJeiS);
+  const fcpiRet    = Math.min(investFcpi, Math.max(0, versPmeJeiS - jeiRet));
+  let   redIrPmeJei = jeiRet  * 0.30;
+  let   redFcpiJei  = fcpiRet * 0.30;
+
+  // Plafond PLURI-ANNUEL JEI+JEIR (RI cumulée 50k sur 2024-2028)
+  const imputeAntOracle = i.irPmeJeiJeirImputeAnterieur || 0;
+  const plafondPluri = Math.max(0, 50000 - imputeAntOracle);
+  const cumulJeiJeirOracle = redIrPmeJei + redIrPmeJeir;
+  if (cumulJeiJeirOracle > plafondPluri) {
+    redIrPmeJeir = Math.max(0, redIrPmeJeir - (cumulJeiJeirOracle - plafondPluri));
+  }
   // Loc'Avantages — mode "dépenses + palier" prioritaire, sinon fallback legacy
   let redLocAv;
   if ((i.locAvantagesDepenses || 0) > 0) {
@@ -341,15 +381,21 @@ function oracleCalc(input) {
   } else {
     redLocAv = Math.min(i.locAvantages || 0, capLocAv);
   }
-  const redSofica = Math.min(i.sofica || 0,     capSofica);
+  const redSofica = Math.min(i.sofica || 0, versSoficaEff) * tauxSoficaOr;
   const redAutres = i.autresReductions;
 
   const totalReductions = redDons + redPinel + redGirPD + redGirAG
-    + redFcpiJei + redFipCorse + redGfi + redIrPme + redLocAv
-    + redSofica + redAutres;
+    + redFcpiJei + redFipCorse + redGfi
+    + redIrPme + redIrPmeEsus + redIrPmeMH
+    + redIrPmeJei + redIrPmeJeii + redIrPmeJeir
+    + redLocAv + redSofica + redAutres;
 
   // --- Étape 9 : crédits ---
-  const credDom = Math.min(i.emploiDomicile, 12000) * 0.50;
+  // Emploi à domicile : plafond 12 000 € + 1500/enfant + 750/garde alt, capé à 15 000 €
+  // (art. 199 sexdecies-I-2° CGI, miroir de calculator.js)
+  const majoEnfDom = 1500 * i.nbEnfants + 750 * i.gardeAlternee;
+  const plafondDom = Math.min(12000 + majoEnfDom, 15000);
+  const credDom = Math.min(i.emploiDomicile, plafondDom) * 0.50;
   const gardeMax = 3500 * Math.max(1, i.nbEnfants);
   const credGarde = Math.min(i.gardeEnfants, gardeMax) * 0.50;
   const credAutres = i.autresCredits;
@@ -365,8 +411,11 @@ function oracleCalc(input) {
   // --- Étape 10 : niches — 2 POCHES (art. 200-0 A CGI) ---
   // Poche 1 (10 000 €) : accessible à tous (niche10 + niche18)
   // Poche 2 (+8 000 €) : RÉSERVÉE aux niche18 (Girardin × quote-part + SOFICA)
+  // IR-PME : seuls irPme/irPmeEsus/irPmeMH dans niche10.
+  // JEI direct, JEII, JEIR, FCPI-JEI sont HORS plafond niches (art. 200-0 A).
   const ri10Panier = redPinel
-    + redFcpiJei + redFipCorse + redGfi + redIrPme
+    + redFipCorse + redGfi
+    + redIrPme + redIrPmeEsus + redIrPmeMH
     + redLocAv + redAutres
     + credDom + credGarde + credAutres;
   const ri18Panier = redGirPD * 0.44 + redGirAG * 0.34 + redSofica;
@@ -387,18 +436,24 @@ function oracleCalc(input) {
   const facteur18 = ri18Panier > 0 ? (poche1_18 + poche2_18) / ri18Panier : 1;
 
   // --- Étape 11 : impôt net ---
-  const redNiche10Retenue = (redPinel + redFcpiJei + redFipCorse
-    + redGfi + redIrPme + redLocAv + redAutres) * facteur10;
+  // IR-PME : seuls irPme/irPmeEsus/irPmeMH passent par le facteur niche10.
+  // JEI direct / JEII / JEIR / FCPI-JEI sont HORS plafond niches (art. 200-0 A).
+  const redNiche10Retenue = (redPinel + redFipCorse + redGfi
+    + redIrPme + redIrPmeEsus + redIrPmeMH
+    + redLocAv + redAutres) * facteur10;
   const redNiche18Retenue = (redGirPD + redGirAG + redSofica) * facteur18;
+  const redIrPmeHors = redIrPmeJei + redIrPmeJeii + redIrPmeJeir + redFcpiJei;
 
   const redApp = Math.min(
     impotApresDecote + irMobilier,
     redDons + fraisScol + redEhpad + redMalraux
-    + redNiche10Retenue + redNiche18Retenue
+    + redNiche10Retenue + redNiche18Retenue + redIrPmeHors
   );
 
   const credEff = (credDom + credGarde + credAutres) * facteur10;
 
+  // pfnlVerse saisi explicitement, conforme impots.gouv.fr (case 2CK manuelle).
+  // Cf. commentaire détaillé dans calculator.js.
   const pfnl = i.pfnlVerse || 0;
 
   let impotNet = Math.max(0,
@@ -536,7 +591,13 @@ function generateProfile(idx) {
   if (rand() < 0.08) profile.dons = randInt(100, 3000);
   if (rand() < 0.05) profile.pinel = randInt(2000, 10000);
   if (rand() < 0.04) profile.girardinPD = randInt(1000, 6000);
-  if (rand() < 0.03) profile.sofica = randInt(500, 5000);
+  if (rand() < 0.03) {
+    // D3.2 sémantique investissement : on saisit un MONTANT SOUSCRIT
+    // (typiquement jusqu'au cap absolu 18 k€) + un taux aléatoire 30/36/48 %
+    profile.sofica = randInt(500, 18000);
+    const tauxOpts = ['30', '36', '48'];
+    profile.soficaTaux = tauxOpts[Math.floor(rand() * 3)];
+  }
   if (rand() < 0.06) profile.fcpiJei = randInt(200, 2000);
   if (rand() < 0.05) profile.malraux = randInt(1000, 6000);
 
@@ -712,7 +773,7 @@ function testPreconisations(baseInput, baseResult, idx) {
   // Test 5 : structure appliquerPreconisations sur tous les modes
   const precoBatch = [
     { id: 1, leverId: 'per', montant: 3000 },                      // versement-direct
-    { id: 2, leverId: 'fcpiJei', montant: 1000 },                  // taux 0.30 → +300 sur fcpiJei
+    { id: 2, leverId: 'fcpiJei', montant: 1000 },                  // versement-direct (post-F4) → +1000 (montant investi)
     { id: 3, leverId: 'girardinPD', montant: 2000, paramValue: 1.13 }, // taux-libre 1.13 → +2260
     { id: 4, leverId: 'jeanbrun', montant: 6000, paramValue: 'social' }, // jeanbrun
   ];
@@ -720,8 +781,9 @@ function testPreconisations(baseInput, baseResult, idx) {
   if (merged.per !== (baseInput.per || 0) + 3000) {
     errs.push(`appliquerPreconisations PER: ${merged.per} ≠ ${(baseInput.per || 0) + 3000}`);
   }
-  if (Math.abs(merged.fcpiJei - ((baseInput.fcpiJei || 0) + 300)) > 0.001) {
-    errs.push(`appliquerPreconisations fcpiJei: ${merged.fcpiJei} ≠ ${(baseInput.fcpiJei || 0) + 300}`);
+  // fcpiJei post-F4 : versement-direct, input reçoit le montant brut investi
+  if (Math.abs(merged.fcpiJei - ((baseInput.fcpiJei || 0) + 1000)) > 0.001) {
+    errs.push(`appliquerPreconisations fcpiJei: ${merged.fcpiJei} ≠ ${(baseInput.fcpiJei || 0) + 1000}`);
   }
   if (Math.abs(merged.girardinPD - ((baseInput.girardinPD || 0) + 2260)) > 0.001) {
     errs.push(`appliquerPreconisations girardinPD: ${merged.girardinPD} ≠ ${(baseInput.girardinPD || 0) + 2260}`);
