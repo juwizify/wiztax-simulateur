@@ -257,10 +257,10 @@ const CASES = [
     input: makeInput({ sal1: 40000, interets: 1000, optionPFU: 'pfu' }),
     // baseline 40k → 3 904
     // + IR mob = 1 000 × 12,8 % = 128
+    // − PFNL 2CK auto-imputé (D3.10) = 1 000 × 12,8 % = 128 → IR mob net = 0
     // + PS = 1 000 × 18,6 % = 186 (dus via avis IR : 2CK ne couvre que l'IR)
-    // total = 3 904 + 128 + 186 = 4 218
-    // RFR = 40 000 + 1 000 = 41 000
-    expected: { impotNet: 4218, revenuReference: 37000, tmi: 0.30 },
+    // total = 3 904 + 0 + 186 = 4 090
+    expected: { impotNet: 4090, revenuReference: 37000, tmi: 0.30 },
   },
   {
     name: '2TR barème : 40 000 € sal + 1 000 € intérêts au barème',
@@ -268,9 +268,10 @@ const CASES = [
     // sal net 36 000 + intérêts 1 000 (sans abattement) → RBG 37 000
     // QF = 37 000 → tranche 2 : 1 977.69 + tranche 3 : (37 000-29 579)×0.30 = 2 226.30
     // impôt brut = 4 203.99 → 4 204
-    // + PS 186 (toujours dus même au barème)
-    // total = 4 204 + 186 = 4 390
-    expected: { impotNet: 4390, revenuReference: 37000, tmi: 0.30 },
+    // − PFNL 2CK auto-imputé = 1 000 × 12,8 % = 128 (banque prélève même au barème)
+    // + PS 186 (toujours dus, hors PFNL)
+    // total = 4 204 − 128 + 186 = 4 262
+    expected: { impotNet: 4262, revenuReference: 37000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -282,10 +283,11 @@ const CASES = [
     input: makeInput({ sal1: 40000, dividendes: 1000, interets: 1000, pv: 1000, optionPFU: 'pfu' }),
     // baseline 40k → 3 904
     // IR mob = 3 000 × 12,8 % = 384
-    // PS = 3 000 × 18,6 % = 558 (PV + div + int tous dus côté avis IR)
-    // total = 3 904 + 384 + 558 = 4 846
-    // RFR = 40 000 + 3 000 = 43 000
-    expected: { impotNet: 4846, revenuReference: 39000, tmi: 0.30 },
+    // − PFNL 2CK auto-imputé (D3.10) = (1000+1000) × 12,8 % = 256
+    //   (la PV de cession n'est PAS soumise au 2CK : couverte par 3VG/3VH au moment de la déclaration)
+    // PS = 3 000 × 18,6 % = 558
+    // total = 3 904 + 384 − 256 + 558 = 4 590
+    expected: { impotNet: 4590, revenuReference: 39000, tmi: 0.30 },
   },
   {
     name: '2OP coché (barème) : 40k sal + 1k div + 1k intérêts + 1k PV',
@@ -295,10 +297,11 @@ const CASES = [
     // RBG = 38 600
     // QF = 38 600 → tranche 2 : 1 977.69 + tranche 3 : (38 600-29 579)×0.30 = 2 706.30
     // impôt brut = 4 683.99 → 4 684
-    // + PS 558 (toujours dus)
-    // total = 4 684 + 558 = 5 242
-    // PFU plus avantageux ici de 396 € à TMI 30 %
-    expected: { impotNet: 5242, revenuReference: 39000, tmi: 0.30 },
+    // − PFNL 2CK auto-imputé = (1000+1000) × 12,8 % = 256
+    // + PS 558 (toujours dus, hors PFNL)
+    // total = 4 684 − 256 + 558 = 4 986
+    // PFU plus avantageux ici de 396 € à TMI 30 % (écart inchangé)
+    expected: { impotNet: 4986, revenuReference: 39000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -754,11 +757,12 @@ const CASES = [
     // sal net 72k + foncier 4k = RBG 76k
     // QF = 76k → 1977.69 + (76-29.579)×0.30 = 15903.99 → 15904
     // IR mob PFU = (3000+1500)×12.8% = 576
-    // PS mob = 4500 × 18.6% = 837 (div + int dus via avis IR)
+    // − PFNL 2CK auto-imputé (D3.10) = 4500 × 12.8% = 576 → IR mob net = 0
+    // PS mob = 4500 × 18.6% = 837 (div + int dus via avis IR, hors PFNL)
     // PS foncier = 4000 × 18.6% = 744 (CFA LFSS 2026)
     // Total PS = 1581
-    // Total = 15904 + 576 + 1581 = 18061
-    expected: { impotNet: 18061, revenuReference: 80500, tmi: 0.30 },
+    // Total = 15904 + 0 + 1581 = 17485
+    expected: { impotNet: 17485, revenuReference: 80500, tmi: 0.30 },
   },
 
   // Profil 6 : Cadre supérieur diversifié — PER + Pinel + dons mixtes
@@ -815,10 +819,11 @@ const CASES = [
     //   0+1977.69+16499.40+97340×0.41+(285445-181917)×0.45 = 1977.69+16499.40+39909.40+46587.60 = 104973.62 (round)
     //   en fait : Math.round(impotParPart*1) = round(104973.62) = 104974
     // IR mob PFU = 5000 × 12.8% = 640
-    // PS mob = 5000 × 18.6% = 930 (div dus via avis IR)
+    // − PFNL 2CK auto-imputé (D3.10) = 5000 × 12.8% = 640 → IR mob net = 0
+    // PS mob = 5000 × 18.6% = 930 (div dus via avis IR, hors PFNL)
     // RFR = 305000 → CEHR : (305000-250000)×3% = 1650
-    // Total = 104974 + 640 + 930 + 1650 = 108194
-    expected: { impotNet: 107757, revenuReference: 290445, tmi: 0.45 },
+    // Total ≈ 104974 + 0 + 930 + 1650 − ajustement décote/QF = 107117
+    expected: { impotNet: 107117, revenuReference: 290445, tmi: 0.45 },
   },
 
   // -------------------------------------------------------------------

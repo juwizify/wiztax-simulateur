@@ -452,7 +452,9 @@ function oracleCalc(input) {
 
   const credEff = (credDom + credGarde + credAutres) * facteur10;
 
-  const pfnl = i.pfnlVerse || 0;
+  // D3.10 : PFNL 2CK auto-imputé (symétrie avec pfnlAV). Sur-saisie pfnlVerse > 0 respectée.
+  const pfnl2CKAuto = (i.dividendes + (i.interets || 0)) * 0.128;
+  const pfnl = i.pfnlVerse > 0 ? i.pfnlVerse : pfnl2CKAuto;
 
   let impotNet = Math.max(0,
     impotApresDecote + irMobilier + irAV - redApp

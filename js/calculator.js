@@ -658,9 +658,17 @@ function calculerIR(input) {
   // PFNL (acompte 2CK déjà versé à la source par la banque) : crédit d'impôt
   // sans plafond niches, imputé sur l'IR final. Si supérieur à l'impôt dû,
   // l'excédent est remboursé (impôt net peut devenir négatif).
-  // - input.pfnlVerse : acompte 2CK saisi par l'utilisateur (div/intérêts)
+  // - det.pfnl2CKAuto : acompte 2CK auto-calculé = (div + intérêts) × 12,8 %.
+  //   Symétrie avec det.pfnlAV (auto-imputé). Corrige la sur-estimation
+  //   d'IR observée quand l'utilisateur saisit des dividendes/intérêts sans
+  //   penser à saisir le 2CK correspondant (limitation V1 documentée).
+  // - input.pfnlVerse : SUR-SAISIE manuelle (sortie effective de la banque).
+  //   Si > 0, on respecte la valeur utilisateur (cas RCM atypique ou
+  //   simulation contrôlée par les tests). Sinon, on prend l'auto-calculé.
   // - det.pfnlAV     : PFNL automatiquement prélevé sur les produits AV > 8 ans
-  det.pfnlVerse = input.pfnlVerse || 0;
+  //   (déjà géré plus haut, indépendamment).
+  det.pfnl2CKAuto = (input.dividendes + (input.interets || 0)) * P.ps.pfuIr;
+  det.pfnlVerse   = input.pfnlVerse > 0 ? input.pfnlVerse : det.pfnl2CKAuto;
 
   det.impotNet = Math.max(0,
     det.impotApresDecote + det.irMobilier + det.irAV - det.reductionsAppliquees

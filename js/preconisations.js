@@ -131,7 +131,7 @@ const LEVIERS_CATALOGUE = [
     levier: 1, cat: 'foncier', mode: 'jeanbrun', inputKey: 'jeanbrunAmort',
     paramKey: 'jeanbrunCategorie',
     nature: 'amortissement-annuel', budget: 'exclu',
-    info: 'Saisir l\'AMORTISSEMENT ANNUEL = prix d\'achat du bien × taux selon la catégorie de loyer (3,5 / 4,5 / 5,5 %). Ce n\'est PAS du cash sortant — c\'est une déduction comptable qui réduit l\'assiette des revenus fonciers → EXCLU du budget annuel. Le bien lui-même est généralement financé à crédit. Applicable aux acquisitions jusqu\'au 31/12/2028.',
+    info: 'À SAISIR : le DÉFICIT JEANBRUN annuel que tu veux générer (= amortissement déductible des revenus fonciers, cf. tooltip détail HTML). Ce n\'est PAS du cash sortant → EXCLU du budget annuel. Le bien est généralement financé à crédit. Plafond annuel par catégorie : 8 / 10 / 12 k€ (intermédiaire / social / très social). Acquisitions éligibles : 21/02/2026 → 31/12/2028.',
     sectionGroup: 'immobilier-locatif',
     tagType: 'Déduction du revenu foncier (amortissement)',
     titleLong: 'Dispositif Jeanbrun — amortissement du logement loué nu',
