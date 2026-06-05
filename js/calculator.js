@@ -658,17 +658,18 @@ function calculerIR(input) {
   // PFNL (acompte 2CK déjà versé à la source par la banque) : crédit d'impôt
   // sans plafond niches, imputé sur l'IR final. Si supérieur à l'impôt dû,
   // l'excédent est remboursé (impôt net peut devenir négatif).
-  // - det.pfnl2CKAuto : acompte 2CK auto-calculé = (div + intérêts) × 12,8 %.
-  //   Symétrie avec det.pfnlAV (auto-imputé). Corrige la sur-estimation
-  //   d'IR observée quand l'utilisateur saisit des dividendes/intérêts sans
-  //   penser à saisir le 2CK correspondant (limitation V1 documentée).
-  // - input.pfnlVerse : SUR-SAISIE manuelle (sortie effective de la banque).
-  //   Si > 0, on respecte la valeur utilisateur (cas RCM atypique ou
-  //   simulation contrôlée par les tests). Sinon, on prend l'auto-calculé.
+  // - input.pfnlVerse : SAISI EXPLICITEMENT par l'utilisateur, comme la case
+  //   2CK du formulaire officiel impots.gouv.fr. Pas d'auto-imputation
+  //   intentionnelle (cf. D3.14 rollback) : le simulateur officiel ne devine
+  //   pas non plus, et auto-imputer casserait le cas dispense de prélèvement
+  //   (RFR < 25/50k intérêts, < 50/75k dividendes → banque ne prélève rien
+  //   → aucun 2CK à créditer). Le choix de saisie est volontaire.
+  //   `det.pfnl2CKAuto` exposé en INFO uniquement (jamais consommé par le
+  //   calcul) pour qu'une future UI puisse suggérer le montant à l'utilisateur.
   // - det.pfnlAV     : PFNL automatiquement prélevé sur les produits AV > 8 ans
-  //   (déjà géré plus haut, indépendamment).
-  det.pfnl2CKAuto = (input.dividendes + (input.interets || 0)) * P.ps.pfuIr;
-  det.pfnlVerse   = input.pfnlVerse > 0 ? input.pfnlVerse : det.pfnl2CKAuto;
+  //   (déjà géré plus haut). Auto-imputable car prélevé sans dispense possible.
+  det.pfnl2CKAuto = (input.dividendes + (input.interets || 0)) * P.ps.pfuIr;  // info, non utilisé
+  det.pfnlVerse   = input.pfnlVerse || 0;
 
   det.impotNet = Math.max(0,
     det.impotApresDecote + det.irMobilier + det.irAV - det.reductionsAppliquees

@@ -95,11 +95,15 @@ mais ne doit jamais être additionné à l'IR (sinon double comptage).
 ## Crédits d'impôt automatiques (acomptes prélevés à la source)
 - **PFNL AV** (`det.pfnlAV` = `av75 × 7,5 % + av128 × 12,8 %`) : auto-imputé.
   Le différentiel `pfnlAV − irAV` est restitué (ex : 4 600 × 7,5 % = 345 € pour single).
+  Auto-imputable car prélevé sans possibilité de dispense.
 - **PFNL mobilier 2CK** (acompte 12,8 % sur dividendes/intérêts prélevé par la banque) :
-  **PAS auto-imputé aujourd'hui** — l'utilisateur doit le saisir manuellement via `input.pfnlVerse`.
-  Limitation connue : usage normal ⇒ surestimation de l'IR si l'utilisateur saisit
-  les dividendes/intérêts sans saisir aussi le 2CK correspondant.
-  Symétrie possible avec `pfnlAV` : auto-calculer `(div + int) × 0,128` et l'imputer.
+  **PAS auto-imputé — VOLONTAIRE** (cf. commit D3.14 rollback du 2026-06-05).
+  L'utilisateur saisit explicitement `input.pfnlVerse` comme il saisit la case 2CK
+  sur le formulaire officiel impots.gouv.fr. Le simulateur officiel ne devine pas
+  non plus. Auto-imputer casserait le cas dispense de prélèvement (RFR < 25/50k
+  intérêts, < 50/75k dividendes → banque ne prélève rien → aucun 2CK à créditer).
+  `det.pfnl2CKAuto` exposé en INFO (jamais consommé) pour qu'une future UI puisse
+  suggérer le montant à l'utilisateur sans l'appliquer automatiquement.
 
 ## Règles importantes
 - Ne jamais modifier un paramètre fiscal sans vérifier sur BOFiP ou brochure IR officielle

@@ -452,9 +452,9 @@ function oracleCalc(input) {
 
   const credEff = (credDom + credGarde + credAutres) * facteur10;
 
-  // D3.10 : PFNL 2CK auto-imputé (symétrie avec pfnlAV). Sur-saisie pfnlVerse > 0 respectée.
-  const pfnl2CKAuto = (i.dividendes + (i.interets || 0)) * 0.128;
-  const pfnl = i.pfnlVerse > 0 ? i.pfnlVerse : pfnl2CKAuto;
+  // D3.14 rollback : pfnlVerse saisi explicitement (conforme impots.gouv.fr).
+  // Pas d'auto-imputation — cf. commentaire dans calculator.js.
+  const pfnl = i.pfnlVerse || 0;
 
   let impotNet = Math.max(0,
     impotApresDecote + irMobilier + irAV - redApp
