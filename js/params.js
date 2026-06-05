@@ -181,10 +181,18 @@ const PARAMS = {
       taux: { 'spr-non': 0.22, 'spr-oui': 0.30 },
       tauxDefaut: 'spr-non',
     },
-    // Loc'Avantages — art. 199 tricies CGI (ex-Cosse)
+    // Loc'Avantages — art. 199 tricies CGI (ex-Cosse).
+    // Intermédiation locative (gestion par association agréée type Solibail) :
+    //   - Loc 1 : 15 % → 20 % (palier loc1-im)
+    //   - Loc 2 : 35 % → 40 % (palier loc2-im)
+    //   - Loc 3 : 65 % (intermédiation obligatoire, pas de variante sans)
     locAvantages: {
       depensesMax: 10000,
-      taux: { 'loc1': 0.15, 'loc2': 0.35, 'loc3': 0.65 },
+      taux: {
+        'loc1': 0.15, 'loc1-im': 0.20,
+        'loc2': 0.35, 'loc2-im': 0.40,
+        'loc3': 0.65,
+      },
       tauxDefaut: 'loc1',
     },
     // Girardin — pas de cap individuel propre (la limite vient du panier 18 k)
