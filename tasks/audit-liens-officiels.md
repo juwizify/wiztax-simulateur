@@ -72,6 +72,34 @@ anciennes) périmées par la LF 2026.
 **Règle pour le futur** : ne jamais coller une URL fiscale officielle sans
 WebFetch préalable confirmant 200 + contenu pertinent.
 
+## Mise à jour D3.9 — 17 URLs vérifiées par 2e passe agent
+
+Un second audit (agent dédié, WebFetch systématique) a permis de récupérer
+**17 URLs valides** ajoutées au catalogue :
+
+| Dispositif | URL(s) ajoutée(s) | Source |
+|---|---|---|
+| SOFICA | `bofip/13198-PGP.html` + `culture.gouv.fr` | BOFiP + Ministère Culture |
+| FIP Corse | `bofip/5320-PGP.html` | BOFiP (pas de fiche grand public) |
+| GFI | `bofip/5537-PGP.html` (DEFI Forêt) | BOFiP (idem) |
+| Malraux | `bofip/8771-PGP.html` | BOFiP (idem) |
+| Loc'Avantages | `vosdroits/F34115` + `actualites/A18077` | service-public.gouv.fr |
+| Girardin PD + AG | `impots.gouv.fr/professionnel/.../investissements-productifs-neufs` | impots.gouv.fr |
+| Déficit foncier | `vosdroits/F1991` | service-public.gouv.fr |
+| Jeanbrun | `actualites/A18817` (Relance logement) | service-public.gouv.fr |
+| EHPAD | `vosdroits/F17` + FAQ impots.gouv.fr | service-public + impots.gouv.fr |
+| Cotisations syndicales | `vosdroits/F1` | service-public.gouv.fr |
+| IR-PME JEII | `bofip/15020-PGP.html/ACTU-2026-00067` | BOFiP (actualité création JEII) |
+
+**Constat** : pour 4 dispositifs spécialisés (SOFICA, FIP Corse, GFI, Malraux),
+**aucune fiche grand public dédiée** n'a été trouvée sur service-public.gouv.fr
+ou economie.gouv.fr. Seul BOFiP est fiable comme source officielle — c'est OK
+pour les utilisateurs avertis (CGP, dev) qui consultent le catalogue WizTax.
+
+**Toujours pas de liens** pour Pinel (mais le HTML mentionne déjà la fermeture
+LF 2024 art. 168 dans le tooltip) et la fiche grand public Denormandie
+`vosdroits/F35011` pourrait être ajoutée si on veut couvrir aussi ce variant.
+
 ## Pistes pour aller plus loin
 
 - service-public.gouv.fr fournit des fiches stables par `F<num>`, redirigées

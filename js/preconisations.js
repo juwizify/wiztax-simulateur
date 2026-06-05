@@ -120,6 +120,11 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 156-I-3° CGI',
     refBofip: 'BOI-RFPI-BASE-30',
+    // URL vérifiée en D3.9.
+    links: [
+      { label: 'service-public.gouv.fr — Revenus locatifs (déficit foncier, cap 10 700 €)',
+        url: 'https://www.service-public.gouv.fr/particuliers/vosdroits/F1991' },
+    ],
   },
   {
     id: 'jeanbrun', label: 'Dispositif Jeanbrun (LF 2026)',
@@ -155,6 +160,11 @@ const LEVIERS_CATALOGUE = [
           { value: 'tres-social',   label: `Très social (5,5 % · plafond ${P.plafonds.jeanbrunPlafondTresSoc.toLocaleString('fr-FR')} €)`,   plafond: P.plafonds.jeanbrunPlafondTresSoc },
         ]
       },
+    ],
+    // URL vérifiée en D3.9 — actualité officielle « Relance logement ».
+    links: [
+      { label: 'service-public.gouv.fr — Relance logement (nouveau dispositif bailleur privé)',
+        url: 'https://www.service-public.gouv.fr/particuliers/actualites/A18817' },
     ],
   },
 
@@ -236,6 +246,13 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 quindecies CGI',
     refBofip: 'BOI-IR-RICI-140',
+    // URLs vérifiées en D3.9.
+    links: [
+      { label: 'service-public.gouv.fr — Frais d\'accueil dépendance (réduction 25 %)',
+        url: 'https://www.service-public.gouv.fr/particuliers/vosdroits/F17' },
+      { label: 'impots.gouv.fr — FAQ entrée en EHPAD (cases 7CD/7CE)',
+        url: 'https://www.impots.gouv.fr/particulier/questions/je-suis-entree-en-etablissement-pour-personne-dependante-comment-puis-je' },
+    ],
   },
   {
     // D3.7 : ajout family 'malraux' pour génération form-row depuis catalogue.
@@ -245,7 +262,7 @@ const LEVIERS_CATALOGUE = [
     levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'malrauxTravaux',
     paramKey: 'malrauxZone',
     nature: 'depenses-annuelles', budget: 'exclu',
-    info: 'Saisir les TRAVAUX DE RESTAURATION DE L\'ANNÉE sur immeuble en SPR ou QAD. Généralement financés à crédit → EXCLU du budget annuel. Le moteur calcule la RI = min(travaux, 100 000 €/an) × 22 % ou 30 % selon zone. Hors plafond niches.',
+    info: 'Loi Malraux (art. 199 tervicies CGI) — restauration d\'immeubles patrimoniaux donnés en location nue 9 ans.\n\nÀ saisir : MONTANT DES TRAVAUX éligibles engagés dans l\'année. Le moteur calcule la RI = min(travaux, 100 000 €/an) × taux zone.\n\nTaux selon zone du bien :\n· SPR sans PSMV → 22 %\n· SPR avec PSMV, ou QAD → 30 %\n\nSigles : SPR = Site Patrimonial Remarquable (ex « secteur sauvegardé »). PSMV = Plan de Sauvegarde et de Mise en Valeur (document d\'urbanisme renforcé). QAD = Quartier Ancien Dégradé (programme spécifique).\n\nGénéralement financé à crédit → EXCLU du budget cash annuel. HORS plafond niches 10 k€ : atout majeur du dispositif.',
     sectionGroup: 'immobilier-locatif',
     tagType: 'Réduction d\'impôt',
     titleLong: 'Loi Malraux — restauration en Site Patrimonial Remarquable',
@@ -265,11 +282,16 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 tervicies CGI',
     refBofip: 'BOI-IR-RICI-200',
+    // URLs vérifiées en D3.9. Pas de fiche grand public dédiée Malraux → BOFiP seul.
+    links: [
+      { label: 'BOFiP — BOI-IR-RICI-200 (modalités Loi Malraux)',
+        url: 'https://bofip.impots.gouv.fr/bofip/8771-PGP.html/identifiant=BOI-IR-RICI-200-30-20240307' },
+    ],
     params: [
-      { name: 'zone', label: 'Zone', defaultValue: 'spr-non',
+      { name: 'zone', label: 'Zone du bien', defaultValue: 'spr-non',
         options: [
-          { value: 'spr-non', label: 'SPR sans PSMV (22 %)' },
-          { value: 'spr-oui', label: 'SPR avec PSMV ou QAD (30 %)' },
+          { value: 'spr-non', label: 'SPR — secteur sauvegardé sans plan urbanisme renforcé (22 %)' },
+          { value: 'spr-oui', label: 'SPR avec PSMV, ou QAD (quartier ancien dégradé) — taux 30 %' },
         ]
       },
     ],
@@ -443,7 +465,8 @@ const LEVIERS_CATALOGUE = [
     refBofip: '—',
     links: [
       { label: 'service-public.gouv.fr — IR-PME (cas JEII)', url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F37091' },
-      // Légifrance Loi 2026-103 (création JEII) : URL retirée en D3.8 (non vérifiée).
+      { label: 'BOFiP — Actualité création de la JEII par LF 2026 art. 23',
+        url: 'https://bofip.impots.gouv.fr/bofip/15020-PGP.html/ACTU-2026-00067' },
     ],
   },
   {
@@ -503,8 +526,12 @@ const LEVIERS_CATALOGUE = [
         text: 'RI = versement × 30 %, plafonné à 12 000 € (cél) / 24 000 € (couple). Exemple : 10 000 € → 3 000 €.' },
     ],
     refCGI: 'Art. 199 terdecies-0 A bis CGI',
-    refBofip: 'BOI-IR-RICI-100',
-    // D3.8 : liens officiels retirés — voir entrée SOFICA pour le rationale.
+    refBofip: 'BOI-IR-RICI-110',
+    // URLs vérifiées en D3.9. Pas de fiche service-public.fr dédiée → BOFiP seul.
+    links: [
+      { label: 'BOFiP — BOI-IR-RICI-110 (souscriptions de parts de FIP)',
+        url: 'https://bofip.impots.gouv.fr/bofip/5320-PGP.html/identifiant=BOI-IR-RICI-110-20140509' },
+    ],
   },
   {
     // Sémantique D3.3 : input.gfi = MONTANT SOUSCRIT (cash), RI = invest × 18 %
@@ -535,8 +562,12 @@ const LEVIERS_CATALOGUE = [
         text: 'Au-delà de la RI : exonération partielle d\'IFI (75 % de la valeur des bois et forêts) et abattement de 75 % sur les droits de mutation à titre gratuit (succession/donation), sous conditions d\'engagement de gestion durable.' },
     ],
     refCGI: 'Art. 199 decies H CGI',
-    refBofip: 'BOI-IR-RICI-130',
-    // D3.8 : liens officiels retirés — voir entrée SOFICA pour le rationale.
+    refBofip: 'BOI-IR-RICI-60-20-20 (DEFI Forêt)',
+    // URLs vérifiées en D3.9. Pas de fiche grand public dédiée GFI → BOFiP seul.
+    links: [
+      { label: 'BOFiP — BOI-IR-RICI-60-20-20 (DEFI Forêt incl. GFI)',
+        url: 'https://bofip.impots.gouv.fr/bofip/5537-PGP.html/identifiant=BOI-IR-RICI-60-20-20-20230614' },
+    ],
   },
   {
     // D3.6 : ajout family 'locAvantages' pour génération form-row depuis catalogue.
@@ -565,6 +596,13 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 tricies CGI',
     refBofip: '—',
+    // URLs vérifiées en D3.9. Fiche grand public Anah + actualité service-public.
+    links: [
+      { label: 'service-public.gouv.fr — Logement conventionné Anah (taux 15/35/65 %)',
+        url: 'https://www.service-public.gouv.fr/particuliers/vosdroits/F34115' },
+      { label: 'service-public.gouv.fr — Loc\'Avantages (jusqu\'au 31/12/2027)',
+        url: 'https://www.service-public.gouv.fr/particuliers/actualites/A18077' },
+    ],
     params: [
       { name: 'palier', label: 'Palier de décote', defaultValue: 'loc1',
         options: [
@@ -605,10 +643,14 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 unvicies CGI',
     refBofip: 'BOI-IR-RICI-180',
-    // D3.8 : liens officiels retirés — audit a confirmé que les permaliens
-    // Légifrance/BOFiP/service-public.fr testés étaient invalides (404 ou
-    // hors sujet). Mieux vaut afficher refCGI/refBofip en texte que des
-    // liens trompeurs. Cf. tasks/audit-liens-officiels.md.
+    // URLs vérifiées en D3.9 (cf. tasks/audit-liens-officiels.md).
+    // SOFICA n'a pas de fiche service-public.fr en langage humain → BOFiP + Culture.
+    links: [
+      { label: 'BOFiP — BOI-IR-RICI-180 (réduction d\'impôt SOFICA)',
+        url: 'https://bofip.impots.gouv.fr/bofip/13198-PGP.html/identifiant=BOI-IR-RICI-180-20240229' },
+      { label: 'Ministère de la Culture — SOFICA',
+        url: 'https://www.culture.gouv.fr/Divers/Outils-de-financement-des-entreprises-culturelles/Cinema-et-audiovisuel/reduction-d-impot-sur-le-revenu-pour-les-investissements-au-capital-de-societes-de-financement-de-l-industrie-cinematographique-et-de-l-audiovisuel' },
+    ],
     params: [
       { name: 'taux', label: 'Taux SOFICA', defaultValue: '36',
         options: [
@@ -643,6 +685,11 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 undecies B CGI',
     refBofip: 'Art. 200-0 A CGI (quote-part)',
+    // URL vérifiée en D3.9 — page impots.gouv.fr professionnel (commune PD + AG).
+    links: [
+      { label: 'impots.gouv.fr — Girardin industriel (investissements productifs neufs Outre-mer)',
+        url: 'https://www.impots.gouv.fr/professionnel/reduction-ou-deduction-au-titre-des-investissements-productifs-neufs' },
+    ],
   },
   {
     id: 'girardinAG', label: 'Girardin Industriel — Avec Agrément',
@@ -668,6 +715,11 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 undecies B CGI',
     refBofip: 'Art. 200-0 A CGI (quote-part)',
+    // URL vérifiée en D3.9 — page impots.gouv.fr (commune PD + AG).
+    links: [
+      { label: 'impots.gouv.fr — Girardin industriel (investissements productifs neufs Outre-mer)',
+        url: 'https://www.impots.gouv.fr/professionnel/reduction-ou-deduction-au-titre-des-investissements-productifs-neufs' },
+    ],
   },
 
   // ─── LEVIER 3 — CRÉDITS D'IMPÔT (REMBOURSÉS SI IR = 0) ──
@@ -748,6 +800,11 @@ const LEVIERS_CATALOGUE = [
     ],
     refCGI: 'Art. 199 quater C CGI',
     refBofip: '—',
+    // URL vérifiée en D3.9.
+    links: [
+      { label: 'service-public.gouv.fr — Cotisations syndicales (crédit 66 %)',
+        url: 'https://www.service-public.gouv.fr/particuliers/vosdroits/F1' },
+    ],
   },
 ];
 
@@ -1186,7 +1243,10 @@ function renderLevierCard(lev) {
        </div>`
     : '';
 
-  return `<div class="levier-card">
+  // data-source-catalogue : marqueur dev pour le bouton « Highlight catalogue »
+  // de la dev-toolbar. Permet de voir d'un coup d'œil tout ce qui vient du
+  // catalogue unique (vs ce qui reste hardcodé dans le HTML).
+  return `<div class="levier-card" data-source-catalogue="${escHtml(lev.id)}">
     <div class="levier-header" onclick="toggleLevier(this)">
       <div class="levier-header-left">
         <div class="levier-tag-type">${escHtml(lev.tagType)}</div>
@@ -1240,7 +1300,8 @@ function renderSimulateurFormRows(targetEl, family) {
           ${selectHtml}
         </div>`
       : `<input type="number" id="${escHtml(lev.inputKey)}" value="0" min="0">`;
-    return `<div class="form-row advanced">
+    // data-source-catalogue : marqueur dev pour le bouton « Highlight catalogue ».
+    return `<div class="form-row advanced" data-source-catalogue="${escHtml(lev.id)}">
       <label for="${escHtml(lev.inputKey)}">
         ${escHtml(lev.titleLong || lev.label)}
         <i class="tip" data-tip="${escHtml(lev.info || '')}">i</i>

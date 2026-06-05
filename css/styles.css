@@ -1224,6 +1224,39 @@ header span {
 .dev-btn:hover {
   background: #fde68a;
 }
+.dev-btn.active {
+  background: #ec4899;
+  color: #fff;
+  border-color: #be185d;
+}
+
+/* Mode dev « Surligner catalogue » — toggled par btnHighlightCatalogue.
+   Tous les éléments générés par renderSimulateurFormRows() et
+   renderLeviersOnglet() portent data-source-catalogue="<id>".
+   Quand body.highlight-catalogue est posé, on les ceinture en magenta
+   + on affiche l'id en haut à droite. Permet de voir d'un coup d'œil
+   ce qui est alimenté par LEVIERS_CATALOGUE vs ce qui reste hardcodé. */
+body.highlight-catalogue [data-source-catalogue] {
+  outline: 2px solid #ec4899;
+  outline-offset: 1px;
+  position: relative;
+  background: rgba(236, 72, 153, 0.04);
+}
+body.highlight-catalogue [data-source-catalogue]::after {
+  content: "catalogue:" attr(data-source-catalogue);
+  position: absolute;
+  top: -8px;
+  right: 0;
+  font-size: 9px;
+  font-weight: 600;
+  background: #ec4899;
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 10;
+  letter-spacing: .3px;
+}
 
 /* ─── Toggle Mode simple / Mode complet ─── */
 /* Une seule source DOM, deux vues filtrées (cf. tasks/option3-fusion-onglets.md).

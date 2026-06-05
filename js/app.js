@@ -720,6 +720,18 @@ function initDevToolbar() {
       recalculer();
     });
   }
+  // Bouton « Surligner catalogue » — toggle body.highlight-catalogue.
+  // Toutes les form-rows et cards portant data-source-catalogue se ceinturent
+  // en magenta avec leur id en badge. Permet de visualiser instantanément ce
+  // qui est généré depuis LEVIERS_CATALOGUE vs ce qui reste hardcodé.
+  const btnHL = document.getElementById('btnHighlightCatalogue');
+  if (btnHL) {
+    btnHL.addEventListener('click', () => {
+      const on = document.body.classList.toggle('highlight-catalogue');
+      btnHL.classList.toggle('active', on);
+      btnHL.textContent = on ? 'Désactiver surlignage' : 'Surligner catalogue';
+    });
+  }
 }
 
 function initPreconisations() {
