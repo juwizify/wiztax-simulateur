@@ -42,6 +42,15 @@ const P = (typeof PARAMS !== 'undefined')
   : require('./params.js').PARAMS;
 const PD = P.plafondsDispositifs;
 
+// ─── Helpers de formatage ───
+// pct(0.18) → '18 %'    pct(0.185) → '18,5 %'
+// eur(50000) → '50 000 €'
+// Évite la duplication des chiffres dans les meta[] / options[].label
+// (qui sont déjà définis dans params.js). Si un paramètre change, le texte
+// affiché se met à jour automatiquement → cf. PR-E.
+const pct = (n) => (n * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %';
+const eur = (n) => n.toLocaleString('fr-FR') + ' €';
+
 // ─────────────────────────────────────────────
 // CATALOGUE DES LEVIERS
 // ─────────────────────────────────────────────
@@ -300,7 +309,7 @@ const LEVIERS_CATALOGUE = [
     // D3.7 : ajout family 'malraux' pour génération form-row depuis catalogue.
     // Sémantique = TRAVAUX DE L'ANNÉE + select zone (SPR sans PSMV / SPR-PSMV ou QAD).
     // Moteur calcule RI = min(travaux, 100 000 €) × taux zone (22 % / 30 %).
-    id: 'malraux', family: 'malraux', label: 'Loi Malraux (22% ou 30%)',
+    id: 'malraux', family: 'malraux', label: `Loi Malraux (${pct(PD.malraux.taux['spr-non'])} ou ${pct(PD.malraux.taux['spr-oui'])})`,
     levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'malrauxTravaux',
     paramKey: 'malrauxZone',
     nature: 'depenses-annuelles', budget: 'exclu',
@@ -309,11 +318,11 @@ const LEVIERS_CATALOGUE = [
     tagType: 'Réduction d\'impôt',
     titleLong: 'Loi Malraux — restauration en Site Patrimonial Remarquable',
     meta: [
-      { label: 'Plafond travaux / an', value: '100 000 €' },
-      { label: 'Plafond travaux / 4 ans', value: '400 000 €' },
-      { label: 'Taux SPR + PSMV ou QAD', value: '30 %' },
-      { label: 'Taux autres SPR', value: '22 %' },
-      { label: 'RI max (4 ans)', value: '120 000 €' },
+      { label: 'Plafond travaux / an', value: eur(PD.malraux.depensesParAnMax) },
+      { label: 'Plafond travaux / 4 ans', value: eur(PD.malraux.depensesPluriAnMax) },
+      { label: 'Taux SPR + PSMV ou QAD', value: pct(PD.malraux.taux['spr-oui']) },
+      { label: 'Taux autres SPR', value: pct(PD.malraux.taux['spr-non']) },
+      { label: 'RI max (4 ans)', value: eur(PD.malraux.depensesPluriAnMax * PD.malraux.taux['spr-oui']) },
       { label: 'Dans le plafond niches ?', value: 'Non — hors plafond', status: 'warn' },
     ],
     descBlocks: [
@@ -332,8 +341,8 @@ const LEVIERS_CATALOGUE = [
     params: [
       { name: 'zone', label: 'Zone du bien', defaultValue: 'spr-non',
         options: [
-          { value: 'spr-non', label: 'SPR — secteur sauvegardé sans plan urbanisme renforcé (22 %)' },
-          { value: 'spr-oui', label: 'SPR avec PSMV, ou QAD (quartier ancien dégradé) — taux 30 %' },
+          { value: 'spr-non', label: `SPR — secteur sauvegardé sans plan urbanisme renforcé (${pct(PD.malraux.taux['spr-non'])})` },
+          { value: 'spr-oui', label: `SPR avec PSMV, ou QAD (quartier ancien dégradé) — taux ${pct(PD.malraux.taux['spr-oui'])}` },
         ]
       },
     ],
@@ -349,24 +358,24 @@ const LEVIERS_CATALOGUE = [
   // 2.b) IR-PME et apparentés (art. 199 terdecies-0 A et bis/ter, post-LF 2026)
   // Source unique : PARAMS.plafondsDispositifs (cf. tasks/d3.1-irpme-spec.md)
   {
-    id: 'irPme', family: 'ir-pme', label: 'IR-PME — PME standard (18 %)',
+    id: 'irPme', family: 'ir-pme', label: `IR-PME — PME standard (${pct(PD.irPme.taux)})`,
     levier: 2, cat: 'niche10', mode: 'versement-direct', taux: PD.irPme.taux, inputKey: 'irPme',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Souscription au capital d\'une PME non cotée (cas général). Réduction 18 % (le « boost 25 % » de 2024-2025 a expiré). Plafond 50 000 € (célibataire) / 100 000 € (couple). Conservation 5 ans. Art. 199 terdecies-0 A CGI.',
+    info: `Souscription au capital d'une PME non cotée (cas général). Réduction ${pct(PD.irPme.taux)} (le « boost 25 % » de 2024-2025 a expiré). Plafond ${eur(PD.irPme.versementMax)} (célibataire) / ${eur(PD.irPme.versementMaxCouple)} (couple). Conservation 5 ans. Art. 199 terdecies-0 A CGI.`,
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
     titleLong: 'IR-PME — PME standard (souscription directe)',
     meta: [
-      { label: 'Taux', value: '18 %' },
-      { label: 'Plafond annuel', value: '50 000 € (célib) / 100 000 € (couple)' },
+      { label: 'Taux', value: pct(PD.irPme.taux) },
+      { label: 'Plafond annuel', value: `${eur(PD.irPme.versementMax)} (célib) / ${eur(PD.irPme.versementMaxCouple)} (couple)` },
       { label: 'Conservation', value: '5 ans minimum' },
-      { label: 'Dans le plafond niches ?', value: 'Oui — 10 000 €', status: 'good' },
+      { label: 'Dans le plafond niches ?', value: `Oui — ${eur(P.niches.plafond)}`, status: 'good' },
     ],
     descBlocks: [
       { label: 'Ce que c\'est',
-        text: 'Souscription directe au capital d\'une PME non cotée (moins de 250 salariés, CA < 50 M€). L\'entreprise ne doit pas être en difficulté. Les titres doivent être conservés au minimum 5 ans. Le taux 18 % est le taux de droit commun ; les variantes ESUS/MH/JEI/JEII/JEIR offrent des taux majorés (voir cards dédiées).' },
+        text: `Souscription directe au capital d'une PME non cotée (moins de 250 salariés, CA < 50 M€). L'entreprise ne doit pas être en difficulté. Les titres doivent être conservés au minimum 5 ans. Le taux ${pct(PD.irPme.taux)} est le taux de droit commun ; les variantes ESUS/MH/JEI/JEII/JEIR offrent des taux majorés (voir cards dédiées).` },
       { label: 'Calcul',
-        text: 'RI = montant versé × 18 %, dans la limite du plafond. Exemple : 10 000 € → 1 800 €. L\'excédent de versements au-delà du plafond est reportable sur 4 ans.' },
+        text: `RI = montant versé × ${pct(PD.irPme.taux)}, dans la limite du plafond ${eur(PD.irPme.versementMax)} / ${eur(PD.irPme.versementMaxCouple)}. Exemple : 10 000 € → ${eur(10000 * PD.irPme.taux)}. L'excédent de versements au-delà du plafond est reportable sur 4 ans.` },
     ],
     refCGI: 'Art. 199 terdecies-0 A CGI',
     refBofip: 'BOI-IR-RICI-90',
@@ -377,19 +386,19 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'irPmeEsus', family: 'ir-pme', label: 'IR-PME — ESUS / SFS (25 %)',
+    id: 'irPmeEsus', family: 'ir-pme', label: `IR-PME — ESUS / SFS (${pct(PD.irPmeEsus.taux)})`,
     levier: 2, cat: 'niche10', mode: 'versement-direct', taux: PD.irPmeEsus.taux, inputKey: 'irPmeEsus',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Souscription au capital d\'une Entreprise Solidaire d\'Utilité Sociale (ESUS) ou Société Foncière Solidaire (SFS). Réduction 25 %. Plafond 50 000 € / 100 000 €. Validité versements 28/06/2024 → 30/09/2026 ; au-delà du 1/10/2026 subordonné à validation Commission européenne.',
+    info: `Souscription au capital d'une Entreprise Solidaire d'Utilité Sociale (ESUS) ou Société Foncière Solidaire (SFS). Réduction ${pct(PD.irPmeEsus.taux)}. Plafond ${eur(PD.irPmeEsus.versementMax)} / ${eur(PD.irPmeEsus.versementMaxCouple)}. Validité versements 28/06/2024 → 30/09/2026 ; au-delà du 1/10/2026 subordonné à validation Commission européenne.`,
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
     titleLong: 'IR-PME — ESUS / SFS (entreprises solidaires)',
     meta: [
-      { label: 'Taux', value: '25 % (majoré)' },
-      { label: 'Plafond annuel', value: '50 000 € / 100 000 €' },
+      { label: 'Taux', value: `${pct(PD.irPmeEsus.taux)} (majoré)` },
+      { label: 'Plafond annuel', value: `${eur(PD.irPmeEsus.versementMax)} / ${eur(PD.irPmeEsus.versementMaxCouple)}` },
       { label: 'Validité', value: 'Versements 28/06/2024 → 30/09/2026' },
       { label: 'Après 1/10/2026', value: 'Subordonné à validation Commission européenne', status: 'warn' },
-      { label: 'Dans le plafond niches ?', value: 'Oui — 10 000 €', status: 'good' },
+      { label: 'Dans le plafond niches ?', value: `Oui — ${eur(P.niches.plafond)}`, status: 'good' },
     ],
     descBlocks: [
       { label: 'Ce que c\'est',
@@ -406,18 +415,18 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'irPmeMH', family: 'ir-pme', label: 'IR-PME — Monuments historiques (25 %)',
+    id: 'irPmeMH', family: 'ir-pme', label: `IR-PME — Monuments historiques (${pct(PD.irPmeMH.taux)})`,
     levier: 2, cat: 'niche10', mode: 'versement-direct', taux: PD.irPmeMH.taux, inputKey: 'irPmeMH',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Souscription au capital d\'une société foncière de monuments historiques (immeubles protégés, sites, parcs, jardins). Réduction 25 %. Plafond 50 000 € / 100 000 €. Validité depuis le 28/09/2025.',
+    info: `Souscription au capital d'une société foncière de monuments historiques (immeubles protégés, sites, parcs, jardins). Réduction ${pct(PD.irPmeMH.taux)}. Plafond ${eur(PD.irPmeMH.versementMax)} / ${eur(PD.irPmeMH.versementMaxCouple)}. Validité depuis le 28/09/2025.`,
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
     titleLong: 'IR-PME — Sociétés foncières de monuments historiques',
     meta: [
-      { label: 'Taux', value: '25 % (majoré)' },
-      { label: 'Plafond annuel', value: '50 000 € / 100 000 €' },
+      { label: 'Taux', value: `${pct(PD.irPmeMH.taux)} (majoré)` },
+      { label: 'Plafond annuel', value: `${eur(PD.irPmeMH.versementMax)} / ${eur(PD.irPmeMH.versementMaxCouple)}` },
       { label: 'Validité', value: 'Versements depuis le 28/09/2025' },
-      { label: 'Dans le plafond niches ?', value: 'Oui — 10 000 €', status: 'good' },
+      { label: 'Dans le plafond niches ?', value: `Oui — ${eur(P.niches.plafond)}`, status: 'good' },
     ],
     descBlocks: [
       { label: 'Ce que c\'est',
@@ -433,17 +442,17 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'irPmeJei', family: 'ir-pme', label: 'IR-PME — JEI direct (30 %)',
+    id: 'irPmeJei', family: 'ir-pme', label: `IR-PME — JEI direct (${pct(PD.irPmeJei.taux)})`,
     levier: 2, cat: 'hors', mode: 'versement-direct', taux: PD.irPmeJei.taux, inputKey: 'irPmeJei',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Souscription directe au capital d\'une Jeune Entreprise Innovante (JEI). Réduction 30 %. Plafond ANNUEL 75 000 € / 150 000 € PARTAGÉ avec FCPI-JEI (cumul des deux ≤ ce plafond). Plafond pluri-annuel : RI cumulée JEI+JEIR ≤ 50 000 € sur 2024-2028. Hors plafond niches 10 k (art. 200-0 A exclut 199 terdecies-0 A bis). Conservation 5 ans.',
+    info: `Souscription directe au capital d'une Jeune Entreprise Innovante (JEI). Réduction ${pct(PD.irPmeJei.taux)}. Plafond ANNUEL ${eur(PD.irPmeJei.versementMax)} / ${eur(PD.irPmeJei.versementMaxCouple)} PARTAGÉ avec FCPI-JEI (cumul des deux ≤ ce plafond). Plafond pluri-annuel : RI cumulée JEI+JEIR ≤ ${eur(PD.irPmeJeiJeirPlafondCumule)} sur 2024-2028. Hors plafond niches ${eur(P.niches.plafond)} (art. 200-0 A exclut 199 terdecies-0 A bis). Conservation 5 ans.`,
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
     titleLong: 'IR-PME — JEI direct (Jeune Entreprise Innovante)',
     meta: [
-      { label: 'Taux', value: '30 %' },
-      { label: 'Plafond annuel partagé avec FCPI-JEI', value: '75 000 € / 150 000 €' },
-      { label: 'Plafond pluri-annuel JEI+JEIR', value: '50 000 € de RI cumulée sur 2024-2028' },
+      { label: 'Taux', value: pct(PD.irPmeJei.taux) },
+      { label: 'Plafond annuel partagé avec FCPI-JEI', value: `${eur(PD.irPmeJei.versementMax)} / ${eur(PD.irPmeJei.versementMaxCouple)}` },
+      { label: 'Plafond pluri-annuel JEI+JEIR', value: `${eur(PD.irPmeJeiJeirPlafondCumule)} de RI cumulée sur 2024-2028` },
       { label: 'Validité', value: '1/1/2024 → 31/12/2028' },
       { label: 'Dans le plafond niches ?', value: 'Non — hors plafond', status: 'warn' },
     ],
@@ -462,16 +471,16 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'fcpiJei', family: 'ir-pme', label: 'IR-PME — FCPI investi en JEI (30 %)',
+    id: 'fcpiJei', family: 'ir-pme', label: `IR-PME — FCPI investi en JEI (${pct(PD.fcpiJei.taux)})`,
     levier: 2, cat: 'hors', mode: 'versement-direct', taux: PD.fcpiJei.taux, inputKey: 'fcpiJei',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Souscription de parts de FCPI investissant en Jeunes Entreprises Innovantes (au quota prévu par le règlement du fonds). Réduction 30 %. Plafond ANNUEL 75 000 € / 150 000 € PARTAGÉ avec IR-PME JEI direct. Hors plafond niches 10 k. Validité depuis le 21/02/2026 — les FCPI classiques ne sont plus éligibles.',
+    info: `Souscription de parts de FCPI investissant en Jeunes Entreprises Innovantes (au quota prévu par le règlement du fonds). Réduction ${pct(PD.fcpiJei.taux)}. Plafond ANNUEL ${eur(PD.fcpiJei.versementMax)} / ${eur(PD.fcpiJei.versementMaxCouple)} PARTAGÉ avec IR-PME JEI direct. Hors plafond niches ${eur(P.niches.plafond)}. Validité depuis le 21/02/2026 — les FCPI classiques ne sont plus éligibles.`,
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
     titleLong: 'IR-PME — FCPI investi en JEI',
     meta: [
-      { label: 'Taux', value: '30 %' },
-      { label: 'Plafond annuel partagé avec JEI direct', value: '75 000 € / 150 000 €' },
+      { label: 'Taux', value: pct(PD.fcpiJei.taux) },
+      { label: 'Plafond annuel partagé avec JEI direct', value: `${eur(PD.fcpiJei.versementMax)} / ${eur(PD.fcpiJei.versementMaxCouple)}` },
       { label: 'Validité', value: 'Depuis le 21/02/2026 (LF 2026)' },
       { label: 'FCPI classique', value: 'Non éligible IR-PME depuis 21/02/2026', status: 'warn' },
       { label: 'Dans le plafond niches ?', value: 'Non — hors plafond', status: 'warn' },
@@ -491,16 +500,16 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'irPmeJeii', family: 'ir-pme', label: 'IR-PME — JEII (40 %)',
+    id: 'irPmeJeii', family: 'ir-pme', label: `IR-PME — JEII (${pct(PD.irPmeJeii.taux)})`,
     levier: 2, cat: 'hors', mode: 'versement-direct', taux: PD.irPmeJeii.taux, inputKey: 'irPmeJeii',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Souscription au capital d\'une Jeune Entreprise Innovante à Impact (JEII). Réduction 40 %. Plafond 50 000 € / 100 000 €. Validité 21/02/2026 → 31/12/2028 (LF 2026, nouvel article).',
+    info: `Souscription au capital d'une Jeune Entreprise Innovante à Impact (JEII). Réduction ${pct(PD.irPmeJeii.taux)}. Plafond ${eur(PD.irPmeJeii.versementMax)} / ${eur(PD.irPmeJeii.versementMaxCouple)}. Validité 21/02/2026 → 31/12/2028 (LF 2026, nouvel article).`,
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
     titleLong: 'IR-PME — JEII (Jeune Entreprise Innovante à Impact)',
     meta: [
-      { label: 'Taux', value: '40 %' },
-      { label: 'Plafond annuel', value: '50 000 € / 100 000 €' },
+      { label: 'Taux', value: pct(PD.irPmeJeii.taux) },
+      { label: 'Plafond annuel', value: `${eur(PD.irPmeJeii.versementMax)} / ${eur(PD.irPmeJeii.versementMaxCouple)}` },
       { label: 'Validité', value: '21/02/2026 → 31/12/2028' },
       { label: 'Conditions', value: 'R&D 5-20 % des charges · critères ESUS · créée < 8 ans' },
       { label: 'Dans le plafond niches ?', value: 'Non — hors plafond', status: 'warn' },
@@ -520,17 +529,17 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'irPmeJeir', family: 'ir-pme', label: 'IR-PME — JEIR (50 %)',
+    id: 'irPmeJeir', family: 'ir-pme', label: `IR-PME — JEIR (${pct(PD.irPmeJeir.taux)})`,
     levier: 2, cat: 'hors', mode: 'versement-direct', taux: PD.irPmeJeir.taux, inputKey: 'irPmeJeir',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Souscription au capital d\'une Jeune Entreprise Innovante de Rupture (JEIR). Réduction 50 %. Plafond 50 000 € / 100 000 €. Plafond pluri-annuel : RI cumulée JEI+JEIR ≤ 50 000 € sur 2024-2028. Hors plafond niches. Validité 1/1/2024 → 31/12/2028. Art. 199 terdecies-0 A ter CGI.',
+    info: `Souscription au capital d'une Jeune Entreprise Innovante de Rupture (JEIR). Réduction ${pct(PD.irPmeJeir.taux)}. Plafond ${eur(PD.irPmeJeir.versementMax)} / ${eur(PD.irPmeJeir.versementMaxCouple)}. Plafond pluri-annuel : RI cumulée JEI+JEIR ≤ ${eur(PD.irPmeJeiJeirPlafondCumule)} sur 2024-2028. Hors plafond niches. Validité 1/1/2024 → 31/12/2028. Art. 199 terdecies-0 A ter CGI.`,
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
     titleLong: 'IR-PME — JEIR (Jeune Entreprise Innovante de Rupture)',
     meta: [
-      { label: 'Taux', value: '50 % (le plus élevé du dispositif IR-PME)' },
-      { label: 'Plafond annuel', value: '50 000 € / 100 000 €' },
-      { label: 'Plafond pluri-annuel JEI+JEIR', value: '50 000 € de RI cumulée sur 2024-2028' },
+      { label: 'Taux', value: `${pct(PD.irPmeJeir.taux)} (le plus élevé du dispositif IR-PME)` },
+      { label: 'Plafond annuel', value: `${eur(PD.irPmeJeir.versementMax)} / ${eur(PD.irPmeJeir.versementMaxCouple)}` },
+      { label: 'Plafond pluri-annuel JEI+JEIR', value: `${eur(PD.irPmeJeiJeirPlafondCumule)} de RI cumulée sur 2024-2028` },
       { label: 'Validité', value: '1/1/2024 → 31/12/2028' },
       { label: 'Conditions', value: 'R&D ≥ 30 % des charges · aides de minimis ≤ 300 k€ / 3 ans' },
       { label: 'Dans le plafond niches ?', value: 'Non — hors plafond', status: 'warn' },
@@ -554,26 +563,26 @@ const LEVIERS_CATALOGUE = [
     // Sémantique D3.3 : input.fipCorse = MONTANT SOUSCRIT (cash), RI = invest × 30 %
     // plafonné à versCouple(PD.fipCorse) = 12 000 € (single) / 24 000 € (couple).
     // Aligné sur le pattern IR-PME / SOFICA.
-    id: 'fipCorse', family: 'fipCorse', label: 'FIP Corse / Outre-mer (30 %)',
+    id: 'fipCorse', family: 'fipCorse', label: `FIP Corse / Outre-mer (${pct(PD.fipCorse.taux)})`,
     levier: 2, cat: 'niche10', mode: 'versement-direct', inputKey: 'fipCorse',
-    taux: PD.fipCorse.taux,    // constante éditoriale, sert à avantageEstime et aux tooltips
+    taux: PD.fipCorse.taux,    // constante éditoriale, sert à avantageEstime
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de FIP Corse ou Outre-mer. Cash sortant. Réduction 30 %. Plafond versement : 12 000 € (célib) / 24 000 € (couple). Blocage 5 ans minimum.',
+    info: `Saisir le MONTANT DE LA SOUSCRIPTION DE L'ANNÉE en parts de FIP Corse ou Outre-mer. Cash sortant. Réduction ${pct(PD.fipCorse.taux)}. Plafond versement : ${eur(PD.fipCorse.versementMax)} (célib) / ${eur(PD.fipCorse.versementMaxCouple)} (couple). Blocage 5 ans minimum.`,
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
     titleLong: 'FIP Corse / Outre-mer',
     meta: [
-      { label: 'Taux', value: '30 % (majoré vs FIP classique métropolitain supprimé)' },
-      { label: 'Plafond versements', value: '12 000 € (célib) / 24 000 € (couple)' },
-      { label: 'RI max célib', value: '3 600 €' },
+      { label: 'Taux', value: `${pct(PD.fipCorse.taux)} (majoré vs FIP classique métropolitain supprimé)` },
+      { label: 'Plafond versements', value: `${eur(PD.fipCorse.versementMax)} (célib) / ${eur(PD.fipCorse.versementMaxCouple)} (couple)` },
+      { label: 'RI max célib', value: eur(PD.fipCorse.versementMax * PD.fipCorse.taux) },
       { label: 'Blocage', value: '5 ans minimum (généralement 7-10 ans en pratique)' },
-      { label: 'Dans le plafond niches ?', value: 'Oui — 10 000 €', status: 'good' },
+      { label: 'Dans le plafond niches ?', value: `Oui — ${eur(P.niches.plafond)}`, status: 'good' },
     ],
     descBlocks: [
       { label: 'Ce que c\'est',
-        text: 'Souscription en parts de FIP (Fonds d\'Investissement de Proximité) investis en PME de Corse ou des DROM. Le FIP classique métropolitain a été supprimé au 1/1/2026. Seuls les FIP Corse et Outre-mer conservent le taux majoré 30 %.' },
+        text: `Souscription en parts de FIP (Fonds d'Investissement de Proximité) investis en PME de Corse ou des DROM. Le FIP classique métropolitain a été supprimé au 1/1/2026. Seuls les FIP Corse et Outre-mer conservent le taux majoré ${pct(PD.fipCorse.taux)}.` },
       { label: 'Calcul',
-        text: 'RI = versement × 30 %, plafonné à 12 000 € (cél) / 24 000 € (couple). Exemple : 10 000 € → 3 000 €.' },
+        text: `RI = versement × ${pct(PD.fipCorse.taux)}, plafonné à ${eur(PD.fipCorse.versementMax)} (cél) / ${eur(PD.fipCorse.versementMaxCouple)} (couple). Exemple : 10 000 € → ${eur(10000 * PD.fipCorse.taux)}.` },
     ],
     refCGI: 'Art. 199 terdecies-0 A bis CGI',
     refBofip: 'BOI-IR-RICI-110',
@@ -588,26 +597,26 @@ const LEVIERS_CATALOGUE = [
     // plafonné à versCouple(PD.gfi) = 50 000 € / 100 000 €.
     // PR-C : taux variable selon input.gfiZone (standard 18 % / éligible 25 %).
     // Zone éligible = massifs déficitaires en gestion durable (CGI 199 decies H I 2°).
-    id: 'gfi', family: 'gfi', label: 'GFI Forestier (18-25 %)',
+    id: 'gfi', family: 'gfi', label: `GFI Forestier (${pct(PD.gfi.taux.standard)} – ${pct(PD.gfi.taux.eligible)})`,
     levier: 2, cat: 'niche10', mode: 'versement-direct', inputKey: 'gfi',
     paramKey: 'gfiZone',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de Groupement Forestier d\'Investissement. Cash sortant.\n\nTaux selon la zone du massif forestier :\n· Standard : 18 %\n· Zone éligible : 25 % (massifs déficitaires en gestion durable certifiée — PEFC / FSC — voir doc du GFI sur l\'éligibilité de chaque parcelle)\n\nPlafond annuel de souscription : 50 000 € (célib) / 100 000 € (couple).\n\nAvantages annexes : exonération partielle d\'IFI (75 % de la valeur des bois) + abattement 75 % sur droits de mutation à titre gratuit (succession/donation), sous conditions d\'engagement de gestion durable.',
+    info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de Groupement Forestier d\'Investissement. Cash sortant.\n\nTaux selon la zone du massif forestier :\n· Standard\n· Zone éligible (massifs déficitaires en gestion durable certifiée — PEFC / FSC — voir doc du GFI sur l\'éligibilité de chaque parcelle)\n\nPlafond annuel de souscription : voir colonne meta.\n\nAvantages annexes : exonération partielle d\'IFI (75 % de la valeur des bois) + abattement 75 % sur droits de mutation à titre gratuit (succession/donation), sous conditions d\'engagement de gestion durable.',
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
     titleLong: 'GFI — Groupement Forestier d\'Investissement',
     meta: [
-      { label: 'Taux', value: '18 % (jusqu\'à 25 % en zone éligible)' },
-      { label: 'Plafond versements', value: '50 000 € (célib) / 100 000 € (couple)' },
-      { label: 'RI max célib', value: '9 000 € (12 500 € en zone majorée)' },
+      { label: 'Taux', value: `${pct(PD.gfi.taux.standard)} (jusqu'à ${pct(PD.gfi.taux.eligible)} en zone éligible)` },
+      { label: 'Plafond versements', value: `${eur(PD.gfi.versementMax)} (célib) / ${eur(PD.gfi.versementMaxCouple)} (couple)` },
+      { label: 'RI max célib', value: `${eur(PD.gfi.versementMax * PD.gfi.taux.standard)} (${eur(PD.gfi.versementMax * PD.gfi.taux.eligible)} en zone majorée)` },
       { label: 'Durée de détention', value: '5 ans 1/2 minimum' },
-      { label: 'Dans le plafond niches ?', value: 'Oui — 10 000 €', status: 'good' },
+      { label: 'Dans le plafond niches ?', value: `Oui — ${eur(P.niches.plafond)}`, status: 'good' },
     ],
     descBlocks: [
       { label: 'Ce que c\'est',
         text: 'Souscription au capital de Groupements Forestiers d\'Investissement (GFI), véhicules collectifs qui financent l\'achat et la gestion durable de forêts françaises. Diversification patrimoniale + soutien à la filière bois + avantage fiscal. Liquidité limitée : marché secondaire restreint, sortie organisée par le gérant en général sur 8-12 ans.' },
       { label: 'Calcul',
-        text: 'RI = montant souscrit × 18 % (ou 25 % en zone éligible majorée), dans la limite du plafond. Exemple : 30 000 € souscrits par un couple à 18 % → 5 400 € de RI.' },
+        text: `RI = montant souscrit × taux (${pct(PD.gfi.taux.standard)} standard / ${pct(PD.gfi.taux.eligible)} zone éligible), dans la limite du plafond ${eur(PD.gfi.versementMaxCouple)} (couple). Exemple : 30 000 € souscrits à ${pct(PD.gfi.taux.standard)} → ${eur(30000 * PD.gfi.taux.standard)} de RI.` },
       { label: 'Avantages annexes',
         text: 'Au-delà de la RI : exonération partielle d\'IFI (75 % de la valeur des bois et forêts) et abattement de 75 % sur les droits de mutation à titre gratuit (succession/donation), sous conditions d\'engagement de gestion durable.' },
     ],
@@ -621,8 +630,8 @@ const LEVIERS_CATALOGUE = [
     params: [
       { name: 'zone', label: 'Zone du massif', defaultValue: 'standard',
         options: [
-          { value: 'standard', label: 'Standard — taux 18 %' },
-          { value: 'eligible', label: 'Zone éligible — taux 25 % (massif déficitaire en gestion durable)' },
+          { value: 'standard', label: `Standard — taux ${pct(PD.gfi.taux.standard)}` },
+          { value: 'eligible', label: `Zone éligible — taux ${pct(PD.gfi.taux.eligible)} (massif déficitaire en gestion durable)` },
         ]
       },
     ],
@@ -640,11 +649,11 @@ const LEVIERS_CATALOGUE = [
     tagType: 'Réduction d\'impôt',
     titleLong: 'Loc\'Avantages — location à loyer modéré',
     meta: [
-      { label: 'Taux loyer intermédiaire (Loc 1)', value: '15 % (sans intermédiation) · 20 % (avec)' },
-      { label: 'Taux loyer social (Loc 2)', value: '35 % (sans intermédiation) · 40 % (avec)' },
-      { label: 'Taux loyer très social (Loc 3)', value: '65 % (avec intermédiation uniquement)' },
-      { label: 'Plafond d\'assiette', value: '10 000 € de loyers retenus par an' },
-      { label: 'Dans le plafond niches ?', value: 'Oui — 10 000 €', status: 'good' },
+      { label: 'Taux loyer intermédiaire (Loc 1)', value: `${pct(PD.locAvantages.taux.loc1)} (sans intermédiation) · ${pct(PD.locAvantages.taux['loc1-im'])} (avec)` },
+      { label: 'Taux loyer social (Loc 2)', value: `${pct(PD.locAvantages.taux.loc2)} (sans intermédiation) · ${pct(PD.locAvantages.taux['loc2-im'])} (avec)` },
+      { label: 'Taux loyer très social (Loc 3)', value: `${pct(PD.locAvantages.taux.loc3)} (avec intermédiation uniquement)` },
+      { label: 'Plafond d\'assiette', value: `${eur(PD.locAvantages.depensesMax)} de loyers retenus par an` },
+      { label: 'Dans le plafond niches ?', value: `Oui — ${eur(P.niches.plafond)}`, status: 'good' },
     ],
     descBlocks: [
       { label: 'Ce que c\'est',
@@ -667,11 +676,11 @@ const LEVIERS_CATALOGUE = [
         // agréée type Solibail. Augmente le taux loc1/loc2 de +5 pts.
         // Loc 3 n'existe qu'avec intermédiation (déjà intégrée au taux 65 %).
         options: [
-          { value: 'loc1',    label: 'Loc 1 — décote 15 %, sans intermédiation (RI 15 %)' },
-          { value: 'loc1-im', label: 'Loc 1 — décote 15 %, avec intermédiation (RI 20 %)' },
-          { value: 'loc2',    label: 'Loc 2 — décote 30 %, sans intermédiation (RI 35 %)' },
-          { value: 'loc2-im', label: 'Loc 2 — décote 30 %, avec intermédiation (RI 40 %)' },
-          { value: 'loc3',    label: 'Loc 3 — IML décote 45 % (RI 65 %, intermédiation obligatoire)' },
+          { value: 'loc1',    label: `Loc 1 — décote 15 %, sans intermédiation (RI ${pct(PD.locAvantages.taux.loc1)})` },
+          { value: 'loc1-im', label: `Loc 1 — décote 15 %, avec intermédiation (RI ${pct(PD.locAvantages.taux['loc1-im'])})` },
+          { value: 'loc2',    label: `Loc 2 — décote 30 %, sans intermédiation (RI ${pct(PD.locAvantages.taux.loc2)})` },
+          { value: 'loc2-im', label: `Loc 2 — décote 30 %, avec intermédiation (RI ${pct(PD.locAvantages.taux['loc2-im'])})` },
+          { value: 'loc3',    label: `Loc 3 — IML décote 45 % (RI ${pct(PD.locAvantages.taux.loc3)}, intermédiation obligatoire)` },
         ]
       },
     ],
@@ -686,23 +695,23 @@ const LEVIERS_CATALOGUE = [
     levier: 2, cat: 'niche18', mode: 'versement-direct', inputKey: 'sofica',
     paramKey: 'soficaTaux',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de SOFICA (financement cinéma/audiovisuel). Cash sortant. Choisir ensuite le taux selon le scénario de la SOFICA. Versement plafonné à min(18 000 €, 25 % du RNG). Niche majorée 18 k€. Conservation 5 ans.',
+    info: `Saisir le MONTANT DE LA SOUSCRIPTION DE L'ANNÉE en parts de SOFICA (financement cinéma/audiovisuel). Cash sortant. Choisir ensuite le taux selon le scénario de la SOFICA. Versement plafonné à min(${eur(PD.sofica.versementMax)}, ${pct(PD.sofica.plafondAssiettePctRng)} du RNG). Niche majorée ${eur(P.niches.plafondMajore)}. Conservation 5 ans.`,
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
     titleLong: 'SOFICA — financement du cinéma et de l\'audiovisuel',
     meta: [
-      { label: 'Taux de base', value: '30 %' },
-      { label: 'Taux majoré (engagement production)', value: '36 %' },
-      { label: 'Taux maximal (production indép. + langues régionales)', value: '48 %' },
-      { label: 'Plafond de souscription', value: 'min(18 000 €, 25 % du RNG)' },
+      { label: 'Taux de base', value: pct(PD.sofica.taux['30']) },
+      { label: 'Taux majoré (engagement production)', value: pct(PD.sofica.taux['36']) },
+      { label: 'Taux maximal (production indép. + langues régionales)', value: pct(PD.sofica.taux['48']) },
+      { label: 'Plafond de souscription', value: `min(${eur(PD.sofica.versementMax)}, ${pct(PD.sofica.plafondAssiettePctRng)} du RNG)` },
       { label: 'Durée de blocage', value: '5 ans minimum' },
-      { label: 'Dans le plafond niches ?', value: 'Oui — plafond majoré 18 000 €', status: 'good' },
+      { label: 'Dans le plafond niches ?', value: `Oui — plafond majoré ${eur(P.niches.plafondMajore)}`, status: 'good' },
     ],
     descBlocks: [
       { label: 'Ce que c\'est',
-        text: 'Les SOFICA sont des fonds agréés par le CNC et l\'AMF qui financent la production de films et séries. Parts bloquées 5 ans, risque de perte en capital. Souscriptions agréées annuellement, en volume limité. Mécanisme de niche à plafond majoré 18 000 € (vs 10 000 € pour les niches standard).' },
+        text: `Les SOFICA sont des fonds agréés par le CNC et l'AMF qui financent la production de films et séries. Parts bloquées 5 ans, risque de perte en capital. Souscriptions agréées annuellement, en volume limité. Mécanisme de niche à plafond majoré ${eur(P.niches.plafondMajore)} (vs ${eur(P.niches.plafond)} pour les niches standard).` },
       { label: 'Calcul',
-        text: 'RI = souscription × taux (30/36/48 %), plafonné à min(18 000 €, 25 % du RNG). Exemple à 48 % : 18 000 × 48 % = 8 640 € de RI.' },
+        text: `RI = souscription × taux (${pct(PD.sofica.taux['30'])}/${pct(PD.sofica.taux['36'])}/${pct(PD.sofica.taux['48'])}), plafonné à min(${eur(PD.sofica.versementMax)}, ${pct(PD.sofica.plafondAssiettePctRng)} du RNG). Exemple à ${pct(PD.sofica.taux['48'])} : ${eur(PD.sofica.versementMax)} × ${pct(PD.sofica.taux['48'])} = ${eur(PD.sofica.versementMax * PD.sofica.taux['48'])} de RI.` },
     ],
     refCGI: 'Art. 199 unvicies CGI',
     refBofip: 'BOI-IR-RICI-180',
@@ -717,9 +726,9 @@ const LEVIERS_CATALOGUE = [
     params: [
       { name: 'taux', label: 'Taux SOFICA', defaultValue: '36',
         options: [
-          { value: '30', label: '30 % — standard',                                taux: 0.30 },
-          { value: '36', label: '36 % — engagement production (10 %)',             taux: 0.36 },
-          { value: '48', label: '48 % — production indép. + langues régionales',   taux: 0.48 },
+          { value: '30', label: `${pct(PD.sofica.taux['30'])} — standard`,                                 taux: PD.sofica.taux['30'] },
+          { value: '36', label: `${pct(PD.sofica.taux['36'])} — engagement production (10 %)`,             taux: PD.sofica.taux['36'] },
+          { value: '48', label: `${pct(PD.sofica.taux['48'])} — production indép. + langues régionales`,   taux: PD.sofica.taux['48'] },
         ]
       },
     ],
