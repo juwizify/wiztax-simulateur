@@ -1,1 +1,4 @@
 .DS_Store
+
+# IDE / outillage local (Claude Code preview server, etc.)
+.claude/
