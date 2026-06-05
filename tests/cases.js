@@ -80,7 +80,7 @@ function makeInput(overrides = {}) {
     irPmeJeii: 0,
     irPmeJeir: 0,
     irPmeJeiJeirImputeAnterieur: 0,
-    malraux: 0,
+    malraux: 0, malrauxTravauxAnterieurs: 0,   // PR-C : cumul 4 ans
     locAvantages: 0,
     sofica: 0, soficaTaux: '36',   // D3.2 : sémantique investissement
     autresReductions: 0,
@@ -688,6 +688,37 @@ const CASES = [
     // +700 € vs zone standard (gain de la majoration zone éligible)
     // impôt net = 20 701 - 2 500 = 18 201
     expected: { impotNet: 18201, revenuReference: 90000, tmi: 0.41 },
+  },
+  {
+    name: "Malraux cumul 4 ans (PR-C) : 350k déjà engagés + 100k année courante → cap pluri 50k",
+    input: makeInput({
+      sal1: 500000, malrauxTravaux: 100000, malrauxZone: 'spr-oui',
+      malrauxTravauxAnterieurs: 350000,
+    }),
+    // Cumul antérieur 350 000 € + saisie 100 000 € = 450 000 € > 400 000 € (pluri)
+    // Restant pluri = 400 000 − 350 000 = 50 000 €
+    // Travaux retenus = min(100 000, 100 000 annuel, 50 000 restant) = 50 000 €
+    // RI = 50 000 × 30 % (SPR + PSMV/QAD) = 15 000 €
+    //
+    // Calcul impôt brut sal 500k célib :
+    //   sal net = 500 000 − 14 555 (cap) = 485 445
+    //   QF = 485 445 → tranches : 0 + 1977.69 + 16499.40 + 97340×0.41 + 303528×0.45 = 0+1977.69+16499.40+39909.40+136587.6 = 194974.09 → 194974
+    //   RFR = 485 445 → CEHR : (485445-250000)×3% jusqu'à 500k, puis 4% au-delà
+    //         CEHR = 250000×3% = 7500 (seuil 250k-500k toujours 3%) → 7064 (cf. moteur exact)
+    //   Total ≈ 194974 - 15000 + CEHR = à laisser le moteur calculer.
+    // Le test vérifie surtout que la RI Malraux est bien tronquée à 50k × 30 % = 15 000 €.
+    expected: { impotNet: 187038, revenuReference: 485445, tmi: 0.45 },
+  },
+  {
+    name: "Malraux cumul 4 ans (PR-C) : 0 antérieur + 100k → plein effet (pas de troncature)",
+    input: makeInput({
+      sal1: 500000, malrauxTravaux: 100000, malrauxZone: 'spr-oui',
+      malrauxTravauxAnterieurs: 0,
+    }),
+    // Cumul antérieur 0 → restant pluri 400 000
+    // Travaux retenus = min(100 000, 100 000, 400 000) = 100 000 (pas de troncature)
+    // RI = 100 000 × 30 % = 30 000 €
+    expected: { impotNet: 172038, revenuReference: 485445, tmi: 0.45 },
   },
 
   // -------------------------------------------------------------------
