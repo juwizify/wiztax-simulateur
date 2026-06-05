@@ -93,7 +93,7 @@ function getInputs() {
     pinel:           v('pinel'),
     girardinPD:      v('girardinPD'),
     girardinAG:      v('girardinAG'),
-    fcpi:            v('fcpi'),
+    // fcpi (classique) : retiré au 21/02/2026 (LF 2026). Seul FCPI-JEI subsiste.
     fcpiJei:         v('fcpiJei'),
     fipCorse:        v('fipCorse'),
     gfi:             v('gfi'),
@@ -248,7 +248,7 @@ function updateCalcDetaille(d) {
     ['cd-rpinel',    'Pinel / Denormandie — NICHE 10k',            d.redPinel,        ''],
     ['cd-rgpd',      'Girardin plein droit — NICHE 18k (44%)',     d.redGirardinPD,   ''],
     ['cd-rgag',      'Girardin avec agrément — NICHE 18k (34%)',   d.redGirardinAG,   ''],
-    ['cd-rfcpi',     'FCPI / FIP classique — NICHE 10k',           d.redFCPI,         ''],
+    // cd-rfcpi retiré — FCPI classique supprimé au 21/02/2026 (LF 2026).
     ['cd-rfcpijei',  'FCPI JEI (LF 2026, 30 %) — NICHE 10k',       d.redFcpiJei,      ''],
     ['cd-rfipcorse', 'FIP Corse / Outre-mer (30 %) — NICHE 10k',   d.redFipCorse,     ''],
     ['cd-rgfi',      'GFI (Groupements forestiers) — NICHE 10k',   d.redGfi,          ''],
@@ -330,7 +330,7 @@ function getInputsSimple() {
     emploiDomicile:  v('s-emploi'),
     gardeEnfants:    v('s-garde'),
     pinel:           v('s-pinel'),
-    girardinPD:      0, girardinAG:   0, fcpi:          0,
+    girardinPD:      0, girardinAG:   0,    // fcpi (classique) retiré 21/02/2026
     sofica:          v('s-sofica'),
     autresReductions: 0,
     autresCredits:    0,

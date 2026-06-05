@@ -756,16 +756,13 @@
             </div>
           </div>
 
-          <div class="form-row">
-            <label for="fcpi">
-              FCPI / FIP classique (extinction)
-              <i class="tip" data-tip="Cases 7GQ / 7FQ de la déclaration.&#10;Fonds Communs de Placement dans l'Innovation (FCPI) ou Fonds d'Investissement de Proximité (FIP) métropolitain.&#10;&#10;⚠ DISPOSITIF QUASI ÉTEINT pour les souscriptions 2026 :&#10;· FIP classique métropolitain : supprimé au 01/01/2026 (LF 2025)&#10;· FCPI classique : supprimé au 21/02/2026 (LF 2026)&#10;&#10;Ce champ reste utile pour :&#10;· Souscription FCPI classique faite entre le 01/01/2026 et le 20/02/2026 (taux 25 % boost transitoire)&#10;· Reports d'années antérieures non encore consommés&#10;&#10;Pour les nouvelles souscriptions 2026, utiliser plutôt :&#10;· FCPI JEI (30 %)&#10;· FIP Corse / Outre-mer (30 %)&#10;· IR-PME / Madelin (25 %)&#10;&#10;Saisir le MONTANT DE LA RÉDUCTION obtenue (pas le montant souscrit).&#10;Plafond global niches : 10 000 €.">i</i>
-            </label>
-            <input type="number" id="fcpi" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-10k">niche 10 000 €</span>
-            </div>
-          </div>
+          <!-- FCPI classique retiré au 21/02/2026 (LF 2026 / loi 2026-103).
+               Pour les nouvelles souscriptions, utiliser plutôt :
+                 · FCPI JEI (30 %)
+                 · FIP Corse / Outre-mer (30 %)
+                 · IR-PME / Madelin
+               Note historique conservée pour mémoire. -->
+
 
           <div class="form-row">
             <label for="fcpiJei">
@@ -1034,7 +1031,7 @@
       <tr><td class="td-label"><span class="td-label-inner">Pinel / Denormandie — NICHE 10k</span></td><td class="td-val" id="cd-rpinel-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Girardin plein droit — NICHE 18k (44 %) <i class="tip" data-tip="Seuls 44 % du montant sont comptabilisés dans le plafond niches (rétrocession 56 % à l'entreprise locale).">i</i></span></td><td class="td-val" id="cd-rgpd-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Girardin avec agrément — NICHE 18k (34 %) <i class="tip" data-tip="Seuls 34 % du montant sont comptabilisés dans le plafond niches (rétrocession 66 %).">i</i></span></td><td class="td-val" id="cd-rgag-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">FCPI / FIP classique — NICHE 10k</span></td><td class="td-val" id="cd-rfcpi-val">—</td></tr>
+      <!-- FCPI classique retiré au 21/02/2026 (LF 2026 / loi 2026-103). -->
       <tr><td class="td-label"><span class="td-label-inner">FCPI JEI (LF 2026, 30 %) — NICHE 10k</span></td><td class="td-val" id="cd-rfcpijei-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">FIP Corse / Outre-mer (30 %) — NICHE 10k</span></td><td class="td-val" id="cd-rfipcorse-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">GFI (Groupements forestiers) — NICHE 10k</span></td><td class="td-val" id="cd-rgfi-val">—</td></tr>
