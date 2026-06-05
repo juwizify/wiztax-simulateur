@@ -67,6 +67,7 @@ function makeInput(overrides = {}) {
     dons: 0,
     dons7UD: 0,
     pinel: 0,
+    denormandie: 0, denormandieDuree: '9',  // Denormandie — prolongé jusqu'au 31/12/2027 par LF 2026 art. 47
     girardinPD: 0,
     girardinAG: 0,
     // fcpi (classique) retiré en D3.4 — dispositif supprimé au 21/02/2026.
@@ -424,9 +425,10 @@ const CASES = [
     input: makeInput({ sal1: 40000, foncierReel: 5000 }),
     // sal net 36 000 + foncier 5 000 → RBG 41 000
     // QF=41 000 → 1 977.69 + (41 000-29 579)×0.30 = 5 403.99 → 5 404
-    // PS foncier = 5 000 × 18,6 % = 930 (CFA LFSS 2026)
-    // total = 5 404 + 930 = 6 334
-    expected: { impotNet: 6334, revenuReference: 41000, tmi: 0.30 },
+    // PS foncier nu = 5 000 × 17,2 % = 860 (taux maintenu LFSS 2026 —
+    // pas concerné par la hausse +1,4 pt qui ne touche que mobilier/LMNP)
+    // total = 5 404 + 860 = 6 264
+    expected: { impotNet: 6264, revenuReference: 41000, tmi: 0.30 },
   },
 
   // -------------------------------------------------------------------
@@ -732,9 +734,9 @@ const CASES = [
     // foncier final = 12 000 - 7 000 = 5 000
     // sal net 36k + 5k = RBG 41 000
     // QF=41k → 1 977.69 + (41-29.579)×0.30 = 5 403.99 → 5 404
-    // PS foncier = 5 000 × 18,6 % = 930 (CFA LFSS 2026)
-    // total = 5 404 + 930 = 6 334
-    expected: { impotNet: 6334, revenuReference: 41000, tmi: 0.30 },
+    // PS foncier nu = 5 000 × 17,2 % = 860 (taux maintenu LFSS 2026)
+    // total = 5 404 + 860 = 6 264
+    expected: { impotNet: 6264, revenuReference: 41000, tmi: 0.30 },
   },
   {
     name: 'Jeanbrun inter cap : 40k sal + 12k foncier - 10k amort. (cap 8k)',
@@ -743,9 +745,9 @@ const CASES = [
     // foncier final = 12 000 - 8 000 = 4 000
     // sal net 36k + 4k = RBG 40 000
     // QF=40k → 1 977.69 + (40-29.579)×0.30 = 5 103.99 → 5 104
-    // PS foncier = 4 000 × 18,6 % = 744 (CFA LFSS 2026)
-    // total = 5 104 + 744 = 5 848
-    expected: { impotNet: 5848, revenuReference: 40000, tmi: 0.30 },
+    // PS foncier nu = 4 000 × 17,2 % = 688 (taux maintenu LFSS 2026)
+    // total = 5 104 + 688 = 5 792
+    expected: { impotNet: 5792, revenuReference: 40000, tmi: 0.30 },
   },
   {
     name: 'Jeanbrun très-social transforme revenu en déficit : 40k sal + 5k foncier - 8k amort.',
@@ -820,12 +822,12 @@ const CASES = [
     // sal net 72k + foncier 4k = RBG 76k
     // QF = 76k → 1977.69 + (76-29.579)×0.30 = 15903.99 → 15904
     // IR mob PFU = (3000+1500)×12.8% = 576
-    // PS mob = 4500 × 18.6% = 837 (div + int dus via avis IR)
-    // PS foncier = 4000 × 18.6% = 744 (CFA LFSS 2026)
-    // Total PS = 1581
-    // Total = 15904 + 576 + 1581 = 18061
+    // PS mob = 4500 × 18.6% = 837 (div + int dus via avis IR — taux mobilier)
+    // PS foncier nu = 4000 × 17.2% = 688 (taux maintenu LFSS 2026)
+    // Total PS = 1525
+    // Total = 15904 + 576 + 1525 = 18005
     // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
-    expected: { impotNet: 18061, revenuReference: 80500, tmi: 0.30 },
+    expected: { impotNet: 18005, revenuReference: 80500, tmi: 0.30 },
   },
 
   // Profil 6 : Cadre supérieur diversifié — PER + Pinel + dons mixtes
@@ -1093,6 +1095,64 @@ const CASES = [
     // Politique : tronquer JEIR → JEIR retenu = 25 000 - 20 000 = 5 000.
     // RI cumulée 2026 = 15 000 + 5 000 = 20 000 (= plafond restant).
     expected: { impotNet: 182037, revenuReference: 485445, tmi: 0.45 },
+  },
+
+  // ───────────────────────────────────────────────────────────────────
+  // PR-Y — Profil complexe utilisateur, validé contre l'avis IR officiel
+  // impots.gouv.fr (capture transmise). Sert d'oracle terrain pour tout
+  // changement futur du moteur : si ce cas casse, on vient d'introduire
+  // un écart par rapport au simulateur officiel.
+  // ───────────────────────────────────────────────────────────────────
+  {
+    name: 'Profil complexe — couple cadre + invest + famille (oracle impots.gouv.fr)',
+    input: makeInput({
+      situation: 'marie-pacse', nbEnfants: 2,
+      sal1: 95000, sal2: 42000,                  // 1AJ / 1BJ
+      microFoncier: 8400,                         // 4BE
+      dividendes: 12000, pv: 7500, optionPFU: 'pfu',  // 2DC / 3VG en PFU
+      per: 8000,                                  // 6NS (D1)
+      dons: 1500,                                 // 7UF
+      emploiDomicile: 6000,                       // 7DB
+      fraisScolLycee: 1,                          // 7EC (1 enfant lycée → 153 €)
+      irPme: 5000,                                // souscription IR-PME standard
+    }),
+    // Calculs détaillés (cohérents avis IR officiel) :
+    //   RBG = sal nets (85 500 + 37 800) + micro-foncier net 5 880 = 129 180
+    //   RNI = RBG − PER 8 000 = 121 180
+    //   RFR = RNI + PER 8 000 + div 12 000 + PV 7 500 = 148 680
+    //   Parts = 2 (couple) + 2 × 0,5 (enfants) = 3 → QF 40 393
+    //   Barème par part 5 222 × 3 = 15 666 ; plafonnement QF supplément 3 282
+    //   → après plafonnement QF = 18 948 (droits simples)
+    //   IR mobilier PFU = (12 000 + 7 500) × 12,8 % = 2 496
+    //   Réductions : dons 990 + lycée 153 + IR-PME 900 = 2 043
+    //   Crédits : emploi dom 6 000 × 50 % = 3 000
+    //   IR pur = 18 948 + 2 496 − 2 043 − 3 000 = 16 401
+    //   PS via avis IR (CSG-CRDS fonciers + cas général + solidarité arrondis) = 4 639
+    //   Total à payer = 16 401 + 4 639 = 21 040
+    expected: { impotNet: 21040, revenuReference: 148680, tmi: 0.30 },
+  },
+
+  // ───────────────────────────────────────────────────────────────────
+  // Denormandie — art. 199 novovicies CGI (volet ancien rénové).
+  // Prolongé jusqu'au 31/12/2027 par LF 2026 art. 47.
+  // ───────────────────────────────────────────────────────────────────
+  {
+    name: 'Denormandie 9 ans — célib 80k sal + 200k invest → RI annuelle 4 000 €',
+    input: makeInput({ situation: 'celibataire', sal1: 80000, denormandie: 200000, denormandieDuree: '9' }),
+    // sal net 72 000, RBG 72 000, QF 72 000 → 1 977.69 + (72-29.579)×0.30 = 14 703,99 → 14 704
+    // RI annuelle = min(200 000, 300 000) × 18 % / 9 = 4 000
+    // total = 14 704 - 4 000 = 10 704
+    expected: { impotNet: 10704, revenuReference: 72000, tmi: 0.30 },
+  },
+  {
+    name: 'Denormandie cap 300k — célib 200k sal + 500k invest → invest plafonné',
+    input: makeInput({ situation: 'celibataire', sal1: 200000, denormandie: 500000, denormandieDuree: '12' }),
+    // sal1 200k → abat 10 % cappé 14 555 → sal net 185 445 → RBG = RNI = 185 445
+    // Barème : 1 977.69 + 16 499.40 + 39 909.40 + 1 587.60 (181 917→185 445 × 45 %) = 59 974
+    // invest retenu = min(500 000, 300 000) = 300 000 (excédent 200 000 ignoré, jauge UI)
+    // RI 12 ans à 21 % total = 300 000 × 21 % / 12 = 5 250/an (dans panier niche10)
+    // impotNet = 59 974 − 5 250 = 54 724
+    expected: { impotNet: 54724, revenuReference: 185445, tmi: 0.45 },
   },
 ];
 

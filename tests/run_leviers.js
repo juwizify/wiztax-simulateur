@@ -36,7 +36,7 @@ function makeInput(o = {}) {
     optionPFU: 'pfu', autresRevenus: 0,
     per: 0, perPlafondManuel: 0, pensionsAlim: 0, nbBeneficiairesPA: 0,
     csgDeductible: 0, autresCharges: 0,
-    dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
+    dons: 0, dons7UD: 0, pinel: 0, denormandie: 0, denormandieDuree: '9', girardinPD: 0, girardinAG: 0,
     fcpi: 0, fcpiJei: 0, fipCorse: 0, gfi: 0, irPme: 0,
     malraux: 0, locAvantages: 0, sofica: 0, autresReductions: 0,
     emploiDomicile: 0, gardeEnfants: 0, cotSyndicales: 0,
@@ -117,6 +117,12 @@ const TESTS = [
   //   RI gagnée par le moteur = invest × taux choisi → delta IR = 1500 ou 2400.
   { id: 'sofica', montant: 5000, paramValue: '30', key: 'sofica', expected: 5000, delta: 1500, deltaTol: 1 },
   { id: 'sofica', montant: 5000, paramValue: '48', key: 'sofica', expected: 5000, delta: 2400, deltaTol: 1 },
+
+  // Denormandie — PR-U sémantique investissement (versement-direct + paramKey).
+  //   input.denormandie = 200 000 ; input.denormandieDuree = '9'
+  //   RI annuelle = 200 000 × 18 % / 9 = 4 000 € → delta IR = 4 000 (TMI 30 % couvre)
+  { id: 'denormandie', montant: 200000, paramValue: '9',  key: 'denormandie', expected: 200000, delta: 4000, deltaTol: 1 },
+  { id: 'denormandie', montant: 200000, paramValue: '12', key: 'denormandie', expected: 200000, delta: 3500, deltaTol: 1 },
 
   // Girardin PD mode taux-libre : rendement saisi en décimal (1.13 = 113 %)
   //   versement 5 000 × rendement 1.13 = 5 650 € de RI brute Girardin.

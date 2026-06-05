@@ -55,12 +55,40 @@ const PARAMS = {
   },
 
   // --- PRÉLÈVEMENTS SOCIAUX ---
+  // Source de vérité : service-public.gouv.fr/F2329 (vérifié 2026-06-05) +
+  // capture avis IR impots.gouv.fr du contribuable (référence interne PR-J).
+  //
+  // L'avis IR décompose les PS en DEUX blocs arrondis indépendamment :
+  //   bloc « CSG + CRDS » : taux variable selon catégorie de revenu
+  //     · 9,7 % (CSG 9,2 + CRDS 0,5) — foncier nu, AV > 8 ans, PV immobilières
+  //     · 11,1 % (CSG 10,6 + CRDS 0,5) — mobilier (div/int/PV mob), LMNP
+  //   bloc « Solidarité » : 7,5 % uniforme sur toutes les catégories.
+  //
+  // LFSS 2026 art. 12 a relevé la CSG du cas général de 9,2 → 10,6 %
+  // (+1,4 pt) sans toucher au taux foncier nu / AV / PV immo.
+  //
+  // Les composantes ci-dessous (csg / crds / solidarite) sont la source
+  // primaire ; les taux agrégés (mobilier, foncierNu, lmnp, …) sont des
+  // raccourcis d'affichage — JAMAIS utilisés pour le calcul officiel,
+  // uniquement pour les libellés (« PS foncier nu 17,2 % »).
   ps: {
-    mobilier: 0.186,  // dividendes, intérêts, PV mob — CSG 10.6% + CRDS 0.5% + sol. 7.5%
-    foncier:  0.186,  // foncier nu, LMNP, micro-foncier — CFA LFSS 2026 inclus
-    av:       0.172,  // AV > 8 ans — non concernée par la CFA, reste à 17,2 %
-    pfuIr:    0.128,  // PFU — part IR (et IR sur AV > 8 ans avant abattement, art. 125-0 A CGI)
-    avIr75:   0.075,  // IR sur AV ≤ 8 ans (PFNL) avant abattement, art. 125-0 A CGI
+    csg: {
+      casGeneral: 0.106,  // mobilier, LMNP
+      fonciers:   0.092,  // foncier nu, AV > 8 ans, PV immobilières
+    },
+    crds:        0.005,
+    solidarite:  0.075,
+
+    // Taux agrégés — pour l'affichage uniquement. Doivent rester cohérents
+    // avec la somme des composantes ci-dessus (vérifié par test unitaire).
+    mobilier:    0.186,  // = csg.casGeneral + crds + solidarite
+    foncierNu:   0.172,  // = csg.fonciers + crds + solidarite
+    lmnp:        0.186,
+    av:          0.172,
+    pvImmo:      0.172,
+
+    pfuIr:       0.128,  // PFU — part IR
+    avIr75:      0.075,  // IR sur AV ≤ 8 ans avant abattement
     csgDeductible: 0.068,
   },
 
@@ -165,9 +193,13 @@ const PARAMS = {
       taux: 0.50,
     },
 
-    // Plafond pluri-annuel commun JEI + JEIR : 50 000 € de RI cumulée sur 2024-2028
-    // (art. 199 terdecies-0 A bis et ter). Appliqué dans le moteur via input
-    // `irPmeJeiJeirImputeAnterieur` (RI déjà imputée 2024-2025, optionnel).
+    // Plafond pluri-annuel commun JEI + JEIR : 50 000 € de RI cumulée sur la
+    // période 01/01/2024 → 31/12/2028. Source : art. 199 terdecies-0 A bis IV
+    // et art. 199 terdecies-0 A ter IV CGI (vérifié Légifrance 2026-06-05) :
+    //   https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051213424
+    //   https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000048796322
+    // Appliqué dans le moteur via input `irPmeJeiJeirImputeAnterieur` (RI déjà
+    // imputée les années antérieures, optionnel).
     irPmeJeiJeirPlafondCumule: 50000,
     // GFI — art. 199 decies H CGI (Groupements Forestiers d'Investissement).
     // Taux standard 18 %, majoré à 25 % pour les acquisitions de forêts en
@@ -205,6 +237,23 @@ const PARAMS = {
         'loc3': 0.65,
       },
       tauxDefaut: 'loc1',
+    },
+    // Denormandie — art. 199 novovicies CGI (volet ancien rénové).
+    // Investissement locatif dans des communes labellisées « Cœur de Ville »
+    // ou en ORT (Opération de Revitalisation du Territoire). Travaux de
+    // rénovation représentant ≥ 25 % du coût total de l'opération.
+    // Taux total de réduction selon engagement de location : 12 % (6 ans),
+    // 18 % (9 ans), 21 % (12 ans). RI étalée linéairement sur la durée
+    // d'engagement → RI annuelle = invest retenu × taux total / durée.
+    // Plafond invest 300 000 €/an, plafond 5 500 €/m². Dans le panier
+    // niches 10 000 €.
+    // Prolongé jusqu'au 31/12/2027 par LF 2026 art. 47 (loi 2026-103).
+    denormandie: {
+      versementMax:        300000,
+      versementMaxCouple:  300000,   // pas de cap doublé pour couple
+      prixMaxM2:             5500,   // non vérifié côté moteur (info UI uniquement)
+      taux: { '6': 0.12, '9': 0.18, '12': 0.21 },
+      tauxDefaut: '9',
     },
     // Girardin — pas de cap individuel propre (la limite vient du panier 18 k)
     // mais on centralise quote-part + rendement par défaut pour cohérence.
@@ -301,6 +350,32 @@ const PARAMS = {
   },
 };
 
-// Compat Node (tests CommonJS). En navigateur, PARAMS reste exposé globalement
-// par le chargement <script> sans avoir à passer par exports.
-if (typeof module !== 'undefined') module.exports = { PARAMS };
+// ============================================================
+// FORMATTEURS PARTAGÉS — source unique pour l'affichage des paramètres
+// ============================================================
+// Conséquence directe du principe « one source of truth » : aucun taux ni
+// plafond fiscal ne doit être écrit en dur dans l'HTML ou les tooltips.
+// Tout texte affiché qui mentionne une valeur de PARAMS DOIT passer par
+// ces helpers, soit en JS (`formatPct(PARAMS.ps.foncierNu)`), soit via les
+// tokens `{{path|fmt}}` résolus par `injectParams()` (cf. js/paramInject.js).
+//
+// Format français : virgule décimale, espace fine pour les milliers,
+// espace insécable avant le symbole.
+const formatPct = (x, opts = {}) => {
+  const v = x * 100;
+  const dec = opts.decimals != null
+    ? opts.decimals
+    : (Number.isInteger(v) ? 0 : (Number.isInteger(v * 10) ? 1 : 2));
+  return v.toLocaleString('fr-FR', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + ' %';
+};
+const formatEur = (x) =>
+  Math.round(x).toLocaleString('fr-FR') + ' €';
+const formatNum = (x) =>
+  x.toLocaleString('fr-FR');
+
+// Compat Node (tests CommonJS). En navigateur, PARAMS et les helpers de
+// format restent exposés globalement par le chargement <script> sans avoir
+// à passer par exports.
+if (typeof module !== 'undefined') {
+  module.exports = { PARAMS, formatPct, formatEur, formatNum };
+}

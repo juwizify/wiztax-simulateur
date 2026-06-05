@@ -11,7 +11,7 @@
 
 <header>
   <h1>WizTax — Simulateur d'impôt sur le revenu</h1>
-  <span>Projection — Revenus 2026 · Déclaration 2027</span>
+  <span>Projection — Revenus 2025 · Déclaration 2026</span>
 </header>
 
 <nav class="tabs-nav">
@@ -215,7 +215,11 @@
             <input type="number" id="bncReel2" value="0" min="0">
           </div>
 
-          <div class="form-subsection advanced"><h3>Revenus fonciers et locatifs</h3></div>
+          <!-- PR-V : sous-section visible aussi en mode simple, mais seul le
+               champ « Foncier réel / déficit » est en simple (cas courant pour
+               la saisie d'un déficit foncier). Les autres régimes (micro-foncier,
+               LMNP, meublé tourisme) restent en .advanced pour le mode complet. -->
+          <div class="form-subsection"><h3>Revenus fonciers et locatifs</h3></div>
 
           <div class="form-row advanced">
             <label for="microFoncier">
@@ -225,9 +229,9 @@
             <input type="number" id="microFoncier" value="0" min="0">
           </div>
 
-          <div class="form-row advanced">
+          <div class="form-row">
             <label for="foncierReel">
-              Revenus fonciers nets (régime réel)
+              Revenus fonciers nets (régime réel) — ou déficit
               <i class="tip" data-tip="Cases 4BA (revenus) ou 4BC (déficit) de la déclaration.&#10;&#10;Bénéfice ou déficit foncier net après déduction des charges réelles (intérêts d'emprunt, travaux, charges de copropriété, taxe foncière, gestion…).&#10;&#10;Si NÉGATIF (déficit foncier) : imputation sur le revenu global plafonnée à 10 700 €/an. Le surplus est reportable 10 ans (non simulé ici).&#10;&#10;Pas de prélèvements sociaux dus en cas de déficit (résultat foncier négatif).&#10;&#10;⚠ Seule la part hors intérêts d'emprunt s'impute sur le RG ; les intérêts ne s'imputent que sur les revenus fonciers futurs (simplification : on ne distingue pas).">i</i>
             </label>
             <input type="number" id="foncierReel" value="0">
@@ -262,6 +266,11 @@
                (pattern SOFICA / D3.2). Tooltip détaillé conservé dans le
                catalogue (info + params[0].label). -->
           <div id="simJeanbrun"></div>
+
+          <!-- Warning cumul déficit foncier classique + Jeanbrun > 10 700 €.
+               Affiché dynamiquement par app.js (updateResults) quand
+               det.deficitFoncierSurplus > 0. -->
+          <div id="deficitFoncierWarning" class="form-warning" hidden></div>
 
           <div class="form-subsection"><h3>Revenus de capitaux mobiliers (RCM)</h3></div>
 
@@ -371,7 +380,9 @@
             <input type="number" id="csgDeductible" value="0" min="0">
           </div>
 
-          <div class="form-row advanced">
+          <!-- PR-V : passé en mode simple (catch-all « Autres charges déductibles »
+               présent dans la liste de la capture utilisateur). -->
+          <div class="form-row">
             <label for="autresCharges">Autres charges déductibles</label>
             <input type="number" id="autresCharges" value="0" min="0">
           </div>
@@ -437,7 +448,7 @@
 
           <div class="form-row advanced">
             <label for="pinel">
-              Pinel / Denormandie — dispositif fermé
+              Pinel — dispositif fermé
               <i class="tip" data-tip="⚠ DISPOSITIF FERMÉ depuis le 01/01/2025 (LF 2024 art. 168).&#10;Aucune nouvelle acquisition éligible.&#10;&#10;Saisie réservée aux ENGAGEMENTS EXISTANTS pris ≤ 31/12/2024 :&#10;les RI courent jusqu'à fin de la période d'engagement (6 / 9 / 12 ans),&#10;soit au plus tard 2036 pour un engagement de 12 ans signé fin 2024.&#10;&#10;À SAISIR : le MONTANT ANNUEL DE LA RÉDUCTION D'IMPÔT (pas l'investissement).&#10;Cette valeur est connue à l'acte (acte notarié + lettre de la banque/notaire).&#10;&#10;Si tu n'as pas l'attestation, calcule la RI annuelle ainsi :&#10;  RI annuelle = invest × taux total / durée engagement&#10;&#10;Taux total selon millésime d'acquisition :&#10;· 2014 → 2022 (Pinel classique) :&#10;    6 ans = 12 %  ·  9 ans = 18 %  ·  12 ans = 21 %&#10;· 2023 (Pinel dégressif) :&#10;    6 ans = 10,5 %  ·  9 ans = 15 %  ·  12 ans = 17,5 %&#10;· 2024 (Pinel dégressif fin) :&#10;    6 ans = 9 %  ·  9 ans = 12 %  ·  12 ans = 14 %&#10;· Pinel+ (zones tendues + critères qualité) : taux 2022 maintenus.&#10;&#10;Exemple : invest 200 000 € engagé 9 ans en Pinel+ → RI totale = 200 000 × 18 % = 36 000 € → RI annuelle = 4 000 € à saisir chaque année.&#10;&#10;Investissement plafonné : 300 000 €/an et 5 500 €/m². Sinon, troncature de l'assiette.&#10;&#10;⚠ Limitation V1 : le simulateur ne modélise PAS l'étalement multi-année (pas d'historique daté). Saisir uniquement la RI de l'année en cours.&#10;&#10;Plafond global niches : 10 000 €.">i</i>
             </label>
             <input type="number" id="pinel" value="0" min="0">
@@ -485,15 +496,27 @@
                soficaTaux (30/36/48 %). Le rendu produit input + select empilés. -->
           <div id="simSofica"></div>
 
-          <div class="form-row advanced">
-            <label for="autresReductions">Autres réductions d'impôt</label>
+          <!-- Denormandie (PR-U) — form-row générée depuis LEVIERS_CATALOGUE
+               (family:'denormandie'). Sémantique investissement : input total
+               (prix + travaux) + select durée 6/9/12 ans. Le moteur calcule la
+               RI annuelle = invest × tauxTotal / durée. -->
+          <div id="simDenormandie"></div>
+
+          <!-- PR-V : passés en mode simple — « Autres réductions » sert de catch-all
+               pour FCPI, FIP, Invest. PME (capture utilisateur). « Autres crédits »
+               complète symétriquement la maille des crédits. -->
+          <div class="form-row">
+            <label for="autresReductions">
+              Autres réductions d'impôt
+              <i class="tip" data-tip="Catch-all pour FCPI JEI, FIP Corse/Outre-mer, Invest. PME (IR-PME variantes), et tout autre dispositif de réduction non listé individuellement. La saisie est directement la RI annuelle obtenue.">i</i>
+            </label>
             <input type="number" id="autresReductions" value="0" min="0">
             <div class="niche-cell">
               <span class="niche-marker niche-10k">niche 10 000 €</span>
             </div>
           </div>
 
-          <div class="form-row advanced">
+          <div class="form-row">
             <label for="autresCredits">Autres crédits d'impôt</label>
             <input type="number" id="autresCredits" value="0" min="0">
             <div class="niche-cell">
@@ -510,20 +533,22 @@
     <aside class="results-panel">
       <h2>Résultats</h2>
       <div class="results-list">
-        <div class="res-row"><span class="res-label">Revenu brut global</span><span class="res-val" id="res-rbg">—</span></div>
-        <div class="res-row"><span class="res-label">Revenu net imposable</span><span class="res-val" id="res-rni">—</span></div>
+        <!-- Libellés alignés sur l'avis IR officiel (impots.gouv.fr) pour
+             faciliter la comparaison ligne à ligne. Les IDs sont conservés
+             pour ne pas casser le binding JS. -->
+        <div class="res-row"><span class="res-label">Revenu brut global ou déficit</span><span class="res-val" id="res-rbg">—</span></div>
+        <div class="res-row"><span class="res-label">Revenu net imposable ou déficit à reporter</span><span class="res-val" id="res-rni">—</span></div>
         <div class="res-row"><span class="res-label">Revenu fiscal de référence</span><span class="res-val" id="res-rfr">—</span></div>
         <div class="res-row"><span class="res-label">Nombre de parts</span><span class="res-val" id="res-parts">—</span></div>
         <div class="res-row"><span class="res-label">Quotient familial (R/N)</span><span class="res-val" id="res-qf">—</span></div>
         <div class="res-row separator"></div>
         <div class="res-row"><span class="res-label">Impôt brut (barème)</span><span class="res-val" id="res-impot-brut">—</span></div>
         <div class="res-row"><span class="res-label">Supplément plafonnement QF</span><span class="res-val" id="res-supp-qf">—</span></div>
-        <div class="res-row highlight"><span class="res-label">Après plafonnement QF</span><span class="res-val" id="res-apres-qf">—</span></div>
+        <div class="res-row highlight"><span class="res-label">Droits simples</span><span class="res-val" id="res-apres-qf">—</span></div>
         <div class="res-row"><span class="res-label">Décote</span><span class="res-val" id="res-decote">—</span></div>
-        <div class="res-row highlight"><span class="res-label">Après décote</span><span class="res-val" id="res-apres-decote">—</span></div>
+        <div class="res-row"><span class="res-label">Après décote</span><span class="res-val" id="res-apres-decote">—</span></div>
         <div class="res-row separator"></div>
-        <div class="res-row"><span class="res-label">IR mobilier (PFU)</span><span class="res-val" id="res-ir-mob">—</span></div>
-        <div class="res-row"><span class="res-label">PS dus via avis IR</span><span class="res-val" id="res-ps">—</span></div>
+        <div class="res-row"><span class="res-label">Impôt proportionnel (PFU)</span><span class="res-val" id="res-ir-mob">—</span></div>
         <div class="res-row"><span class="res-label">CEHR hauts revenus</span><span class="res-val" id="res-cehr">—</span></div>
         <div class="res-row separator"></div>
         <div class="res-jauges">
@@ -550,11 +575,14 @@
           </div>
         </div>
         <div class="res-row" id="res-niches-perdues-row" style="display:none"><span class="res-label">Niches perdues</span><span class="res-val warning" id="res-niches-perdues">—</span></div>
-        <div class="res-row"><span class="res-label">Total réductions retenues</span><span class="res-val" id="res-reductions">—</span></div>
-        <div class="res-row"><span class="res-label">Total crédits retenus</span><span class="res-val" id="res-credits">—</span></div>
+        <div class="res-row"><span class="res-label">Total des réductions d'impôt</span><span class="res-val" id="res-reductions">—</span></div>
+        <div class="res-row"><span class="res-label">Total des crédits d'impôt</span><span class="res-val" id="res-credits">—</span></div>
+        <div class="res-row separator"></div>
+        <div class="res-row highlight"><span class="res-label">Impôt sur le revenu net</span><span class="res-val" id="res-ir-pur">—</span></div>
+        <div class="res-row"><span class="res-label">Prélèvements sociaux (avis IR)</span><span class="res-val" id="res-ps">—</span></div>
         <div class="res-row separator"></div>
         <div class="res-row total-final">
-          <span class="res-label">IMPÔT NET</span>
+          <span class="res-label">Montant restant à payer</span>
           <span class="res-val" id="res-impot-net">—</span>
         </div>
         <div class="res-row"><span class="res-label">Taux moyen</span><span class="res-val" id="res-taux-moyen">—</span></div>
@@ -652,13 +680,18 @@
   <div class="calc-section">
     <h2>Étape 7 — Prélèvements sociaux</h2>
     <table class="calc-table">
-      <tr><td class="td-label"><span class="td-label-inner">PS dividendes (18,6 %) — prélevés à la source <i class="tip" data-tip="Formule : dividendes × 18,6 %&#10;&#10;Prélevés directement par la banque au moment du versement (CSG 10,6 % + CRDS 0,5 % + solidarité 7,5 %). Déjà acquittés, EXCLUS de l'avis IR.">i</i></span></td><td class="td-val" id="cd-psdiv-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">PS intérêts (18,6 %) — prélevés à la source <i class="tip" data-tip="Formule : intérêts × 18,6 %&#10;&#10;Prélevés par la banque sur les livrets imposables, comptes-titres, PEL/CEL > 12 ans, etc. Déjà acquittés, EXCLUS de l'avis IR.">i</i></span></td><td class="td-val" id="cd-psint-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">PS sur produits AV (17,2 %) — prélevés à la source <i class="tip" data-tip="Formule : (av75 + av128) × 17,2 %&#10;&#10;Calculés sur le BRUT (l'abattement ne porte que sur l'IR). Prélevés par l'assureur au rachat. Taux 17,2 % maintenu pour l'AV (LFSS 2026). Déjà acquittés, EXCLUS de l'avis IR.">i</i></span></td><td class="td-val" id="cd-psav-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS dividendes ({{ps.mobilier|pct}}) — prélevés à la source <i class="tip" data-tip="Formule : dividendes × {{ps.mobilier|pct}}&#10;&#10;Prélevés directement par la banque au moment du versement (CSG + CRDS + solidarité + CFA, LFSS 2026 art. 12). Déjà acquittés, EXCLUS de l'avis IR.&#10;&#10;Source : service-public.gouv.fr/particuliers/vosdroits/F2329">i</i></span></td><td class="td-val" id="cd-psdiv-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS intérêts ({{ps.mobilier|pct}}) — prélevés à la source <i class="tip" data-tip="Formule : intérêts × {{ps.mobilier|pct}}&#10;&#10;Prélevés par la banque sur les livrets imposables, comptes-titres, PEL/CEL > 12 ans, etc. Déjà acquittés, EXCLUS de l'avis IR.&#10;&#10;Source : service-public.gouv.fr/particuliers/vosdroits/F2329">i</i></span></td><td class="td-val" id="cd-psint-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS sur produits AV ({{ps.av|pct}}) — prélevés à la source <i class="tip" data-tip="Formule : (av75 + av128) × {{ps.av|pct}}&#10;&#10;Calculés sur le BRUT (l'abattement ne porte que sur l'IR). Prélevés par l'assureur au rachat. Taux {{ps.av|pct}} maintenu pour l'AV (LFSS 2026 art. 12 — l'AV est explicitement exclue de la nouvelle CFA). Déjà acquittés, EXCLUS de l'avis IR.&#10;&#10;Source : service-public.gouv.fr/particuliers/vosdroits/F2329">i</i></span></td><td class="td-val" id="cd-psav-val">—</td></tr>
       <tr class="total-row"><td class="td-label"><span class="td-label-inner">▶ Sous-total PS prélevés à la source <i class="tip" data-tip="Information uniquement — ces PS ont déjà été acquittés par la banque/l'assureur au moment du versement. Ils ne figurent PAS sur l'avis IR.">i</i></span></td><td class="td-val" id="cd-pssrc-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">PS plus-values mobilières (18,6 %) — voie de rôle <i class="tip" data-tip="Formule : PV mobilières × 18,6 %&#10;&#10;Contrairement aux dividendes/intérêts, les PV mobilières sont déclarées par le contribuable et les PS sont recouvrées via l'avis IR (pas de prélèvement à la source).">i</i></span></td><td class="td-val" id="cd-pspv-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">PS foncier — revenus fonciers nets (17,2 %) — voie de rôle <i class="tip" data-tip="Formule : max(0, revenus fonciers nets) × 17,2 %&#10;&#10;Revenus fonciers nets = micro-foncier×70% + foncier réel + meublé classé×50% + meublé non classé×70%&#10;&#10;Pas de PS sur résultat foncier négatif (déficit). Recouvrement via avis IR.">i</i></span></td><td class="td-val" id="cd-psfon-val">—</td></tr>
-      <tr class="total-row"><td class="td-label"><span class="td-label-inner">▶ Sous-total PS dus via avis IR</span></td><td class="td-val" id="cd-psrol-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS plus-values mobilières ({{ps.mobilier|pct}}) — voie de rôle <i class="tip" data-tip="Formule : PV mobilières × {{ps.mobilier|pct}}&#10;&#10;Contrairement aux dividendes/intérêts, les PV mobilières sont déclarées par le contribuable et les PS sont recouvrées via l'avis IR (pas de prélèvement à la source).&#10;&#10;Source : service-public.gouv.fr/particuliers/vosdroits/F2329">i</i></span></td><td class="td-val" id="cd-pspv-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS foncier nu ({{ps.foncierNu|pct}}) — voie de rôle <i class="tip" data-tip="Taux applicable : {{ps.foncierNu|pct}} (CSG 9,2 % + CRDS 0,5 % + Solidarité 7,5 %).&#10;&#10;Le foncier nu (location vide, art. 14 CGI) n'est PAS concerné par la hausse LFSS 2026 — taux maintenu à {{ps.foncierNu|pct}}.&#10;&#10;Assiette : (micro-foncier × 70 % + foncier réel positif) × {{ps.foncierNu|pct}}&#10;&#10;Pas de PS sur déficit foncier (traité comme charge déductible du revenu global, effet IR pur — cf. BOI-RFPI-BASE-30-20 §220). Recouvrement via avis IR.&#10;&#10;Source : service-public.gouv.fr/particuliers/vosdroits/F2329">i</i></span></td><td class="td-val" id="cd-psfonNu-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">PS LMNP ({{ps.lmnp|pct}}) — voie de rôle <i class="tip" data-tip="Taux applicable : {{ps.lmnp|pct}} (CSG 10,6 % + CRDS 0,5 % + Solidarité 7,5 %).&#10;&#10;Le LMNP (location meublée non pro, BIC art. 35 CGI) est concerné par la hausse LFSS 2026 : CSG portée de 9,2 % à 10,6 % (+1,4 pt). Application rétroactive aux loyers perçus dès le 1er janvier 2025.&#10;&#10;Assiette : (meublé classé × 50 % + non classé × 70 % + autres meublés × 50 %) × {{ps.lmnp|pct}}&#10;&#10;Source : service-public.gouv.fr/particuliers/vosdroits/F2329 · LFSS 2026 art. 12">i</i></span></td><td class="td-val" id="cd-psLMNP-val">—</td></tr>
+      <tr class="calc-subhead"><td colspan="2" class="td-label"><span class="td-label-inner muted">— Calcul officiel arrondi (avis IR impots.gouv.fr) —</span></td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">▸ Montant CSG-CRDS fonciers (9,7 %) <i class="tip" data-tip="Foncier nu + AV imposable (mais AV exclue car déjà prélevée à la source).&#10;&#10;Formule : round(base_fonciers × (CSG 9,2 % + CRDS 0,5 %)).&#10;&#10;L'avis IR officiel arrondit ce bloc indépendamment du bloc Solidarité, d'où un écart possible de ±1 € vs un calcul global à 17,2 %.">i</i></span></td><td class="td-val" id="cd-psCsgCrdsFon-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">▸ Montant CSG-CRDS cas général (11,1 %) <i class="tip" data-tip="Mobilier (div + intérêts + PV mob) + LMNP.&#10;&#10;Formule : round((base_mobilier + base_LMNP) × (CSG 10,6 % + CRDS 0,5 %)).&#10;&#10;Taux relevé par LFSS 2026 (+1,4 pt sur la CSG).">i</i></span></td><td class="td-val" id="cd-psCsgCrdsCG-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">▸ Montant prélèvement de solidarité (7,5 %) <i class="tip" data-tip="Taux uniforme 7,5 % sur la SOMME de toutes les assiettes PS (foncier nu + mobilier + LMNP).&#10;&#10;Formule : round(base_totale × 7,5 %).&#10;&#10;Composante non déductible — séparée du bloc CSG-CRDS sur l'avis officiel pour cette raison (la CSG 6,8 % est, elle, déductible).">i</i></span></td><td class="td-val" id="cd-psSolid-val">—</td></tr>
+      <tr class="total-row"><td class="td-label"><span class="td-label-inner">▶ Sous-total PS dus via avis IR <i class="tip" data-tip="= Montant CSG-CRDS fonciers + Montant CSG-CRDS cas général + Montant solidarité.&#10;&#10;Identique à l'avis IR officiel (à l'arrondi près de chaque bloc). Source : capture avis impots.gouv.fr du contribuable de référence (PR-J).">i</i></span></td><td class="td-val" id="cd-psrol-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">▶ TOTAL PS (charge fiscale globale) <i class="tip" data-tip="Source + voie de rôle. Représente la charge fiscale totale en PS, y compris ce qui a déjà été prélevé par la banque/l'assureur.">i</i></span></td><td class="td-val" id="cd-tps-val">—</td></tr>
     </table>
   </div>
@@ -670,7 +703,8 @@
       <tr class="hors-niche"><td class="td-label"><span class="td-label-inner">Frais de scolarité 7EA/7EC/7EF — HORS NICHE <i class="tip" data-tip="61 € collège + 153 € lycée + 183 € sup, par enfant à charge.">i</i></span></td><td class="td-val" id="cd-rscol-val">—</td></tr>
       <tr class="hors-niche"><td class="td-label"><span class="td-label-inner">EHPAD ascendants 7CD (25 %) — HORS NICHE <i class="tip" data-tip="25 % des frais, plafond 10 000 € de dépenses par personne hébergée.">i</i></span></td><td class="td-val" id="cd-rehpad-val">—</td></tr>
       <tr class="hors-niche"><td class="td-label"><span class="td-label-inner">Loi Malraux 7NX/7NY (22/30 %) — HORS NICHE</span></td><td class="td-val" id="cd-rmalraux-val">—</td></tr>
-      <tr><td class="td-label"><span class="td-label-inner">Pinel / Denormandie — NICHE 10k</span></td><td class="td-val" id="cd-rpinel-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Pinel — NICHE 10k</span></td><td class="td-val" id="cd-rpinel-val">—</td></tr>
+      <tr><td class="td-label"><span class="td-label-inner">Denormandie — NICHE 10k <i class="tip" data-tip="Volet ancien rénové de l'article 199 novovicies CGI. Prolongé jusqu'au 31/12/2027 par la LF 2026 (art. 47).">i</i></span></td><td class="td-val" id="cd-rdeno-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Girardin plein droit — NICHE 18k (44 %) <i class="tip" data-tip="Seuls 44 % du montant sont comptabilisés dans le plafond niches (rétrocession 56 % à l'entreprise locale).">i</i></span></td><td class="td-val" id="cd-rgpd-val">—</td></tr>
       <tr><td class="td-label"><span class="td-label-inner">Girardin avec agrément — NICHE 18k (34 %) <i class="tip" data-tip="Seuls 34 % du montant sont comptabilisés dans le plafond niches (rétrocession 66 %).">i</i></span></td><td class="td-val" id="cd-rgag-val">—</td></tr>
       <!-- FCPI classique retiré en D3.4 (dispositif supprimé au 21/02/2026 par la LF 2026). -->
@@ -742,6 +776,11 @@
     <label for="precoBudget">Budget total disponible / an</label>
     <input type="number" id="precoBudget" value="0" min="0" placeholder="ex : 20 000">
     <span class="preco-budget-suffix">€</span>
+    <!-- DEV ONLY — facilite le test rapide de tous les dispositifs.
+         À retirer ou masquer derrière un feature flag avant prod publique. -->
+    <button type="button" id="precoDevFillAll" class="preco-dev-btn" title="Crée une ligne par dispositif du catalogue, montant 1 000 € chacune">
+      <span class="preco-dev-badge">DEV</span> Tout à 1 000 €
+    </button>
   </div>
 
   <div class="preco-layout">
@@ -888,139 +927,13 @@
 
 <!-- ══════════════════════════════════════════════
      ONGLET PARAMÈTRES FISCAUX
+     Toutes les cards sont générées dynamiquement depuis PARAMS_GROUPS
+     (cf. js/paramsRegistry.js) par js/paramsTab.js. Valeurs injectées
+     via tokens {{path|fmt}} (paramInject.js). Source unique de vérité.
 ═══════════════════════════════════════════════ -->
 <div id="parametres" class="tab-pane">
 
-  <div class="param-card">
-    <h2>Barème progressif de l'IR</h2>
-    <table class="param-table">
-      <tr><td class="pt-label">Jusqu'à 11 600 €</td><td class="pt-val">0 %</td></tr>
-      <tr><td class="pt-label">11 601 € à 29 579 €</td><td class="pt-val">11 %</td></tr>
-      <tr><td class="pt-label">29 580 € à 84 577 €</td><td class="pt-val">30 %</td></tr>
-      <tr><td class="pt-label">84 578 € à 181 917 €</td><td class="pt-val">41 %</td></tr>
-      <tr><td class="pt-label">Au-delà de 181 917 €</td><td class="pt-val">45 %</td></tr>
-      <tr><td colspan="2" class="pt-source">Source : BOI-IR-LIQ-20-10 du 07/04/2026</td></tr>
-    </table>
-  </div>
-
-  <div class="param-card">
-    <h2>Quotient familial</h2>
-    <table class="param-table">
-      <tr><td class="pt-label">Plafond par demi-part supplémentaire (standard)</td><td class="pt-val">1 807 €</td></tr>
-      <tr><td class="pt-label">Plafond demi-part case L (vieux parent isolé)</td><td class="pt-val">1 079 €</td></tr>
-      <tr><td class="pt-label">Plafond demi-part case G (veuve de guerre)</td><td class="pt-val">déplafonné</td></tr>
-      <tr><td class="pt-label">Parent isolé — 1er enfant</td><td class="pt-val">4 262 €</td></tr>
-      <tr><td class="pt-label">Parent isolé — demi-part 1er enfant</td><td class="pt-val">2 131 €</td></tr>
-      <tr><td class="pt-label">Veuf avec enfants — part supp.</td><td class="pt-val">2 011 €</td></tr>
-      <tr><td colspan="2" class="pt-source">Source : BOI-IR-LIQ-20-20-20 du 07/04/2026 — art. 197 I 2 al. 2 CGI (case L)</td></tr>
-    </table>
-  </div>
-
-  <div class="param-card">
-    <h2>Décote</h2>
-    <table class="param-table">
-      <tr><td class="pt-label">Plafond célibataire</td><td class="pt-val">897 €</td></tr>
-      <tr><td class="pt-label">Plafond couple</td><td class="pt-val">1 483 €</td></tr>
-      <tr><td class="pt-label">Seuil impôt célibataire</td><td class="pt-val">1 982 €</td></tr>
-      <tr><td class="pt-label">Seuil impôt couple</td><td class="pt-val">3 277 €</td></tr>
-      <tr><td class="pt-label">Taux de décote</td><td class="pt-val">45,25 %</td></tr>
-      <tr><td colspan="2" class="pt-source">Source : BOI-IR-LIQ-20-20-30 du 07/04/2026</td></tr>
-    </table>
-  </div>
-
-  <div class="param-card">
-    <h2>Abattements et exonérations</h2>
-    <table class="param-table">
-      <tr><td class="pt-label">Salaires + alloc. chômage — taux / min / max par déclarant</td><td class="pt-val">10 % · 509 € · 14 555 €</td></tr>
-      <tr><td class="pt-label">Pensions retraite + invalidité + alim. perçues — taux / min / max foyer</td><td class="pt-val">10 % · 454 € · 4 439 €</td></tr>
-      <tr><td class="pt-label">Heures sup. et RTT exonérées — plafond annuel/déclarant</td><td class="pt-val">7 500 €</td></tr>
-      <tr><td class="pt-label">Micro-BNC — taux / min</td><td class="pt-val">34 % · 305 €</td></tr>
-      <tr><td class="pt-label">Micro-foncier</td><td class="pt-val">30 %</td></tr>
-      <tr><td class="pt-label">Meublé classé micro-BIC</td><td class="pt-val">50 %</td></tr>
-      <tr><td class="pt-label">Meublé non classé micro-BIC</td><td class="pt-val">30 %</td></tr>
-      <tr><td class="pt-label">Dividendes (si option barème 2OP)</td><td class="pt-val">40 %</td></tr>
-      <tr><td class="pt-label">AV &gt; 8 ans — abattement annuel single / couple</td><td class="pt-val">4 600 € / 9 200 €</td></tr>
-    </table>
-  </div>
-
-  <div class="param-card">
-    <h2>Prélèvements sociaux</h2>
-    <table class="param-table">
-      <tr><td class="pt-label">PS revenus mobiliers (dividendes, intérêts, PV mobilières)</td><td class="pt-val">18,6 %</td></tr>
-      <tr><td class="pt-label">PS revenus fonciers (nu, LMNP)</td><td class="pt-val">18,6 %</td></tr>
-      <tr><td class="pt-label">PS AV &gt; 8 ans, PV immobilières</td><td class="pt-val">17,2 %</td></tr>
-      <tr><td class="pt-label">PFU — part IR</td><td class="pt-val">12,8 %</td></tr>
-      <tr><td class="pt-label">CSG déductible</td><td class="pt-val">6,8 %</td></tr>
-      <tr><td colspan="2" class="pt-source">Source : LFSS 2026, art. 12</td></tr>
-    </table>
-  </div>
-
-  <div class="param-card">
-    <h2>Niches fiscales</h2>
-    <table class="param-table">
-      <tr><td class="pt-label">Plafond général</td><td class="pt-val">10 000 €</td></tr>
-      <tr><td class="pt-label">Plafond majoré (Girardin / Sofica)</td><td class="pt-val">18 000 €</td></tr>
-      <tr><td class="pt-label">Girardin plein droit — quote-part</td><td class="pt-val">44 %</td></tr>
-      <tr><td class="pt-label">Girardin avec agrément — quote-part</td><td class="pt-val">34 %</td></tr>
-      <tr><td colspan="2" class="pt-source">Source : art. 200-0 A, 4° du CGI</td></tr>
-    </table>
-  </div>
-
-  <div class="param-card">
-    <h2>PER — plafond de déduction</h2>
-    <table class="param-table">
-      <tr><td class="pt-label">Taux (% des revenus professionnels N-1)</td><td class="pt-val">10 %</td></tr>
-      <tr><td class="pt-label">Plancher (10% × PASS 2025)</td><td class="pt-val">4 710 €</td></tr>
-      <tr><td class="pt-label">Plafond max salarié (10% × 8 × PASS 2025)</td><td class="pt-val">37 680 €</td></tr>
-      <tr><td class="pt-label">Pensions alimentaires — enfant majeur</td><td class="pt-val">6 674 € / enfant</td></tr>
-      <tr><td colspan="2" class="pt-source">Source : Art. 163 quatervicies CGI — Art. 156-II CGI — PASS 2025 : 47 100 €</td></tr>
-    </table>
-  </div>
-
-  <div class="param-card">
-    <h2>Réductions et crédits — paramètres</h2>
-    <table class="param-table">
-      <tr><td class="pt-label">Dons 7UD (Coluche) — taux 1ᵉʳ palier (≤ 2 000 €)</td><td class="pt-val">75 %</td></tr>
-      <tr><td class="pt-label">Dons 7UF (intérêt général) — taux</td><td class="pt-val">66 %</td></tr>
-      <tr><td class="pt-label">Dons — plafond de la base</td><td class="pt-val">20 % du RNI</td></tr>
-      <tr><td class="pt-label">Cotisations syndicales 7AC — taux / plafond</td><td class="pt-val">66 % · 1 % des revenus</td></tr>
-      <tr><td class="pt-label">Frais scolarité — collège / lycée / supérieur (par enfant)</td><td class="pt-val">61 € / 153 € / 183 €</td></tr>
-      <tr><td class="pt-label">Frais EHPAD ascendants 7CD — taux / plafond par personne</td><td class="pt-val">25 % · 10 000 €</td></tr>
-      <tr><td class="pt-label">Emploi à domicile — taux / plafond dépenses</td><td class="pt-val">50 % · 12 000 €</td></tr>
-      <tr><td class="pt-label">Garde enfants &lt; 6 ans — taux / plafond par enfant</td><td class="pt-val">50 % · 3 500 €</td></tr>
-      <tr><td colspan="2" class="pt-source">Sources : art. 200 CGI (dons) — art. 199 quater C/F CGI (syndicales/scolarité) — art. 199 quindecies CGI (EHPAD) — art. 199 sexdecies CGI (domicile) — LF 2026, art. 28</td></tr>
-    </table>
-  </div>
-
-  <div class="param-card">
-    <h2>Foncier — déficit et amortissement Jeanbrun</h2>
-    <table class="param-table">
-      <tr><td class="pt-label">Déficit foncier — plafond imputable sur revenu global</td><td class="pt-val">10 700 €/an</td></tr>
-      <tr><td class="pt-label">Jeanbrun — loyer intermédiaire (taux / plafond)</td><td class="pt-val">3,5 % · 8 000 €/an</td></tr>
-      <tr><td class="pt-label">Jeanbrun — loyer social (taux / plafond)</td><td class="pt-val">4,5 % · 10 000 €/an</td></tr>
-      <tr><td class="pt-label">Jeanbrun — loyer très social (taux / plafond)</td><td class="pt-val">5,5 % · 12 000 €/an</td></tr>
-      <tr><td colspan="2" class="pt-source">Sources : art. 156-I-3° CGI (déficit foncier) — LF 2026 art. créant le statut bailleur privé (Jeanbrun, en vigueur 21/02/2026)</td></tr>
-    </table>
-  </div>
-
-  <div class="param-card">
-    <h2>CEHR — Contribution exceptionnelle hauts revenus</h2>
-    <table class="param-table">
-      <tr><td class="pt-label">Célibataire · tranche 3% (250 k – 500 k€)</td><td class="pt-val">3 %</td></tr>
-      <tr><td class="pt-label">Célibataire · tranche 4% (> 500 k€)</td><td class="pt-val">4 %</td></tr>
-      <tr><td class="pt-label">Couple · tranche 3% (500 k – 1 M€)</td><td class="pt-val">3 %</td></tr>
-      <tr><td class="pt-label">Couple · tranche 4% (> 1 M€)</td><td class="pt-val">4 %</td></tr>
-      <tr><td class="pt-label">Assiette</td><td class="pt-val">Revenu fiscal de référence</td></tr>
-      <tr><td colspan="2" class="pt-source">Source : Art. 223 sexies CGI — prorogée LF 2026</td></tr>
-    </table>
-  </div>
-
-  <div class="param-card param-card--scope">
-    <h2>Cadre temporel de ce simulateur</h2>
-    <p>Mode <strong>projection</strong> : ce simulateur estime l'impôt sur les <strong>revenus 2026</strong> qui seront déclarés en mai-juin 2027.</p>
-    <p style="margin-top:0.6rem">Les paramètres utilisés sont ceux de la <strong>Loi de Finances 2026</strong> (barème publié le 07/04/2026, PS 18,6 % LFSS 2026). Le barème pour les revenus 2026 sera officiellement fixé par la LF 2027 (~décembre 2026), avec probablement une réindexation inflation de l'ordre de 1-2 % sur les tranches et plafonds. <strong>L'écart avec le calcul réel de la déclaration 2027 sera marginal</strong>.</p>
-    <p style="margin-top:0.6rem">⚠ Évolutions LF 2026 déjà prises en compte : suppression FIP classique métropolitain (01/01/2026) et FCPI classique (21/02/2026), création FCPI JEI (30 %), maintien FIP Corse/Outre-mer (30 %), maintien IR-PME (25 %), hausse PS revenus mobiliers à 18,6 %.</p>
-  </div>
+  <div id="parametres-container"></div>
 
 </div>
 
@@ -1039,18 +952,17 @@
 
   <!-- Cards générées dynamiquement depuis LEVIERS_CATALOGUE (preconisations.js).
        Tout enrichissement / nouveau levier se fait dans le catalogue ; cet HTML
-       reste minimal. Cf. tasks/design-system-spec.md + tasks/d3.1-irpme-spec.md. -->
+       reste minimal. Cf. tasks/design-system-spec.md + tasks/d3.1-irpme-spec.md.
+       Les sources officielles sont désormais portées par chaque card (champ
+       `links` du catalogue) plutôt que rappelées globalement en bas de page. -->
   <div id="leviersAuto"></div>
-
-  <!-- Footer sources -->
-  <div class="leviers-footer">
-    <strong>Sources officielles</strong> : Art. 200-0 A CGI (plafond global niches) — BOI-IR-BASE-20-50 (PER) — BOI-IR-RICI-200 (Malraux) — BOI-IR-RICI-365 (Denormandie) — BOI-IR-RICI-90 (IR-PME) — BOI-IR-RICI-250 (Dons) — Art. 156 II CGI (déficit foncier) — Art. 156 bis CGI (MH) — Art. 199 undecies B CGI (Girardin) — Art. 199 unvicies CGI (Sofica) — LF 2026, art. 28 (dons), art. 47 (Jeanbrun), art. 10 (PER)<br>
-    <strong>⚠ Situation au 22 avril 2026.</strong> Vérifier les taux et conditions en vigueur avant toute décision d'investissement.
-  </div>
 
 </div>
 
 <script src="js/params.js"></script>
+<script src="js/paramsRegistry.js"></script>
+<script src="js/paramInject.js"></script>
+<script src="js/paramsTab.js"></script>
 <script src="js/calculator.js"></script>
 <script src="js/preconisations.js"></script>
 <script src="js/app.js"></script>

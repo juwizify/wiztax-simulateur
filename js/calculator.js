@@ -134,18 +134,47 @@ function calculerIR(input) {
                      :                                  P.plafonds.jeanbrunPlafondInter;
   det.jeanbrunAmort = Math.min(input.jeanbrunAmort || 0, jeanbrunPlaf);
 
-  // Foncier réel après amortissement Jeanbrun, puis plafonnement du déficit (4BC) :
-  // imputation sur revenu global plafonnée à 10 700 €/an.
-  // Le surplus serait reportable 10 ans (non simulé). Si bénéfice (>= 0), pas de plafonnement.
+  // Foncier réel après amortissement Jeanbrun. Deux branches sémantiques :
+  //
+  // 1. POSITIF → revenu foncier (bénéfice) : entre dans le revenu brut global
+  //    et dans l'assiette PS catégorie foncier nu (art. 14 CGI), 18,6 %.
+  //
+  // 2. NÉGATIF → déficit foncier traité comme CHARGE PURE DÉDUCTIBLE :
+  //    capée à 10 700 €/an (art. 156-I-3° CGI), imputée sur le revenu global
+  //    comme charge (effet IR seulement, exactement comme le PER). Choix de
+  //    design « préconisation simple » : n'affecte ni l'assiette PS d'aucune
+  //    catégorie, ni les revenus fonciers positifs existants (qui conservent
+  //    leur PS propre). Justification : (a) micro et réel ne coexistent pas
+  //    sur la déclaration officielle, (b) en contexte préconisation, recommander
+  //    un déficit foncier ne doit pas mécaniquement écraser la stratégie
+  //    immobilière déjà en place du foyer. Plafond PARTAGÉ avec amortissement
+  //    Jeanbrun (lecture restrictive art. 156-I-3°, doctrine BOFiP en attente
+  //    pour le bailleur privé Jeanbrun, LF 2026 art. 47).
+  //
+  // Surplus (excédent de saisie au-dessus de 10 700 €) exposé pour l'UI ; en
+  // pratique reportable 10 ans sur revenus fonciers futurs (non simulé V1).
   const foncierApresJeanbrun = input.foncierReel - det.jeanbrunAmort;
-  det.foncierReel = foncierApresJeanbrun >= 0
-    ? foncierApresJeanbrun
-    : Math.max(foncierApresJeanbrun, -P.plafonds.deficitFoncierMax);
+  det.foncierReel = Math.max(0, foncierApresJeanbrun);
+  det.deficitFoncierImputable = foncierApresJeanbrun < 0
+    ? Math.min(-foncierApresJeanbrun, P.plafonds.deficitFoncierMax)
+    : 0;
+  det.deficitFoncierSurplus = foncierApresJeanbrun < -P.plafonds.deficitFoncierMax
+    ? -foncierApresJeanbrun - P.plafonds.deficitFoncierMax
+    : 0;
 
   // Meublé
   det.meubleClasseNet = input.meubleClasse * (1 - P.abat.meubleClasse.taux);
   det.meubleNonClasseNet = input.meubleNonClasse * (1 - P.abat.meubleNonClasse.taux);
   det.autresMeublesNet = (input.autresMeubles || 0) * (1 - P.abat.autresMeubles.taux);
+
+  // Assiettes PS catégorielles, calculées une seule fois ici et consommées à
+  // l'étape 7. Aucune assiette ne reçoit de déficit (charge pure → traitée à
+  // l'étape 2 comme déduction du revenu net imposable, parallèle au PER).
+  //   foncier nu  = micro-foncier net + foncier réel positif (art. 14 CGI)
+  //   LMNP/BIC    = meublés classé/non classé/autres (art. 35 CGI) — assiette
+  //                 distincte, jamais croisée avec foncier nu.
+  det.foncierNuBase = det.microFoncierNet + det.foncierReel;
+  det.lmnpBase      = det.meubleClasseNet + det.meubleNonClasseNet + det.autresMeublesNet;
 
   // Mobilier selon option
   const isPFU = input.optionPFU === 'pfu';
@@ -207,8 +236,12 @@ function calculerIR(input) {
   det.csgDeductible = input.csgDeductible;
   det.autresCharges = input.autresCharges;
 
+  // Le déficit foncier (art. 156-I-3° CGI) est déduit ici comme charge pure
+  // sur le revenu global, à parité avec le PER. Voir étape 1 pour le détail
+  // sémantique. La cap à 10 700 €/an est déjà appliquée en amont.
   det.revenuNetImposable = Math.max(0,
-    det.revenuBrutGlobal - det.per - det.pensionsAlim - det.csgDeductible - det.autresCharges
+    det.revenuBrutGlobal - det.per - det.deficitFoncierImputable
+    - det.pensionsAlim - det.csgDeductible - det.autresCharges
   );
 
   // ============================================================
@@ -313,12 +346,47 @@ function calculerIR(input) {
   //       • revenus fonciers (nu, LMNP, micro-foncier)
   // ============================================================
   // PS recouvrés via avis (intégrés à l'impôt à payer)
+  // ───────────────────────────────────────────────────────────────────
+  // PS détaillés par catégorie de revenu (NON arrondis) — utilisés pour
+  // l'affichage pédagogique dans le calcul détaillé. Le total officiel
+  // arrondi conforme à l'avis IR est calculé séparément ci-dessous.
   det.psDividendes = input.dividendes * P.ps.mobilier;
   det.psInterets   = (input.interets || 0) * P.ps.mobilier;
   det.psPV         = input.pv * P.ps.mobilier;
-  const revenusFonciersNets = det.microFoncierNet + det.foncierReel + det.meubleClasseNet + det.meubleNonClasseNet + det.autresMeublesNet;
-  det.psFoncier    = Math.max(0, revenusFonciersNets) * P.ps.foncier;
-  det.psRole       = det.psDividendes + det.psInterets + det.psPV + det.psFoncier;
+  det.psFoncierNu  = det.foncierNuBase * P.ps.foncierNu;
+  det.psLMNP       = det.lmnpBase * P.ps.lmnp;
+  det.psFoncier    = det.psFoncierNu + det.psLMNP;
+  det.psMobilier   = det.psDividendes + det.psInterets + det.psPV;
+
+  // ───────────────────────────────────────────────────────────────────
+  // PS « voie de rôle » (intégrés à l'impôt à payer via avis IR) — calculés
+  // EXACTEMENT comme l'admin (capture avis IR contribuable, PR-J) :
+  //
+  //   1. Décomposition en deux blocs CSG-CRDS / Solidarité (la solidarité
+  //      n'est pas déductible alors qu'une part de la CSG l'est → l'admin
+  //      les sépare au sortir du calcul).
+  //   2. Le bloc CSG-CRDS a un taux différent selon catégorie :
+  //        · foncier nu               → 9,7 % (CSG 9,2 + CRDS 0,5)
+  //        · mobilier (div/int/PV)    → 11,1 % (CSG 10,6 + CRDS 0,5)
+  //        · LMNP (BIC art. 35 CGI)   → 11,1 %
+  //      L'admin agrège par TAUX (pas par catégorie) avant d'arrondir.
+  //   3. Le bloc Solidarité a un taux unique 7,5 % sur la SOMME des assiettes.
+  //   4. Chaque bloc est arrondi à l'euro le plus proche (Math.round).
+  //
+  // L'AV > 8 ans est exclue (prélèvement libératoire à la source par
+  // l'assureur — `det.psAV` plus bas).
+  // Assiettes par taux CSG-CRDS (PS dus quel que soit le régime PFU/barème —
+  // calculés sur le BRUT, sans abattement).
+  const baseFonciers   = det.foncierNuBase;
+  const baseMobilier   = input.dividendes + (input.interets || 0) + input.pv;
+  const baseLMNP       = det.lmnpBase;
+  const baseTotalePS   = baseFonciers + baseMobilier + baseLMNP;
+
+  det.psCsgCrdsFonciers   = Math.round(baseFonciers * (P.ps.csg.fonciers + P.ps.crds));
+  det.psCsgCrdsCasGeneral = Math.round((baseMobilier + baseLMNP) * (P.ps.csg.casGeneral + P.ps.crds));
+  det.psSolidarite        = Math.round(baseTotalePS * P.ps.solidarite);
+
+  det.psRole = det.psCsgCrdsFonciers + det.psCsgCrdsCasGeneral + det.psSolidarite;
   // PS prélevés à la source ET libératoires (info uniquement, exclus impôt dû)
   det.psAV     = avProduits * P.ps.av;
   det.psSource = det.psAV;
@@ -443,6 +511,17 @@ function calculerIR(input) {
   det.redPinel       = input.pinel;             // Pinel : retiré du périmètre (fermé fin 2024). Pas de cap V1.
   det.redGirardinPD  = input.girardinPD;        // Girardin : pas de cap individuel, limité par panier majoré.
   det.redGirardinAG  = input.girardinAG;
+  // Denormandie — art. 199 novovicies CGI (volet ancien rénové). Sémantique
+  // INVESTISSEMENT pure (cohérent IR-PME / SOFICA / GFI / FIP Corse) :
+  //   * input.denormandie       = MONTANT INVESTI dans l'année (prix + travaux)
+  //   * input.denormandieDuree  = '6' | '9' | '12' (engagement de location)
+  // RI annuelle = min(invest, 300 000 €) × taux total / durée.
+  // Prolongé jusqu'au 31/12/2027 par LF 2026 art. 47.
+  const _denoDureeCle = input.denormandieDuree || PD.denormandie.tauxDefaut;
+  const _denoDureeNum = parseInt(_denoDureeCle, 10) || 9;
+  const _denoTauxTot  = PD.denormandie.taux[_denoDureeCle] || PD.denormandie.taux[PD.denormandie.tauxDefaut];
+  const investDenoRetenu = Math.min(input.denormandie || 0, PD.denormandie.versementMax);
+  det.redDenormandie  = investDenoRetenu * _denoTauxTot / _denoDureeNum;
   // FCPI classique : RETIRÉ au 21/02/2026 (LF 2026). det.redFCPI supprimé — la
   // mécanique FCPI ne subsiste que via det.redFcpiJei (taux 30 %, panier partagé
   // avec IR-PME JEI direct), calculé plus haut.
@@ -550,13 +629,14 @@ function calculerIR(input) {
     // cumulé qui dépasse le plafond commun
     irPmeJei:     Math.max(0, (input.irPmeJei || 0)     - investJeiRetenu),
     fcpiJei:      Math.max(0, (input.fcpiJei || 0)      - investFcpiRetenu),
+    denormandie:  Math.max(0, (input.denormandie || 0)  - investDenoRetenu),
   };
 
   det.totalReductions = det.redDons + det.redPinel + det.redGirardinPD + det.redGirardinAG
     + det.redFcpiJei + det.redFipCorse + det.redGfi
     + det.redIrPme + det.redIrPmeEsus + det.redIrPmeMH
     + det.redIrPmeJei + det.redIrPmeJeii + det.redIrPmeJeir
-    + det.redLocAvantages + det.redSofica + det.redAutres;
+    + det.redLocAvantages + det.redSofica + det.redDenormandie + det.redAutres;
 
   // ============================================================
   // ÉTAPE 9 : CRÉDITS D'IMPÔT
@@ -612,7 +692,7 @@ function calculerIR(input) {
   // IR-PME : seuls irPme / irPmeEsus / irPmeMH entrent en niche10.
   // Les variantes JEI direct, JEII, JEIR et FCPI-JEI sont HORS plafond niches
   // (art. 200-0 A exclut 199 terdecies-0 A bis et ter) → ne PAS les inclure ici.
-  const ri10Panier = det.redPinel
+  const ri10Panier = det.redPinel + det.redDenormandie
     + det.redFipCorse + det.redGfi
     + det.redIrPme + det.redIrPmeEsus + det.redIrPmeMH
     + det.redLocAvantages + det.redAutres
@@ -659,7 +739,7 @@ function calculerIR(input) {
   // Hors panier niches (toujours retenus) : dons, fraisScol, EHPAD, Malraux,
   // et les variantes IR-PME JEI direct / JEII / JEIR / FCPI-JEI
   // (art. 200-0 A CGI exclut explicitement 199 terdecies-0 A bis et ter).
-  const redNiche10Retenue = (det.redPinel
+  const redNiche10Retenue = (det.redPinel + det.redDenormandie
     + det.redFipCorse + det.redGfi
     + det.redIrPme + det.redIrPmeEsus + det.redIrPmeMH
     + det.redLocAvantages + det.redAutres) * facteur10;
@@ -713,16 +793,27 @@ function calculerIR(input) {
   // ⚠ Doit être calculé AVANT la CEHR (étape 12) qui l'utilise comme assiette.
   const hsExoRFR1 = Math.min(input.heuresSupExo1 || 0, P.plafonds.heuresSupExoPlafond);
   const hsExoRFR2 = Math.min(input.heuresSupExo2 || 0, P.plafonds.heuresSupExoPlafond);
+  // Le déficit foncier imputé sur revenu global réduit le revenu net imposable
+  // et donc le RFR (art. 1417-III CGI). On le soustrait ici pour la même
+  // raison qu'on soustrait implicitement le PER (revenus bruts utilisés sans
+  // les charges déductibles).
+  // ⚠ Micro-foncier : on prend le NET (après abattement 30 %), pas le brut.
+  // L'abattement micro-foncier est un abattement de DROIT, le RFR ne le
+  // réintègre pas (contrairement aux abattements 40 % dividendes barème ou
+  // 71 % meublé classé — qui eux aussi sont déjà nets ici, cohérent).
+  // Source : capture avis IR impots.gouv.fr (RFR officiel utilise 5 880 €
+  // pour un 4BE 8 400 €, soit 8 400 × 70 %).
   det.revenuReference = Math.max(0,
     det.salaireNet + hsExoRFR1 + hsExoRFR2
     + det.pensionNet
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1 + input.bncReel2
-    + input.microFoncier + det.foncierReel
+    + det.microFoncierNet + det.foncierReel
     + input.meubleClasse + input.meubleNonClasse + (input.autresMeubles || 0)
     + input.dividendes + (input.interets || 0) + input.pv
     + (input.avProduits75 || 0) + (input.avProduits128 || 0)
     + input.autresRevenus
+    - det.deficitFoncierImputable
   );
 
   det.tauxMoyen = det.revenuReference > 0

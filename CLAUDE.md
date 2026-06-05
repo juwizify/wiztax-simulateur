@@ -13,7 +13,19 @@ Destinée à être intégrée dans un vrai logiciel par un développeur.
 - Google Sheet original : https://docs.google.com/spreadsheets/d/1_0rPgviPknM7q37ouvSVIbcXNTeHo__Ys8-4EtG0Wfs/edit
 
 ## Structure
-- `js/params.js` — tous les paramètres fiscaux (ne pas modifier sans source officielle)
+- `js/params.js` — **source unique de vérité** des paramètres fiscaux + helpers
+  de format `formatPct`/`formatEur`/`formatNum`. NE JAMAIS modifier une valeur
+  sans avoir vérifié la source officielle et mis à jour `lastVerified` dans
+  `paramsRegistry.js`.
+- `js/paramsRegistry.js` — **registre éditorial** : organisation de l'onglet
+  Paramètres fiscaux, libellés, sources officielles (URL + référence légale).
+  Les VALEURS sont lues depuis PARAMS via les tokens `{{path|fmt}}` — aucun
+  chiffre fiscal hardcodé dans ce fichier.
+- `js/paramInject.js` — résolveur des tokens `{{path|fmt}}` au DOM ready.
+  Aucun nombre fiscal ne doit apparaître en dur dans le HTML / data-tip ;
+  toujours passer par un token (ex. `{{ps.foncierNu|pct}}` → « 17,2 % »).
+- `js/paramsTab.js` — générateur dynamique des cards de l'onglet Paramètres
+  fiscaux depuis `paramsRegistry.js`. L'HTML statique a disparu.
 - `js/calculator.js` — moteur de calcul pur (étapes 1 à 11), pas de DOM ici
 - `js/preconisations.js` — **catalogue unique des leviers fiscaux** (`LEVIERS_CATALOGUE`).
   Source éditoriale unique consommée par : `renderLeviersOnglet()` (cards onglet
@@ -59,9 +71,17 @@ des sources officielles.
   Source : BOI-IR-LIQ-20-20-20 du 07/04/2026
 - Décote : célibataire 897 € (seuil 1 982 €), couple 1 483 € (seuil 3 277 €), taux 45,25 %
   Source : BOI-IR-LIQ-20-20-30 du 07/04/2026
-- PS : 18,6 % mobilier (dividendes/intérêts/PV mobilières), 18,6 % foncier nu/LMNP,
-  17,2 % AV > 8 ans (et PV immobilières) — Source : LFSS 2026 art. 12
-  (cf. commit e39d7f1 « fix(ps): foncier/LMNP à 18,6 % (CFA LFSS 2026) »)
+- PS — Source : [service-public.gouv.fr/F2329](https://www.service-public.gouv.fr/particuliers/vosdroits/F2329) (vérifié 2026-06-05) · LFSS 2026 art. 12
+  * **18,6 %** mobilier (dividendes/intérêts/PV mobilières) — hausse CSG +1,4 pt
+  * **18,6 %** LMNP (BIC art. 35 CGI) — hausse CSG +1,4 pt, rétroactif 01/01/2025
+  * **17,2 %** foncier nu (art. 14 CGI) — **maintenu**, pas concerné par la hausse
+  * **17,2 %** AV > 8 ans, PV immobilières — maintenus
+  * Composition 17,2 % : CSG 9,2 + CRDS 0,5 + Solidarité 7,5
+  * Composition 18,6 % : CSG 10,6 + CRDS 0,5 + Solidarité 7,5
+  ⚠ Erreur historique : avant PR-I, `ps.foncier` était à 18,6 % en supposant
+  une CFA LFSS 2026. La source officielle (vérifiée 06/2026) infirme : seul
+  le LMNP a basculé à 18,6 %, le foncier nu reste à 17,2 %. Clés actuelles :
+  `ps.foncierNu` et `ps.lmnp` séparées.
 - PFU : 12,8 % IR + 18,6 % PS = 31,4 % total
 - Niches : 10 000 € général, 18 000 € majoré (Girardin/Sofica)
 - Girardin plein droit : 44 % dans le plafond (rétrocession 56%) — art. 200-0 A, 4° CGI
@@ -86,11 +106,57 @@ Deux flux distincts dans le calculator (`calculator.js` étape 7) :
     l'acompte IR manuellement en case **2CK** — et 2CK ne couvre **que la
     part IR** (12,8 %). La part PS reste donc due via l'avis IR.
 - Plus-values mobilières — `det.psPV`
-- Revenus fonciers (nu, meublé, micro-foncier) — `det.psFoncier`
+- Revenus fonciers nu + LMNP — `det.psFoncier` = `det.psFoncierNu + det.psLMNP`
+  → **Assiettes PS catégorielles distinctes ET taux distincts** :
+    * `det.psFoncierNu` = `(microFoncierNet + foncierReel) × P.ps.foncierNu`
+      où `P.ps.foncierNu = 17,2 %` (taux maintenu LFSS 2026 — pas concerné
+      par la hausse CSG). Foncier nu = catégorie « revenus fonciers »,
+      art. 14 CGI. `foncierReel = max(0, input.foncierReel - jeanbrunAmort)`
+      (partie bénéfice uniquement).
+    * `det.psLMNP` = `(meubleClasseNet + meubleNonClasseNet + autresMeublesNet) × P.ps.lmnp`
+      où `P.ps.lmnp = 18,6 %` (LFSS 2026 art. 12 — CSG portée à 10,6 %).
+      LMNP = catégorie BIC, art. 35 CGI.
+  → Aucune assiette ne reçoit la composante négative (déficit). Cf. section
+    « Déficit foncier — charge pure » plus bas.
 → Somme dans `det.psRole` ; **seul `psRole` entre dans `det.impotNet`**.
 
 `det.totalPS = psSource + psRole` est conservé pour afficher la charge fiscale globale,
 mais ne doit jamais être additionné à l'IR (sinon double comptage).
+
+## Déficit foncier — charge pure sur revenu global (modèle PER)
+Choix de design « préconisation simple » (cf. justification ci-dessous) :
+le champ `input.foncierReel` se sépare en deux branches sémantiques à
+l'étape 1 du `calculator.js` :
+
+| `input.foncierReel - jeanbrunAmort` | Sortie moteur | Effet |
+|---|---|---|
+| **≥ 0** (revenu foncier réel) | `det.foncierReel = ce montant` | Entre dans RBG + assiette PS catégorie foncier nu (art. 14 CGI), 18,6 %. |
+| **< 0** (déficit foncier saisi en préconisation) | `det.foncierReel = 0` ; `det.deficitFoncierImputable = min(-fonc, 10 700)` | **Charge pure** déduite du revenu net imposable à l'étape 2 (parallèle au PER). **Aucun effet PS** sur aucune catégorie. **N'affecte pas** les revenus fonciers/LMNP positifs existants. |
+
+Cap : 10 700 €/an partagé avec amortissement Jeanbrun (art. 156-I-3° CGI).
+`det.deficitFoncierSurplus` expose l'excédent au-delà du cap pour
+l'affichage du warning (UI ne signale pas une erreur silencieuse).
+
+**Justification du choix design** :
+1. Sur la déclaration officielle (impots.gouv.fr), un foyer ne peut pas
+   à la fois être en régime micro-foncier ET déclarer un déficit foncier
+   réel — les deux régimes sont mutuellement exclusifs. La question d'un
+   déficit qui « absorberait » des revenus micro positifs ne se pose donc
+   pas en pratique.
+2. En contexte **préconisation**, recommander à un client d'investir dans
+   un dispositif générant du déficit foncier ne doit pas mécaniquement
+   modifier la fiscalité de son patrimoine immobilier déjà en place. Le
+   simulateur quantifie l'effet IR pur de la préconisation, à parité avec
+   les autres charges déductibles (PER, pensions alim, CSG déductible).
+3. Conforme à BOI-RFPI-BASE-30-20 §220 : « L'imputation éventuelle des
+   dépenses sur le revenu global produit uniquement un effet en matière
+   d'impôt sur le revenu et, le cas échéant, de CEHR. Les prélèvements
+   sociaux ne sont économisés qu'à proportion des revenus fonciers
+   effacés. » Ici aucun revenu foncier n'est effacé par la préconisation,
+   donc aucun PS n'est économisé.
+
+Le RFR (étape 11) est ajusté en miroir : `- det.deficitFoncierImputable`
+pour refléter l'effet sur l'assiette CEHR (art. 1417-III CGI).
 
 ## Crédits d'impôt automatiques (acomptes prélevés à la source)
 - **PFNL AV** (`det.pfnlAV` = `av75 × 7,5 % + av128 × 12,8 %`) : auto-imputé.
