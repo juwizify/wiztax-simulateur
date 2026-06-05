@@ -10,16 +10,17 @@
  * l'onglet Simulateur (le client peut avoir un PER existant + on préconise
  * un versement supplémentaire).
  *
- * ⚠ LIMITATIONS CONNUES :
+ * ⚠ NOTES & CHOIX DE DESIGN :
  *
- * - PINEL : le calcul actuel est INCORRECT pour Pinel.
- *   La RI Pinel doit être ÉTALÉE sur la durée d'engagement (6/9/12 ans),
- *   pas appliquée intégralement sur l'année. Exemple : 200 000 € investis
- *   en Pinel 9 ans (taux 18 %) doivent donner 4 000 €/an de RI pendant
- *   9 ans (= 200 000 × 18 % / 9), pas 36 000 € sur l'année.
- *   Le simulateur applique aujourd'hui le taux complet sur l'année,
- *   ce qui SUR-ESTIME largement l'avantage fiscal projeté pour Pinel.
- *   À fixer en V2 : ajouter (taux total / durée) dans le calcul.
+ * - PINEL : la sémantique de saisie est INTENTIONNELLEMENT « RI annuelle déjà
+ *   connue par l'utilisateur » (lue sur l'attestation fiscale notariale). Le
+ *   moteur ne ré-applique pas le taux et n'étale pas sur 6/9/12 ans : il
+ *   prend la RI annuelle saisie au pied de la lettre. PR-D enrichit le tooltip
+ *   HTML avec la formule d'étalement (RI annuelle = invest × taux total / durée)
+ *   et les taux par millésime (2014-2022, 2023, 2024, Pinel+) pour les
+ *   utilisateurs qui n'auraient pas l'attestation et doivent calculer eux-mêmes.
+ *   Pinel est en .advanced + label « dispositif fermé » (LF 2024 art. 168) :
+ *   plus aucune nouvelle acquisition éligible depuis le 01/01/2025.
  *
  * - INVESTISSEMENTS IMMOBILIERS À CRÉDIT (Pinel, Jeanbrun, Malraux,
  *   Loc'Avantages, Denormandie) : le "montant" saisi représente
