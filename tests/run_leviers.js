@@ -82,16 +82,29 @@ const TESTS = [
   { id: 'gardeEnf', montant: 3000, key: 'gardeEnfants', expected: 3000, delta: 1500, deltaTol: 1 },
 
   // FCPI JEI : 5000 × 30% = 1500 → input.fcpiJei = 1500
-  { id: 'fcpiJei', montant: 5000, key: 'fcpiJei', expected: 1500, delta: 1500, deltaTol: 1 },
+  // ── IR-PME post-F4 : mode 'versement-direct' — l'input reçoit le MONTANT INVESTI,
+  //    le moteur calcule la RI = invest × taux. Donc :
+  //    expected (= merged[inputKey]) = montant brut, delta IR = montant × taux.
+  { id: 'fcpiJei',    montant: 5000, key: 'fcpiJei',    expected: 5000, delta: 1500, deltaTol: 1 },
 
-  // FIP Corse : 5000 × 30% = 1500
-  { id: 'fipCorse', montant: 5000, key: 'fipCorse', expected: 1500, delta: 1500, deltaTol: 1 },
+  // FIP Corse — D3.3 sémantique investissement : montant souscrit, RI = invest × 30 %.
+  { id: 'fipCorse', montant: 5000, key: 'fipCorse', expected: 5000, delta: 1500, deltaTol: 1 },
 
-  // IR-PME : 5000 × 25% = 1250
-  { id: 'irPme', montant: 5000, key: 'irPme', expected: 1250, delta: 1250, deltaTol: 1 },
+  // IR-PME PME standard : 5000 € investis → RI 5000 × 18 % = 900
+  { id: 'irPme',      montant: 5000, key: 'irPme',      expected: 5000, delta: 900,  deltaTol: 1 },
+  // IR-PME ESUS/SFS : 5000 € investis × 25 % = 1250
+  { id: 'irPmeEsus',  montant: 5000, key: 'irPmeEsus',  expected: 5000, delta: 1250, deltaTol: 1 },
+  // IR-PME Monuments historiques : 5000 € investis × 25 % = 1250
+  { id: 'irPmeMH',    montant: 5000, key: 'irPmeMH',    expected: 5000, delta: 1250, deltaTol: 1 },
+  // IR-PME JEI direct : 5000 € investis × 30 % = 1500 (HORS plafond niches)
+  { id: 'irPmeJei',   montant: 5000, key: 'irPmeJei',   expected: 5000, delta: 1500, deltaTol: 1 },
+  // IR-PME JEII : 5000 € investis × 40 % = 2000 (HORS)
+  { id: 'irPmeJeii',  montant: 5000, key: 'irPmeJeii',  expected: 5000, delta: 2000, deltaTol: 1 },
+  // IR-PME JEIR : 5000 € investis × 50 % = 2500 (HORS, plafond pluri-annuel)
+  { id: 'irPmeJeir',  montant: 5000, key: 'irPmeJeir',  expected: 5000, delta: 2500, deltaTol: 1 },
 
-  // GFI : 5000 × 18% = 900
-  { id: 'gfi', montant: 5000, key: 'gfi', expected: 900, delta: 900, deltaTol: 1 },
+  // GFI — D3.3 sémantique investissement : montant souscrit, RI = invest × 18 % = 900.
+  { id: 'gfi', montant: 5000, key: 'gfi', expected: 5000, delta: 900, deltaTol: 1 },
 
   // LocAvantages mode versement-direct (Phase 2.4) : input.locAvantagesDepenses = montant.
   // Le moteur calcule la RI = min(dépenses, 10k) × taux(palier). Niche 10k (couple+1enf, sans autres niches).
@@ -99,9 +112,11 @@ const TESTS = [
   { id: 'locAvantages', montant: 8000, paramValue: 'loc2', key: 'locAvantagesDepenses', expected: 8000, delta: 8000 * 0.35, deltaTol: 1 },
   { id: 'locAvantages', montant: 8000, paramValue: 'loc3', key: 'locAvantagesDepenses', expected: 8000, delta: 8000 * 0.65, deltaTol: 1 },
 
-  // SOFICA taux-variable : 30 / 36 / 48 % selon scénario
-  { id: 'sofica', montant: 5000, paramValue: '30', key: 'sofica', expected: 1500, delta: 1500, deltaTol: 1 },
-  { id: 'sofica', montant: 5000, paramValue: '48', key: 'sofica', expected: 2400, delta: 2400, deltaTol: 1 },
+  // SOFICA — D3.2 sémantique investissement (versement-direct + paramKey).
+  //   input.sofica = MONTANT SOUSCRIT (5 000 €) ; input.soficaTaux = '30'|'36'|'48'
+  //   RI gagnée par le moteur = invest × taux choisi → delta IR = 1500 ou 2400.
+  { id: 'sofica', montant: 5000, paramValue: '30', key: 'sofica', expected: 5000, delta: 1500, deltaTol: 1 },
+  { id: 'sofica', montant: 5000, paramValue: '48', key: 'sofica', expected: 5000, delta: 2400, deltaTol: 1 },
 
   // Girardin PD mode taux-libre : rendement saisi en décimal (1.13 = 113 %)
   //   versement 5 000 × rendement 1.13 = 5 650 € de RI brute Girardin.
@@ -150,8 +165,18 @@ for (const t of TESTS) {
 
   // Vérif avantageEstime (si pertinent)
   const est = avantageEstime(preco[0], TEMOIN);
-  if (lev.mode === 'taux' || lev.mode === 'taux-variable') {
-    const expEst = t.id === 'pinel' || t.id === 'sofica' || t.id === 'fcpiJei' ||
+  // D3.2 : SOFICA est passé en 'versement-direct' (+ paramKey 'soficaTaux').
+  // On l'inclut explicitement dans le check avantageEstime (avantage IR =
+  // montant × taux choisi, cf. branche dédiée dans preconisations.js).
+  // Mode 'taux' retiré en D3.5 — seuls 'taux-variable' (Loc'Av/Malraux paramKey
+  // + opt.taux) et SOFICA (id-gated) entrent dans le check avantageEstime.
+  const inclusAvantage = lev.mode === 'taux-variable' || lev.id === 'sofica';
+  if (inclusAvantage) {
+    // Pour SOFICA (sémantique investissement), expected = montant brut souscrit ;
+    // l'avantage IR attendu est dans t.delta. Pour les autres taux-variable / taux,
+    // expected EST l'avantage attendu (montant déjà transformé en RI dans appliquerPreconisations).
+    const expEst = t.id === 'sofica' ? t.delta
+                 : t.id === 'pinel' || t.id === 'fcpiJei' ||
                    t.id === 'fipCorse' || t.id === 'irPme' || t.id === 'gfi' ||
                    t.id === 'malraux' || t.id === 'locAvantages' ||
                    t.id === 'girardinPD' || t.id === 'girardinAG'

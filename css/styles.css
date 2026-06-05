@@ -1,6 +1,40 @@
 /* ═══════════════════════════════════════════════════
-   DESIGN SYSTEM — "The Architectural Ledger"
-   Palette : L'Éditorial Wealth / Stitch
+   DESIGN SYSTEM WizTax
+   ───────────────────────────────────────────────────
+   Spec complète : tasks/design-system-spec.md
+
+   Principe directeur (Stripe-grade) :
+   ───────────────────────────────────
+   Une seule banque de composants partagée par toutes les pages.
+   Quand une page a besoin d'un visuel — Card, Badge, Button… — elle
+   réutilise le composant central. Si un composant manque, on l'ajoute
+   ICI (jamais en local dans une page). L'accent bleu (--accent) est
+   réservé aux signaux interactifs (tab actif, focus). PAS de décoration
+   de masse (plus de liserés colorés sur les cards, plus de h2 en accent).
+
+   Inventaire des composants (à consulter avant d'inventer une nouvelle classe) :
+   ──────────────────────────────────────────────────────────────────────────────
+   Layout       : .sim-layout, .form-grid, .form-row, .form-subsection
+   Navigation   : .tabs-nav + .tab-btn, .mode-toggle + .mode-btn
+   Cards        : .section-card, .calc-section, .param-card, .levier-card,
+                  .results-panel — TOUTES alignées sur le même style sobre
+                  (border 1px var(--surface-container-high), radius 8px,
+                  h2 .72rem uppercase color var(--on-surface-variant)).
+   Badges       : .niche-marker / .lbadge / .preco-cat-badge — 3 noms
+                  historiques, MÊME langage visuel + MÊME palette par
+                  catégorie (cf. variables --badge-{hors,10k,18k,foncier}-*).
+                  Pour une nouvelle utilisation, préférer .niche-marker.
+   Inputs       : .form-row input/select avec focus accent
+   Tooltips     : .tip + .tip-down (info "i")
+   Tables       : .calc-table (calcul détaillé), .param-table (paramètres),
+                  .preco-compare-table (préco) — à factoriser en E future
+   Dev          : .dev-toolbar (visible uniquement en mode dev)
+
+   Composants spécifiques métier (pas factorisables, documentés mais à part) :
+   ──────────────────────────────────────────────────────────────────────────
+   .preco-*  (~30 classes) : onglet Préconisations — table de leviers
+                             ajoutables, jauges paniers, barre de synthèse.
+   .levier-* : onglet Leviers fiscaux — cards accordéon descriptives.
 ═══════════════════════════════════════════════════ */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,9 +65,19 @@
   --shadow-arch:   0px 8px 24px rgba(20, 23, 32, 0.08), 0px 1px 4px rgba(20, 23, 32, 0.04);
   --shadow-float:  0px 4px 16px rgba(51, 64, 250, 0.12);
   --gradient-cta:  linear-gradient(135deg, #3340FA 0%, #0716E5 100%);
-  --radius-card:   1.25rem;  /* 20px — légèrement moins rond */
+  --radius-card:   1.25rem;  /* 20px — legacy, à terme aligné sur 8px (cf. spec DS) */
   --radius-input:  0.625rem; /* 10px */
   --radius-sm:     0.5rem;   /* 8px */
+
+  /* Tokens badges — palette unique pour les paniers de niches fiscales.
+     Une catégorie = une couleur partout (cf. tasks/design-system-spec.md). */
+  --badge-hors-fg:    #1e40af;  --badge-hors-bg:    #EFF6FF;  --badge-hors-br:    #BFDBFE;
+  --badge-10k-fg:     #475569;  --badge-10k-bg:     #F1F5F9;  --badge-10k-br:     #CBD5E1;
+  --badge-18k-fg:     #92400E;  --badge-18k-bg:     #FFFBEB;  --badge-18k-br:     #FDE68A;
+  --badge-foncier-fg: #166534;  --badge-foncier-bg: #F0FDF4;  --badge-foncier-br: #BBF7D0;
+  --badge-neutral-fg: var(--on-surface-variant);
+  --badge-neutral-bg: var(--surface-container-low);
+  --badge-neutral-br: var(--outline-variant);
 
   /* Typographie */
   --font-headline: 'Manrope', system-ui, sans-serif;
@@ -190,21 +234,21 @@ header span {
 ───────────────────────────────────────────── */
 .section-card {
   background: var(--surface-lowest);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-arch);
-  margin-bottom: 16px;
-  overflow: hidden;   /* contient le border-top coloré */
-  border-top: 3px solid var(--accent);
+  border: 1px solid var(--surface-container-high);
+  border-radius: 8px;
+  margin-bottom: 14px;
+  overflow: hidden;
 }
 .section-card h2 {
   font-family: var(--font-headline);
-  font-size: .78rem;
-  font-weight: 700;
+  font-size: .72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .7px;
-  color: var(--on-surface);
-  padding: 14px 20px;
-  background: var(--surface-container-low);
+  letter-spacing: .6px;
+  color: var(--on-surface-variant);
+  padding: 12px 20px;
+  background: transparent;
+  border-bottom: 1px solid var(--surface-container-high);
 }
 
 /* ─────────────────────────────────────────────
@@ -227,11 +271,11 @@ header span {
 }
 .form-subsection h3 {
   font-family: var(--font-headline);
-  font-size: .78rem;
-  font-weight: 700;
-  color: var(--accent);
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: .5px;
   margin: 0;
 }
 
@@ -291,6 +335,26 @@ header span {
 }
 .form-row select { text-align: left; }
 
+/* Cellule centrale composée — input + select empilés verticalement.
+   Utilisée par renderSimulateurFormRows() quand un levier a un paramètre
+   additionnel (ex. SOFICA : montant souscrit + select taux 30/36/48 %).
+   La grille `.form-row` impose 130 px en col 2 ; pour rester lisible on
+   stacke input au-dessus, select dessous (les labels d'options peuvent
+   être longs et débordent normalement via le menu déroulant natif). */
+.form-row-input-with-param {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.form-row-input-with-param input[type="number"],
+.form-row-input-with-param select {
+  width: 100%;
+}
+.form-row-input-with-param select {
+  font-size: .78rem;
+  padding: 5px 8px;
+}
+
 /* Checkbox dans un form-row : aligne à droite comme les inputs number, taille raisonnable */
 .form-row input[type="checkbox"].form-checkbox {
   justify-self: end;
@@ -318,23 +382,73 @@ header span {
   font-size: .88rem;
 }
 
-/* Niche markers */
-.niche-marker {
-  font-size: .70rem;
-  font-weight: 500;
-  padding: 2px 7px;
-  border-radius: 99px;
+/* ─────────────────────────────────────────────
+   BADGES (paniers niches & catégories) — composant unifié
+   3 anciennes familles (.niche-marker, .lbadge, .preco-cat-badge)
+   convergent ici sur le MÊME langage visuel et la MÊME palette
+   sémantique par catégorie. Une catégorie = une couleur partout.
+───────────────────────────────────────────── */
+.niche-marker,
+.lbadge,
+.preco-cat-badge {
   display: inline-block;
-  line-height: 1.6;
-  letter-spacing: 0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: .7rem;
+  font-weight: 500;
+  letter-spacing: .2px;
+  line-height: 1.5;
   white-space: nowrap;
+  border: 1px solid var(--badge-neutral-br);
+  background: var(--badge-neutral-bg);
+  color: var(--badge-neutral-fg);
 }
-.niche-10k    { color: var(--outline);   background: var(--surface-container-low); border: 1px solid var(--outline-variant); }
-.niche-18k    { color: #6B5000;          background: #FFF8E0;                       border: 1px solid #E8D58A; }
-.niche-18k-44 { color: #6B5000;          background: #FFF8E0;                       border: 1px solid #E8D58A; }
-.niche-18k-34 { color: #6B5000;          background: #FFF8E0;                       border: 1px solid #E8D58A; }
-.niche-hors   { color: #7B1200;          background: #FFE8E4;                       border: 1px solid #F5C4B8; }
-.niche-plaf   { color: var(--outline);   background: transparent;                   font-size: .67rem; font-weight: 400; padding: 0 2px; }
+/* Variante "hors plafond niches" — bleu sobre */
+.niche-hors,
+.lbadge-hors,
+.preco-cat-hors {
+  color: var(--badge-hors-fg);
+  background: var(--badge-hors-bg);
+  border-color: var(--badge-hors-br);
+}
+/* Variante "niche 10 000 €" — gris neutre */
+.niche-10k,
+.lbadge-10k,
+.preco-cat-niche10 {
+  color: var(--badge-10k-fg);
+  background: var(--badge-10k-bg);
+  border-color: var(--badge-10k-br);
+}
+/* Variante "niche 18 000 € majorée" — ambre (Girardin/SOFICA) */
+.niche-18k,
+.niche-18k-44,
+.niche-18k-34,
+.lbadge-18k,
+.preco-cat-niche18 {
+  color: var(--badge-18k-fg);
+  background: var(--badge-18k-bg);
+  border-color: var(--badge-18k-br);
+}
+/* Variante "déduction foncière" (assiette foncière, hors panier niches) — vert */
+.preco-cat-foncier {
+  color: var(--badge-foncier-fg);
+  background: var(--badge-foncier-bg);
+  border-color: var(--badge-foncier-br);
+}
+/* Variante "déduction du revenu" (Leviers fiscaux) — neutre par défaut */
+.lbadge-deduct {
+  /* hérite du style neutre de la base — pas de modifier nécessaire */
+}
+
+/* Étiquette plafond/info (texte d'info, pas un badge) */
+.niche-plaf {
+  color: var(--outline);
+  background: transparent;
+  font-size: .67rem;
+  font-weight: 400;
+  padding: 0 2px;
+}
 
 .niche-cell { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
 
@@ -352,13 +466,14 @@ header span {
 }
 
 /* Carte "cadre temporel" dans l'onglet Paramètres */
+/* .param-card--scope : variante d'introduction (texte explicatif).
+   Subtle background pour la différencier sans liseré coloré. */
 .param-card--scope {
-  background: #F0F4FF;
-  border-top-color: var(--accent);
+  background: var(--surface-container-low);
 }
 .param-card--scope p {
   font-size: .84rem;
-  color: var(--text-secondary);
+  color: var(--on-surface-variant);
   line-height: 1.5;
   margin: 0;
 }
@@ -366,24 +481,26 @@ header span {
 /* ─────────────────────────────────────────────
    PANNEAU RÉSULTATS
 ───────────────────────────────────────────── */
+/* .results-panel : aligné sur .section-card (cf. tasks/design-system-spec.md).
+   Conserve position:sticky pour rester visible au scroll. */
 .results-panel {
   position: sticky;
   top: 24px;
   background: var(--surface-lowest);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-arch);
+  border: 1px solid var(--surface-container-high);
+  border-radius: 8px;
   overflow: hidden;
-  border-top: 3px solid var(--accent);
 }
 .results-panel h2 {
   font-family: var(--font-headline);
-  font-size: .78rem;
-  font-weight: 700;
+  font-size: .72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .7px;
-  color: var(--on-surface);
-  padding: 14px 20px;
-  background: var(--surface-container-low);
+  letter-spacing: .6px;
+  color: var(--on-surface-variant);
+  padding: 12px 20px;
+  background: transparent;
+  border-bottom: 1px solid var(--surface-container-high);
 }
 .results-list { padding: 6px 0 12px; }
 
@@ -433,29 +550,30 @@ header span {
 ───────────────────────────────────────────── */
 #calcul { padding: 28px 40px; }
 
+/* .calc-section : aligné sur .section-card (cf. tasks/design-system-spec.md).
+   Variante .final pour l'impôt total (sémantique error). */
 .calc-section {
   background: var(--surface-lowest);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-arch);
-  margin-bottom: 16px;
+  border: 1px solid var(--surface-container-high);
+  border-radius: 8px;
+  margin-bottom: 14px;
   overflow: hidden;
-  border-top: 3px solid var(--accent);
 }
 .calc-section h2 {
   font-family: var(--font-headline);
-  font-size: .78rem;
-  font-weight: 700;
+  font-size: .72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .7px;
-  color: var(--on-surface);
-  padding: 14px 20px;
-  background: var(--surface-container-low);
-}
-.calc-section.final {
-  border-top-color: var(--error);
+  letter-spacing: .6px;
+  color: var(--on-surface-variant);
+  padding: 12px 20px;
+  background: transparent;
+  border-bottom: 1px solid var(--surface-container-high);
 }
 .calc-section.final h2 {
   color: var(--error);
+  /* On garde le signal "impôt final" via la couleur du texte (sémantique error),
+     pas via un liseré décoratif. */
 }
 
 .calc-table {
@@ -517,22 +635,24 @@ header span {
   gap: 20px;
   align-items: start;
 }
+/* .param-card : aligné sur .section-card (cf. tasks/design-system-spec.md).
+   Le liseré vert décoratif a été retiré (pas d'info sémantique). */
 .param-card {
   background: var(--surface-lowest);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-arch);
+  border: 1px solid var(--surface-container-high);
+  border-radius: 8px;
   overflow: hidden;
-  border-top: 3px solid #2E7D52;  /* vert — différencie l'onglet paramètres */
 }
 .param-card h2 {
   font-family: var(--font-headline);
-  font-size: .78rem;
-  font-weight: 700;
+  font-size: .72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .7px;
-  color: var(--on-surface);
-  padding: 14px 20px;
-  background: var(--surface-container-low);
+  letter-spacing: .6px;
+  color: var(--on-surface-variant);
+  padding: 12px 20px;
+  background: transparent;
+  border-bottom: 1px solid var(--surface-container-high);
 }
 .param-table {
   width: 100%;
@@ -580,40 +700,31 @@ header span {
   color: var(--on-surface-variant);
 }
 
+/* Titre de groupe dans l'onglet Leviers — typo cohérente avec les h2 de cards.
+   Pas de couleur thématique (décision DS : signal sans valeur sémantique). */
 .leviers-section-title {
   font-family: var(--font-headline);
-  font-size: .88rem;
-  font-weight: 700;
-  letter-spacing: .2px;
+  font-size: .72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--on-surface-variant);
   margin: 28px 0 10px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
 }
 .leviers-section-title:first-of-type { margin-top: 0; }
 
-/* Badges */
-.lbadge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 99px;
-  font-size: .70rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.lbadge-hors   { background: #E8F0FE; color: #1a3fa0; border: 1px solid #b0c4f8; }
-.lbadge-10k    { background: #E6F4EA; color: #1e6b35; border: 1px solid #9fd4ac; }
-.lbadge-18k    { background: #FEF3E2; color: #b45309; border: 1px solid #f8d89e; }
-.lbadge-deduct { background: var(--surface-container-low); color: var(--on-surface-variant); border: 1px solid var(--outline-variant); }
+/* Badges leviers — style unifié plus haut (cf. .niche-marker, .lbadge, .preco-cat-badge).
+   Les variantes .lbadge-hors / -10k / -18k / -deduct sont définies dans le bloc
+   commun pour partager les couleurs avec les autres familles. */
 
-/* Cards accordéon */
+/* .levier-card : card accordéon, alignée sur .section-card.
+   Pas de liseré coloré ni d'ombre lourde (cf. tasks/design-system-spec.md). */
 .levier-card {
   background: var(--surface-lowest);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-arch);
+  border: 1px solid var(--surface-container-high);
+  border-radius: 8px;
   margin-bottom: 8px;
   overflow: hidden;
-  border-top: 3px solid var(--accent);
 }
 .levier-header {
   display: flex;
@@ -710,6 +821,34 @@ header span {
   font-style: normal;
   color: var(--outline);
   font-size: .82rem;
+}
+
+/* Bloc Sources officielles dans chaque card (links cliquables) */
+.levier-sources {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--surface-container-high);
+}
+.levier-sources-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.levier-sources-list li {
+  font-size: .78rem;
+  line-height: 1.5;
+}
+.levier-sources-list a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color .15s;
+}
+.levier-sources-list a:hover {
+  border-bottom-color: var(--accent);
 }
 
 /* Footer sources */
@@ -1050,7 +1189,7 @@ header span {
    PRÉCONISATIONS — refonte 3 leviers (Phase 3)
 ═══════════════════════════════════════════════════════════ */
 
-/* ─── Dev toolbar (temporaire — à retirer avant prod) ─── */
+/* ─── Dev toolbar (mode dev uniquement — cf. isDevMode dans app.js) ─── */
 .dev-toolbar {
   display: flex;
   align-items: center;
@@ -1085,6 +1224,79 @@ header span {
 .dev-btn:hover {
   background: #fde68a;
 }
+.dev-btn.active {
+  background: #ec4899;
+  color: #fff;
+  border-color: #be185d;
+}
+
+/* Mode dev « Surligner catalogue » — toggled par btnHighlightCatalogue.
+   Tous les éléments générés par renderSimulateurFormRows() et
+   renderLeviersOnglet() portent data-source-catalogue="<id>".
+   Quand body.highlight-catalogue est posé, on les ceinture en magenta
+   + on affiche l'id en haut à droite. Permet de voir d'un coup d'œil
+   ce qui est alimenté par LEVIERS_CATALOGUE vs ce qui reste hardcodé. */
+body.highlight-catalogue [data-source-catalogue] {
+  outline: 2px solid #ec4899;
+  outline-offset: 1px;
+  position: relative;
+  background: rgba(236, 72, 153, 0.04);
+}
+body.highlight-catalogue [data-source-catalogue]::after {
+  content: "catalogue:" attr(data-source-catalogue);
+  position: absolute;
+  top: -8px;
+  right: 0;
+  font-size: 9px;
+  font-weight: 600;
+  background: #ec4899;
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 10;
+  letter-spacing: .3px;
+}
+
+/* ─── Toggle Mode simple / Mode complet ─── */
+/* Une seule source DOM, deux vues filtrées (cf. tasks/option3-fusion-onglets.md).
+   Style underline aligné sur .tabs-nav — sobre, sans fond, sans coins arrondis.
+   La règle .advanced ci-dessous matche tous les champs marqués avancés en C2 :
+   en mode simple ils sont cachés du DOM et ignorés par getInputs() (C3). */
+.mode-toggle {
+  display: flex;
+  gap: 28px;
+  margin: 20px 40px 4px;
+  padding: 0;
+  border-bottom: 1px solid var(--surface-container-high);
+}
+.mode-btn {
+  padding: 8px 0;
+  margin-bottom: -1px;        /* chevauche la border-bottom du conteneur */
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: .8rem;
+  font-weight: 500;
+  letter-spacing: .2px;
+  transition: color .15s, border-color .15s;
+}
+.mode-btn:hover { color: var(--on-surface); }
+.mode-btn.active {
+  color: var(--on-surface);
+  border-bottom-color: var(--on-surface);
+  font-weight: 600;
+}
+.mode-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+body.mode-simple .advanced { display: none !important; }
 
 /* ─── Layout 2 colonnes ─── */
 .preco-layout {
@@ -1197,30 +1409,12 @@ header span {
   font-style: italic;
 }
 
-/* ─── Pastille catégorie (Niche 10k / 18k / Hors / Foncier) ─── */
+/* Pastille catégorie Préco — style unifié plus haut (cf. .niche-marker, .lbadge,
+   .preco-cat-badge). Conserve juste son margin-left contextuel. */
 .preco-cat-badge {
-  display: inline-block;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background: #f1f5f9;
-  font-size: 0.72em;
-  font-weight: 500;
   margin-left: 6px;
   vertical-align: middle;
-  white-space: nowrap;
-  color: #64748b;
 }
-/* Différenciation discrète par couleur de texte uniquement, fond identique */
-.preco-cat-niche10 { color: #1e40af; }
-.preco-cat-niche18 { color: #92400e; }
-.preco-cat-hors    { color: #475569; }
-.preco-cat-foncier { color: #166534; }
-
-/* Pastille "nature" — retirée des lignes (cf. fix surdim) mais classes
-   conservées au cas où on l'utilise ailleurs (récap surdim ci-dessous). */
-.preco-nat-rep      { color: #075985; }
-.preco-nat-perdu    { color: #9a3412; }
-.preco-nat-rembours { color: #166534; }
 
 /* Colonne "Plafond individuel" centrée — la coche ✓ tombe au milieu */
 .preco-table-section th:nth-child(5),
@@ -1394,33 +1588,54 @@ header span {
   color: #64748b;
   font-weight: 600;
 }
-.preco-sidebar .recap-jauge {
+/* Composant .recap-jauge — utilisé dans sidebar Préco ET dans panneau Résultats
+   du Simulateur (Phase G). Sélecteurs élargis pour couvrir les deux contextes. */
+.preco-sidebar .recap-jauge,
+.results-panel .recap-jauge {
   margin-bottom: 6px;
 }
-.preco-sidebar .recap-jauge-label {
+.preco-sidebar .recap-jauge-label,
+.results-panel .recap-jauge-label {
   display: block;
   font-size: 0.78em;
   color: #475569;
   margin-bottom: 2px;
 }
-.preco-sidebar .recap-jauge-bar {
+.preco-sidebar .recap-jauge-bar,
+.results-panel .recap-jauge-bar {
   height: 4px;
   background: #e2e8f0;
   border-radius: 2px;
   overflow: hidden;
 }
-.preco-sidebar .recap-jauge-fill {
+.preco-sidebar .recap-jauge-fill,
+.results-panel .recap-jauge-fill {
   height: 100%;
   background: var(--accent);
   transition: width 0.2s ease, background 0.2s ease;
 }
-.preco-sidebar .recap-jauge-val {
+.preco-sidebar .recap-jauge-val,
+.results-panel .recap-jauge-val {
   font-size: 0.72em;
   font-variant-numeric: tabular-nums;
   color: #64748b;
   display: block;
   text-align: right;
   margin-top: 2px;
+}
+
+/* Wrapper du bloc jauges dans le panneau Résultats du Simulateur */
+.results-panel .res-jauges {
+  padding: 8px 20px 12px;
+}
+.results-panel .res-jauges-title {
+  font-family: var(--font-headline);
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--on-surface-variant);
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
 /* Sur écrans étroits : layout passe en 1 colonne, sidebar empilée en bas

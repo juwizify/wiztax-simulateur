@@ -26,88 +26,143 @@ function v(id) {
   return parseFloat(el.value.replace(/\s/g, '').replace(',', '.')) || 0;
 }
 
-function getInputs() {
+// Valeurs neutres par défaut pour TOUS les champs attendus par calculerIR.
+// Source unique : si un nouveau champ est ajouté au moteur, on l'ajoute ici
+// une seule fois et getInputs en hérite via `{ ...defaultInputs(), ...DOM }`
+// (plus besoin de forcer chaque champ absent à 0 manuellement).
+function defaultInputs() {
   return {
     // Situation
-    situation:    document.getElementById('situation').value,
+    situation: 'celibataire', nbEnfants: 0, gardeAlternee: 0,
+    parentIsole: false, demiPartSupp: false, demiPartCas: 'L',
+    // Revenus salaires/pensions
+    sal1: 0, sal2: 0, allocChomage1: 0, allocChomage2: 0,
+    fraisReels1: 0, fraisReels2: 0, heuresSupExo1: 0, heuresSupExo2: 0,
+    pen1: 0, pen2: 0, pensInvalidite1: 0, pensInvalidite2: 0,
+    pensAlimRecue1: 0, pensAlimRecue2: 0,
+    // BNC, foncier, meublé
+    bncMicro1: 0, bncMicro2: 0, bncReel1: 0, bncReel2: 0,
+    microFoncier: 0, foncierReel: 0,
+    meubleClasse: 0, meubleNonClasse: 0, autresMeubles: 0,
+    jeanbrunAmort: 0, jeanbrunCategorie: 'intermediaire',
+    // Mobilier
+    dividendes: 0, interets: 0, pv: 0,
+    avProduits75: 0, avProduits128: 0, pfnlVerse: 0,
+    optionPFU: 'pfu', autresRevenus: 0,
+    // Charges déductibles
+    per: 0, perPlafondManuel: 0, pensionsAlim: 0, nbBeneficiairesPA: 0,
+    csgDeductible: 0, autresCharges: 0,
+    // Réductions
+    dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
+    fcpiJei: 0, fipCorse: 0, gfi: 0,    // fcpi (classique) retiré en D3.4
+    // IR-PME — 7 sous-dispositifs (cf. tasks/d3.1-irpme-spec.md)
+    irPme: 0,        // PME standard 18 %         → niche10
+    irPmeEsus: 0,    // ESUS / SFS 25 %           → niche10
+    irPmeMH: 0,      // Monuments historiques 25%  → niche10
+    irPmeJei: 0,     // JEI direct 30 %           → HORS plafond niches
+    irPmeJeii: 0,    // JEII 40 %                 → HORS
+    irPmeJeir: 0,    // JEIR 50 %                 → HORS
+    // Plafond pluri-annuel JEI+JEIR (50k RI cumulée 2024-2028) : RI déjà
+    // imputée 2024-2025 (input optionnel pour les investisseurs récurrents).
+    irPmeJeiJeirImputeAnterieur: 0,
+    malraux: 0, malrauxTravaux: 0, malrauxZone: 'spr-non',
+    locAvantages: 0, locAvantagesDepenses: 0, locAvantagesPalier: 'loc1',
+    // SOFICA (D3.2) : sémantique investissement = montant souscrit + taux choisi
+    sofica: 0, soficaTaux: '36',
+    autresReductions: 0,
+    // Crédits
+    emploiDomicile: 0, gardeEnfants: 0, cotSyndicales: 0,
+    fraisScolCollege: 0, fraisScolLycee: 0, fraisScolSup: 0,
+    ehpadFrais: 0, ehpadNbPers: 1, autresCredits: 0,
+  };
+}
+
+// Helpers de lecture DOM avec fallback sur la valeur défaut (cf. defaultInputs).
+const _sel  = (id, fallback) => document.getElementById(id)?.value ?? fallback;
+const _bool = (id) => document.getElementById(id)?.checked ?? false;
+
+function getInputs() {
+  const d = defaultInputs();
+  const out = {
+    ...d,
+    // Situation
+    situation:    _sel('situation', d.situation),
     nbEnfants:    v('nbEnfants'),
     gardeAlternee: v('gardeAlternee'),
-    parentIsole:  document.getElementById('parentIsole').value === 'oui',
-    demiPartSupp: document.getElementById('demiPartSupp').checked,
-    demiPartCas:  document.getElementById('demiPartCas').value,
-
+    parentIsole:  _sel('parentIsole', 'non') === 'oui',
+    demiPartSupp: _bool('demiPartSupp'),
+    demiPartCas:  _sel('demiPartCas', d.demiPartCas),
     // Revenus
-    sal1:         v('sal1'),
-    sal2:         v('sal2'),
-    allocChomage1: v('allocChomage1'),
-    allocChomage2: v('allocChomage2'),
-    fraisReels1:  v('fraisReels1'),
-    fraisReels2:  v('fraisReels2'),
-    heuresSupExo1: v('heuresSupExo1'),
-    heuresSupExo2: v('heuresSupExo2'),
-    pen1:         v('pen1'),
-    pen2:         v('pen2'),
-    pensInvalidite1: v('pensInvalidite1'),
-    pensInvalidite2: v('pensInvalidite2'),
-    pensAlimRecue1: v('pensAlimRecue1'),
-    pensAlimRecue2: v('pensAlimRecue2'),
-    bncMicro1:    v('bncMicro1'),
-    bncMicro2:    v('bncMicro2'),
-    bncReel1:     v('bncReel1'),
-    bncReel2:     v('bncReel2'),
-    microFoncier: v('microFoncier'),
-    foncierReel:  v('foncierReel'),
-    meubleClasse: v('meubleClasse'),
-    meubleNonClasse: v('meubleNonClasse'),
+    sal1: v('sal1'), sal2: v('sal2'),
+    allocChomage1: v('allocChomage1'), allocChomage2: v('allocChomage2'),
+    fraisReels1: v('fraisReels1'),     fraisReels2: v('fraisReels2'),
+    heuresSupExo1: v('heuresSupExo1'), heuresSupExo2: v('heuresSupExo2'),
+    pen1: v('pen1'), pen2: v('pen2'),
+    pensInvalidite1: v('pensInvalidite1'), pensInvalidite2: v('pensInvalidite2'),
+    pensAlimRecue1: v('pensAlimRecue1'),   pensAlimRecue2: v('pensAlimRecue2'),
+    bncMicro1: v('bncMicro1'), bncMicro2: v('bncMicro2'),
+    bncReel1: v('bncReel1'),   bncReel2: v('bncReel2'),
+    microFoncier: v('microFoncier'), foncierReel: v('foncierReel'),
+    meubleClasse: v('meubleClasse'), meubleNonClasse: v('meubleNonClasse'),
     autresMeubles: v('autresMeubles'),
-    jeanbrunAmort:    v('jeanbrunAmort'),
-    jeanbrunCategorie: v('jeanbrunCategorie'),
-    dividendes:   v('dividendes'),
-    interets:     v('interets'),
-    pv:           v('pv'),
-    avProduits75:  v('avProduits75'),
-    avProduits128: v('avProduits128'),
-    pfnlVerse:    v('pfnlVerse'),
-    autresRevenus: v('autresRevenus'),
-    optionPFU:    document.getElementById('optionPFU').value,
-
+    jeanbrunAmort: v('jeanbrunAmort'),
+    jeanbrunCategorie: _sel('jeanbrunCategorie', d.jeanbrunCategorie),
+    dividendes: v('dividendes'), interets: v('interets'), pv: v('pv'),
+    avProduits75: v('avProduits75'), avProduits128: v('avProduits128'),
+    pfnlVerse: v('pfnlVerse'), autresRevenus: v('autresRevenus'),
+    optionPFU: _sel('optionPFU', d.optionPFU),
     // Charges
-    per:               v('per'),
-    perPlafondManuel:  v('perPlafondManuel'),
-    pensionsAlim:      v('pensionsAlim'),
-    nbBeneficiairesPA: v('nbBeneficiairesPA'),
-    csgDeductible:     v('csgDeductible'),
-    autresCharges:     v('autresCharges'),
-
+    per: v('per'), perPlafondManuel: v('perPlafondManuel'),
+    pensionsAlim: v('pensionsAlim'), nbBeneficiairesPA: v('nbBeneficiairesPA'),
+    csgDeductible: v('csgDeductible'), autresCharges: v('autresCharges'),
     // Réductions / Crédits
-    dons:            v('dons'),
-    dons7UD:         v('dons7UD'),
-    emploiDomicile:  v('emploiDomicile'),
-    gardeEnfants:    v('gardeEnfants'),
-    cotSyndicales:   v('cotSyndicales'),
+    dons: v('dons'), dons7UD: v('dons7UD'),
+    emploiDomicile: v('emploiDomicile'), gardeEnfants: v('gardeEnfants'),
+    cotSyndicales: v('cotSyndicales'),
     fraisScolCollege: v('fraisScolCollege'),
     fraisScolLycee:   v('fraisScolLycee'),
     fraisScolSup:     v('fraisScolSup'),
-    ehpadFrais:      v('ehpadFrais'),
-    ehpadNbPers:     v('ehpadNbPers'),
-    pinel:           v('pinel'),
-    girardinPD:      v('girardinPD'),
-    girardinAG:      v('girardinAG'),
-    // fcpi (classique) : retiré au 21/02/2026 (LF 2026). Seul FCPI-JEI subsiste.
-    fcpiJei:         v('fcpiJei'),
-    fipCorse:        v('fipCorse'),
-    gfi:             v('gfi'),
-    irPme:           v('irPme'),
-    malraux:          v('malraux'),  // legacy (RI directe) — UI n'expose plus ce champ
-    malrauxTravaux:   v('malrauxTravaux'),
-    malrauxZone:      document.getElementById('malrauxZone')?.value || 'spr-non',
-    locAvantages:    v('locAvantages'),  // legacy (RI directe) — UI n'expose plus ce champ, conservé pour rétro-compat
+    ehpadFrais: v('ehpadFrais'), ehpadNbPers: v('ehpadNbPers'),
+    pinel: v('pinel'),
+    girardinPD: v('girardinPD'), girardinAG: v('girardinAG'),
+    // FCPI classique : retiré du moteur en D3.4 — dispositif supprimé au
+    // 21/02/2026 (LF 2026). Seul FCPI-JEI subsiste (taux 30 %, family ir-pme).
+    fcpiJei: v('fcpiJei'),
+    fipCorse: v('fipCorse'), gfi: v('gfi'),
+    // IR-PME — 7 sous-dispositifs (cf. tasks/d3.1-irpme-spec.md)
+    irPme:        v('irPme'),
+    irPmeEsus:    v('irPmeEsus'),
+    irPmeMH:      v('irPmeMH'),
+    irPmeJei:     v('irPmeJei'),
+    irPmeJeii:    v('irPmeJeii'),
+    irPmeJeir:    v('irPmeJeir'),
+    irPmeJeiJeirImputeAnterieur: v('irPmeJeiJeirImputeAnterieur'),
+    malraux: v('malraux'),               // legacy (RI directe) — UI n'expose plus ce champ
+    malrauxTravaux: v('malrauxTravaux'),
+    malrauxZone: _sel('malrauxZone', d.malrauxZone),
+    locAvantages: v('locAvantages'),     // legacy (RI directe) — UI n'expose plus ce champ
     locAvantagesDepenses: v('locAvantagesDepenses'),
-    locAvantagesPalier:   document.getElementById('locAvantagesPalier')?.value || 'loc1',
-    sofica:          v('sofica'),
+    locAvantagesPalier: _sel('locAvantagesPalier', d.locAvantagesPalier),
+    sofica: v('sofica'),
+    soficaTaux: _sel('soficaTaux', d.soficaTaux),
     autresReductions: v('autresReductions'),
-    autresCredits:   v('autresCredits'),
+    autresCredits: v('autresCredits'),
   };
+
+  // Phase C3 : en mode simple, les champs marqués .advanced dans le DOM sont
+  // IGNORÉS par le moteur. Leur valeur DOM est préservée (pour rebascule en
+  // mode complet) mais le calcul utilise la valeur neutre de defaultInputs().
+  // Source unique = le markup HTML (`.advanced` posé en C2), pas de liste
+  // dupliquée à maintenir ici.
+  if (document.body.classList.contains('mode-simple')) {
+    const advancedNodes = document.querySelectorAll(
+      '#simulateur .advanced input[id], #simulateur .advanced select[id]'
+    );
+    advancedNodes.forEach(el => {
+      if (el.id in d) out[el.id] = d[el.id];
+    });
+  }
+  return out;
 }
 
 // ─────────────────────────────────────────────
@@ -132,7 +187,10 @@ function fmtParts(n) {
 // ─────────────────────────────────────────────
 // MISE À JOUR DES RÉSULTATS (panneau de droite)
 // ─────────────────────────────────────────────
-function updateResults(d) {
+function updateResults(d, input) {
+  // input est optionnel pour compat ; certaines jauges (PER, Dons) ont besoin
+  // de la saisie utilisateur courante pour exprimer « utilisé / plafond ».
+  input = input || {};
   const set = (id, val) => {
     const el = document.getElementById(id);
     if (el) el.textContent = val;
@@ -157,9 +215,14 @@ function updateResults(d) {
   // Plafond PER live (sous le champ de saisie)
   set('per-cap-live',    fmt(d.perCap));
 
-  // Niches : 2 lignes claires (poche commune + supplément majorée)
-  set('res-poche1', fmt(d.poche1Utilisee || 0) + ' / 10 000 €');
-  set('res-poche2', fmt(d.poche2Utilisee || 0) + ' / 8 000 €');
+  // Jauges plafonds visuelles (état ACTUEL — sans préco appliquées).
+  // Pattern symétrique avec l'onglet Préco qui affiche les mêmes jauges
+  // mais sur la situation PROJETÉE (detApres). Cf. Phase G.
+  const donsTotalSim = (input.dons || 0) + (input.dons7UD || 0);
+  setJauge('SimPer',    input.per || 0,         d.perCap || 0);
+  setJauge('SimDons',   donsTotalSim,           (d.revenuNetImposable || 0) * 0.20);
+  setJauge('SimPoche1', d.ri10Panier || 0,      10000);
+  setJauge('SimPoche2', (d.ri10Panier || 0) + (d.ri18Panier || 0), 18000);
   // Ligne "niches perdues" affichée seulement si > 0
   const perduesRow = document.getElementById('res-niches-perdues-row');
   if (perduesRow) {
@@ -248,7 +311,7 @@ function updateCalcDetaille(d) {
     ['cd-rpinel',    'Pinel / Denormandie — NICHE 10k',            d.redPinel,        ''],
     ['cd-rgpd',      'Girardin plein droit — NICHE 18k (44%)',     d.redGirardinPD,   ''],
     ['cd-rgag',      'Girardin avec agrément — NICHE 18k (34%)',   d.redGirardinAG,   ''],
-    // cd-rfcpi retiré — FCPI classique supprimé au 21/02/2026 (LF 2026).
+    // FCPI classique (cd-rfcpi) : retiré en D3.4 — dispositif supprimé 21/02/2026.
     ['cd-rfcpijei',  'FCPI JEI (LF 2026, 30 %) — NICHE 10k',       d.redFcpiJei,      ''],
     ['cd-rfipcorse', 'FIP Corse / Outre-mer (30 %) — NICHE 10k',   d.redFipCorse,     ''],
     ['cd-rgfi',      'GFI (Groupements forestiers) — NICHE 10k',   d.redGfi,          ''],
@@ -294,81 +357,6 @@ function updateCalcDetaille(d) {
 }
 
 // ─────────────────────────────────────────────
-// INPUTS SIMULATEUR SIMPLIFIÉ
-// ─────────────────────────────────────────────
-function getInputsSimple() {
-  return {
-    // Situation
-    situation:    v('s-situation'),
-    nbEnfants:    v('s-nbEnfants'),
-    gardeAlternee: v('s-gardeAlternee'),
-    parentIsole:  v('s-parentIsole') === 'oui',
-
-    // Revenus — champs simplifiés
-    sal1:         v('s-sal'),
-    sal2:         0,
-    pen1:         0, pen2:           0,
-    bncMicro1:    v('s-bnc'),
-    bncMicro2:    0,
-    bncReel1:     0, bncReel2:       0,
-    microFoncier: 0, foncierReel:    0,
-    meubleClasse: 0, meubleNonClasse: 0, autresMeubles: 0,
-    dividendes:   v('s-dividendes'),
-    pv:           0,
-    autresRevenus: 0,
-    optionPFU:    v('s-optionPFU'),
-
-    // Charges
-    per:               v('s-per'),
-    pensionsAlim:      v('s-pensionsAlim'),
-    nbBeneficiairesPA: v('s-nbBeneficiairesPA'),
-    csgDeductible:     v('s-csg'),
-    autresCharges:     0,
-
-    // Réductions / Crédits
-    dons:            v('s-dons'),
-    emploiDomicile:  v('s-emploi'),
-    gardeEnfants:    v('s-garde'),
-    pinel:           v('s-pinel'),
-    girardinPD:      0, girardinAG:   0,    // fcpi (classique) retiré 21/02/2026
-    sofica:          v('s-sofica'),
-    autresReductions: 0,
-    autresCredits:    0,
-  };
-}
-
-// ─────────────────────────────────────────────
-// RÉSULTATS SIMULATEUR SIMPLIFIÉ
-// ─────────────────────────────────────────────
-function updateResultsSimple(d) {
-  const set = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
-  };
-
-  set('s-res-rni',          fmt(d.revenuNetImposable));
-  set('s-res-parts',        fmtParts(d.parts));
-  set('s-res-impot-brut',   fmt(d.impotBrut));
-  set('s-res-supp-qf',      fmt(d.supplementQF));
-  set('s-res-decote',       fmt(d.decote));
-  set('s-res-apres-decote', fmt(d.impotApresDecote));
-  set('s-res-ir-mob',       fmt(d.irMobilier));
-  set('s-res-ps',           fmt(d.psRole));
-  set('s-res-cehr',         fmt(d.cehr));
-  // Plafond PER live
-  set('s-per-cap-live',     fmt(d.perCap));
-  // Réductions + crédits = avantages totaux appliqués
-  const avantages = d.reductionsAppliquees + d.creditsAppliques;
-  set('s-res-avantages',    avantages > 0 ? '−\u202F' + fmt(avantages) : fmt(0));
-  set('s-res-taux-moyen',   fmtPct(d.tauxMoyen));
-  set('s-res-tmi',          fmtPct(d.tmi));
-  set('s-parts-affichage',  fmtParts(d.parts) + ' parts');
-
-  const impotNetEl = document.getElementById('s-res-impot-net');
-  if (impotNetEl) impotNetEl.textContent = fmt(d.impotNet);
-}
-
-// ─────────────────────────────────────────────
 // ACCORDÉON LEVIERS FISCAUX
 // ─────────────────────────────────────────────
 function toggleLevier(header) {
@@ -389,28 +377,103 @@ function toggleLevier(header) {
 function recalculer() {
   const input = getInputs();
   const det = calculerIR(input);
-  updateResults(det);
+  updateResults(det, input);
   updateCalcDetaille(det);
   // Met à jour aussi l'onglet préconisations (calculs uniquement, sans toucher aux inputs)
   if (typeof refreshPreconisationsCalculs === 'function') refreshPreconisationsCalculs();
 }
 
-function recalculerSimple() {
-  const input = getInputsSimple();
-  const det = calculerIR(input);
-  updateResultsSimple(det);
+// ─────────────────────────────────────────────
+// MODE SIMPLE / COMPLET — toggle persistant
+// ─────────────────────────────────────────────
+// Phase C1 (infra) : toggle qui pose body.mode-simple / body.mode-complet
+// et persiste le choix en localStorage. Effet visible à partir de C2
+// (champs .advanced marqués) ; effet sur le calcul à partir de C3
+// (getInputs filtre les .advanced en mode simple).
+const MODE_STORAGE_KEY = 'wiztax.mode';
+
+function getMode() {
+  try {
+    const stored = localStorage.getItem(MODE_STORAGE_KEY);
+    return stored === 'complet' ? 'complet' : 'simple';
+  } catch (e) {
+    return 'simple';
+  }
+}
+
+function setMode(mode) {
+  const m = (mode === 'complet') ? 'complet' : 'simple';
+  document.body.classList.toggle('mode-simple',  m === 'simple');
+  document.body.classList.toggle('mode-complet', m === 'complet');
+  try { localStorage.setItem(MODE_STORAGE_KEY, m); } catch (e) {}
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    const active = btn.dataset.mode === m;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-checked', active ? 'true' : 'false');
+  });
+  // À partir de Phase C3, getInputs() filtre selon le mode → on doit
+  // re-calculer pour refléter le nouveau périmètre. En C1/C2 c'est un
+  // no-op côté résultats, mais sans coût.
+  if (typeof recalculer === 'function') recalculer();
+}
+
+function initModeToggle() {
+  setMode(getMode());
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => setMode(btn.dataset.mode));
+  });
 }
 
 // ─────────────────────────────────────────────
 // INITIALISATION
 // ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Écouter tous les inputs — chaque champ déclenche son propre simulateur
+  // Générer les form-rows IR-PME du Simulateur depuis LEVIERS_CATALOGUE
+  // AVANT d'attacher les listeners (sinon les nouveaux inputs ne reçoivent
+  // pas le handler de recalcul). Cf. tasks/d3.1-irpme-spec.md.
+  if (typeof renderSimulateurFormRows === 'function') {
+    const simIrPme = document.getElementById('simIrPme');
+    if (simIrPme) renderSimulateurFormRows(simIrPme, 'ir-pme');
+    // SOFICA (D3.2) : même pattern — container vide alimenté depuis le catalogue
+    const simSofica = document.getElementById('simSofica');
+    if (simSofica) renderSimulateurFormRows(simSofica, 'sofica');
+    // FIP Corse + GFI (D3.3) : sémantique investissement, mode versement-direct
+    const simFipCorse = document.getElementById('simFipCorse');
+    if (simFipCorse) renderSimulateurFormRows(simFipCorse, 'fipCorse');
+    const simGfi = document.getElementById('simGfi');
+    if (simGfi) renderSimulateurFormRows(simGfi, 'gfi');
+    // Malraux (D3.7) + Loc'Avantages (D3.6) : input dépenses + select empilés
+    const simMalraux = document.getElementById('simMalraux');
+    if (simMalraux) renderSimulateurFormRows(simMalraux, 'malraux');
+    const simLocAvantages = document.getElementById('simLocAvantages');
+    if (simLocAvantages) renderSimulateurFormRows(simLocAvantages, 'locAvantages');
+    // D3.11 : 6 leviers restants migrés vers le générateur catalogue.
+    // Jeanbrun = input déficit + select catégorie ; les 5 autres = simple input.
+    [
+      ['simJeanbrun', 'jeanbrun'],
+      ['simDons7UD', 'dons7UD'],
+      ['simDons7UF', 'dons7UF'],
+      ['simEmploiDom', 'emploiDom'],
+      ['simGardeEnf', 'gardeEnf'],
+      ['simSyndic', 'syndic'],
+      // D3.12 : Girardin PD + AG (RI saisie directe, sans slider rendement)
+      ['simGirardinPD', 'girardinPD'],
+      ['simGirardinAG', 'girardinAG'],
+      // D3.13 : PER (sous-champ perPlafondManuel + cellule cap dynamique)
+      //         EHPAD (sous-champ ehpadNbPers)
+      ['simPer', 'per'],
+      ['simEhpad', 'ehpad'],
+    ].forEach(([id, fam]) => {
+      const el = document.getElementById(id);
+      if (el) renderSimulateurFormRows(el, fam);
+    });
+  }
+
+  // Écouter tous les inputs : un seul handler (recalculer) — le périmètre
+  // (mode simple vs complet) est géré par getInputs en lisant body.mode-simple.
   document.querySelectorAll('input[type="number"], input[type="checkbox"], select').forEach(el => {
-    const isSimple = el.id && el.id.startsWith('s-');
-    const handler = isSimple ? recalculerSimple : recalculer;
-    el.addEventListener('input',  handler);
-    el.addEventListener('change', handler);
+    el.addEventListener('input',  recalculer);
+    el.addEventListener('change', recalculer);
   });
 
   // Demi-part supplémentaire : afficher le select des cas seulement si cochée
@@ -422,15 +485,24 @@ document.addEventListener('DOMContentLoaded', () => {
   demiPartCb.addEventListener('change', toggleDemiPartCas);
   toggleDemiPartCas();
 
+  // Mode simple / complet — toggle persistant (cf. tasks/option3-fusion-onglets.md)
+  initModeToggle();
+
+  // Onglet Leviers fiscaux : génération dynamique des cards depuis le catalogue
+  // (Phase F3 — en construction, coexiste avec le HTML statique pendant la migration).
+  if (typeof renderLeviersOnglet === 'function') {
+    const auto = document.getElementById('leviersAuto');
+    if (auto) renderLeviersOnglet(auto);
+  }
+
   // Préconisations : init + listeners
   initPreconisations();
 
-  // Dev toolbar : bouton "Charger cas démo" + "Vider" — temporaire, à retirer.
+  // Dev toolbar (mode dev uniquement, voir isDevMode).
   initDevToolbar();
 
-  // Premiers calculs
+  // Premier calcul
   recalculer();
-  recalculerSimple();
 });
 
 // ─────────────────────────────────────────────
@@ -449,32 +521,6 @@ function renderCatBadge(cat) {
   const label = labels[cat];
   if (!label) return '';
   return ` <span class="preco-cat-badge preco-cat-${cat}">${label}</span>`;
-}
-
-// Pastille indiquant le sort de l'EXCÉDENT (= ce qui dépasse l'impôt ou le
-// plafond) pour ce dispositif : perdu ? reportable N années ? remboursé ?
-// Affichée à côté du badge de catégorie sur chaque ligne.
-function renderNaturePastille(lev) {
-  if (!lev) return '';
-  const reportables = {
-    per:           'Reportable 3 ans',
-    deficitFoncier:'Reportable 10 ans (foncier)',
-    girardinPD:    'Reportable 5 ans',
-    girardinAG:    'Reportable 5 ans',
-    irPme:         'Reportable 4 ans',
-    dons7UD:       'Reportable 5 ans',
-    dons7UF:       'Reportable 5 ans',
-  };
-  if (reportables[lev.id]) {
-    return ` <span class="preco-cat-badge preco-nat-rep">${reportables[lev.id]}</span>`;
-  }
-  if (lev.levier === 2) {
-    return ` <span class="preco-cat-badge preco-nat-perdu">Perdu si dépassement</span>`;
-  }
-  if (lev.levier === 3) {
-    return ` <span class="preco-cat-badge preco-nat-rembours">Remboursable</span>`;
-  }
-  return '';
 }
 
 // Quel pourcentage d'1 € saisi dans la ligne préco entre dans le panier
@@ -628,9 +674,17 @@ function computeMaxForLevier(lev, inputAvant, paramValue, detAvant, isCouple) {
 }
 
 // ─────────────────────────────────────────────
-// DEV TOOLBAR — bouton "Charger cas démo" + "Vider"
-// Temporaire pour faciliter le test manuel. À retirer avant prod.
+// DEV TOOLBAR — outils de test (charger cas démo, vider les champs).
+// Visible UNIQUEMENT en mode dev : localhost / 127.0.0.1 / fichier local,
+// ou si l'URL contient ?dev (ex: https://wizify.github.io/...?dev).
+// En production publique : la toolbar est cachée par isDevMode().
 // ─────────────────────────────────────────────
+function isDevMode() {
+  const h = location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '') return true;
+  return new URLSearchParams(location.search).has('dev');
+}
+
 const DEMO_CASE = {
   // Foyer : couple marié 2 enfants
   situation: 'marie-pacse',
@@ -654,6 +708,11 @@ const DEMO_CASE = {
 };
 
 function initDevToolbar() {
+  const toolbar = document.querySelector('.dev-toolbar');
+  if (!isDevMode()) {
+    if (toolbar) toolbar.style.display = 'none';
+    return;
+  }
   const btnLoad = document.getElementById('btnLoadDemo');
   const btnReset = document.getElementById('btnResetInputs');
   if (btnLoad) {
@@ -679,6 +738,18 @@ function initDevToolbar() {
         el.checked = false;
       });
       recalculer();
+    });
+  }
+  // Bouton « Surligner catalogue » — toggle body.highlight-catalogue.
+  // Toutes les form-rows et cards portant data-source-catalogue se ceinturent
+  // en magenta avec leur id en badge. Permet de visualiser instantanément ce
+  // qui est généré depuis LEVIERS_CATALOGUE vs ce qui reste hardcodé.
+  const btnHL = document.getElementById('btnHighlightCatalogue');
+  if (btnHL) {
+    btnHL.addEventListener('click', () => {
+      const on = document.body.classList.toggle('highlight-catalogue');
+      btnHL.classList.toggle('active', on);
+      btnHL.textContent = on ? 'Désactiver surlignage' : 'Surligner catalogue';
     });
   }
 }
@@ -1136,6 +1207,7 @@ function refreshPreconisationsCalculs() {
   // Tableau comparatif
   setCmp('rni',   detAvant.revenuNetImposable, detApres.revenuNetImposable);
   setCmp('ibr',   detAvant.impotBrut,          detApres.impotBrut);
+  setCmp('decote', detAvant.decote,            detApres.decote, true);
   setCmp('red',   detAvant.reductionsAppliquees, detApres.reductionsAppliquees, true);
   setCmp('cr',    detAvant.creditsAppliques,   detApres.creditsAppliques, true);
   setCmp('csy',   detAvant.credSyndic,         detApres.credSyndic, true);
@@ -1280,18 +1352,3 @@ function setJauge(name, used, cap) {
   val.textContent = fmt(used) + ' / ' + (cap > 0 ? fmt(cap) : '—');
 }
 
-function groupedLeviersOptions(leviers) {
-  const groups = {
-    hors:    { label: 'Hors plafond niches',          opts: [] },
-    niche10: { label: 'Niche 10 000 €',                opts: [] },
-    niche18: { label: 'Niche 18 000 € (majorée)',      opts: [] },
-    foncier: { label: 'Déduction d\'assiette foncière',opts: [] },
-  };
-  leviers.forEach(l => {
-    if (groups[l.cat]) groups[l.cat].opts.push(`<option value="${l.id}">${l.label}</option>`);
-  });
-  return Object.values(groups)
-    .filter(g => g.opts.length)
-    .map(g => `<optgroup label="${g.label}">${g.opts.join('')}</optgroup>`)
-    .join('');
-}

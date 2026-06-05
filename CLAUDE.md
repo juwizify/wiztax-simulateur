@@ -15,9 +15,42 @@ Destinée à être intégrée dans un vrai logiciel par un développeur.
 ## Structure
 - `js/params.js` — tous les paramètres fiscaux (ne pas modifier sans source officielle)
 - `js/calculator.js` — moteur de calcul pur (étapes 1 à 11), pas de DOM ici
+- `js/preconisations.js` — **catalogue unique des leviers fiscaux** (`LEVIERS_CATALOGUE`).
+  Source éditoriale unique consommée par : `renderLeviersOnglet()` (cards onglet
+  Leviers fiscaux) + `renderSimulateurFormRows(targetEl, family)` (form-rows
+  Simulateur). Tout enrichissement (label, taux, plafond, tooltip, liens, params)
+  passe par le catalogue, jamais en HTML statique.
 - `js/app.js` — lecture des inputs, affichage des résultats, navigation onglets
-- `css/styles.css` — mise en forme
-- `index.html` — structure HTML complète avec les 3 onglets
+- `css/styles.css` — design system + composants. **Banque centrale** : avant
+  d'inventer une nouvelle classe, ouvrir l'en-tête du fichier (inventaire
+  des composants) et utiliser/étendre l'existant. Spec : `tasks/design-system-spec.md`.
+- `index.html` — structure HTML complète avec les 5 onglets
+  (Simulateur [toggle mode simple/complet], Calcul détaillé, Préconisations,
+  Paramètres fiscaux, Leviers fiscaux). Cf. tasks/option3-fusion-onglets.md
+  pour le refactor du Simulateur unique (anciens Simplifié + Complet fusionnés).
+  Les form-rows IR-PME / SOFICA / FIP Corse / GFI / Malraux / Loc'Avantages
+  sont **générées dynamiquement** depuis `LEVIERS_CATALOGUE` (post-D3.6) ;
+  conteneurs `<div id="simXxx"></div>` pour chaque `family`.
+
+## Sémantique des leviers fiscaux (post-D3.x)
+
+Tous les véhicules « cash sortant » du Simulateur utilisent désormais la
+**sémantique investissement** : l'utilisateur saisit le montant souscrit (cash),
+et le moteur calcule la RI = invest retenu × taux applicable.
+
+| Levier | Input | Taux | Plafond invest |
+|---|---|---|---|
+| IR-PME (7 variantes) | montant souscrit | 18/25/30/40/50 % selon variante | 50k/100k (75k/150k pour JEI) |
+| SOFICA | montant souscrit + soficaTaux | 30/36/48 % | min(18k, 25 % RNG) |
+| FIP Corse | montant souscrit | 30 % | 12k/24k |
+| GFI | montant souscrit | 18 % | 50k/100k |
+| Malraux | travaux + malrauxZone | 22/30 % | 100k/an |
+| Loc'Avantages | dépenses + locAvantagesPalier | 15/35/65 % | 10k/an |
+
+FCPI classique : **retiré au 21/02/2026** (LF 2026 / loi 2026-103). Pinel :
+**fermé au 31/12/2024** (LF 2024 art. 168) — saisie réservée aux engagements
+existants en `.advanced`. Cf. `tasks/audit-liens-officiels.md` pour le statut
+des sources officielles.
 
 ## Paramètres fiscaux vérifiés (sources officielles)
 - Barème : 11 600 / 29 579 / 84 577 / 181 917 à 0% / 11% / 30% / 41% / 45%
@@ -26,7 +59,9 @@ Destinée à être intégrée dans un vrai logiciel par un développeur.
   Source : BOI-IR-LIQ-20-20-20 du 07/04/2026
 - Décote : célibataire 897 € (seuil 1 982 €), couple 1 483 € (seuil 3 277 €), taux 45,25 %
   Source : BOI-IR-LIQ-20-20-30 du 07/04/2026
-- PS : 18,6 % mobilier (dividendes/PV), 17,2 % foncier — Source : LFSS 2026 art. 12
+- PS : 18,6 % mobilier (dividendes/intérêts/PV mobilières), 18,6 % foncier nu/LMNP,
+  17,2 % AV > 8 ans (et PV immobilières) — Source : LFSS 2026 art. 12
+  (cf. commit e39d7f1 « fix(ps): foncier/LMNP à 18,6 % (CFA LFSS 2026) »)
 - PFU : 12,8 % IR + 18,6 % PS = 31,4 % total
 - Niches : 10 000 € général, 18 000 € majoré (Girardin/Sofica)
 - Girardin plein droit : 44 % dans le plafond (rétrocession 56%) — art. 200-0 A, 4° CGI
@@ -60,11 +95,15 @@ mais ne doit jamais être additionné à l'IR (sinon double comptage).
 ## Crédits d'impôt automatiques (acomptes prélevés à la source)
 - **PFNL AV** (`det.pfnlAV` = `av75 × 7,5 % + av128 × 12,8 %`) : auto-imputé.
   Le différentiel `pfnlAV − irAV` est restitué (ex : 4 600 × 7,5 % = 345 € pour single).
+  Auto-imputable car prélevé sans possibilité de dispense.
 - **PFNL mobilier 2CK** (acompte 12,8 % sur dividendes/intérêts prélevé par la banque) :
-  **PAS auto-imputé aujourd'hui** — l'utilisateur doit le saisir manuellement via `input.pfnlVerse`.
-  Limitation connue : usage normal ⇒ surestimation de l'IR si l'utilisateur saisit
-  les dividendes/intérêts sans saisir aussi le 2CK correspondant.
-  Symétrie possible avec `pfnlAV` : auto-calculer `(div + int) × 0,128` et l'imputer.
+  **Saisie manuelle via `input.pfnlVerse`** — choix de design délibéré, conforme
+  au comportement du simulateur officiel impots.gouv.fr (l'utilisateur saisit
+  explicitement la case 2CK, l'outil ne devine pas). Couvre proprement le cas
+  dispense de prélèvement (RFR < 25/50k intérêts, < 50/75k dividendes → banque
+  ne prélève rien → aucun 2CK à créditer → l'utilisateur laisse pfnlVerse vide).
+  `det.pfnl2CKAuto` exposé en INFO (jamais consommé par le calcul) pour qu'une
+  future UI puisse suggérer le montant à l'utilisateur sans l'appliquer.
 
 ## Règles importantes
 - Ne jamais modifier un paramètre fiscal sans vérifier sur BOFiP ou brochure IR officielle
