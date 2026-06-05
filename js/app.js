@@ -456,6 +456,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ['simEmploiDom', 'emploiDom'],
       ['simGardeEnf', 'gardeEnf'],
       ['simSyndic', 'syndic'],
+      // D3.12 : Girardin PD + AG (RI saisie directe, sans slider rendement)
+      ['simGirardinPD', 'girardinPD'],
+      ['simGirardinAG', 'girardinAG'],
     ].forEach(([id, fam]) => {
       const el = document.getElementById(id);
       if (el) renderSimulateurFormRows(el, fam);

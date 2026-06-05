@@ -472,29 +472,12 @@
             </div>
           </div>
 
-          <div class="form-row advanced">
-            <label for="girardinPD">
-              Girardin plein droit
-              <i class="tip" data-tip="Réduction d'impôt (outre-mer sans agrément).&#10;&#10;Saisir le montant de la réduction (attestation fiscale).&#10;Seuls 44% de la réduction comptent dans le plafond.&#10;Art. 199 undecies B et 200-0 A, 4° CGI.">i</i>
-            </label>
-            <input type="number" id="girardinPD" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-18k-44">niche 18 000 €</span>
-              <span class="niche-plaf">quote-part plafond : × 44 %</span>
-            </div>
-          </div>
-
-          <div class="form-row advanced">
-            <label for="girardinAG">
-              Girardin avec agrément
-              <i class="tip" data-tip="Réduction d'impôt (outre-mer avec agrément ministériel).&#10;&#10;Saisir le montant de la réduction (attestation fiscale).&#10;Seuls 34% de la réduction comptent dans le plafond.&#10;Art. 199 undecies B et 200-0 A, 4° CGI.">i</i>
-            </label>
-            <input type="number" id="girardinAG" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-18k-34">niche 18 000 €</span>
-              <span class="niche-plaf">quote-part plafond : × 34 %</span>
-            </div>
-          </div>
+          <!-- Girardin PD + AG (D3.12) — form-rows générées depuis LEVIERS_CATALOGUE
+               (family:'girardinPD' / 'girardinAG'). Dans le Simulateur l'utilisateur
+               saisit directement la RI (attestation fiscale). Le slider rendement
+               (mode taux-libre) n'apparaît QUE dans l'onglet Préconisations. -->
+          <div id="simGirardinPD"></div>
+          <div id="simGirardinAG"></div>
 
 
           <!-- FIP Corse + GFI (D3.3) — form-rows générées depuis LEVIERS_CATALOGUE

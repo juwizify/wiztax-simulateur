@@ -673,8 +673,13 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'girardinPD', label: 'Girardin Industriel — Plein Droit',
+    // D3.12 : ajout family pour génération form-row dans le Simulateur.
+    // Dans le Simulateur l'utilisateur saisit directement la RI (montant
+    // de la réduction attestée). Le mode taux-libre + slider rendement
+    // n'intervient QUE dans l'onglet Préconisations (calcul prospectif).
+    id: 'girardinPD', family: 'girardinPD', label: 'Girardin Industriel — Plein Droit',
     levier: 2, cat: 'niche18', mode: 'taux-libre', inputKey: 'girardinPD',
+    nichePlafLabel: 'quote-part plafond : × 44 %',
     nature: 'versement-annuel', budget: 'cash',
     rendementDefaut: 1.10, rendementMin: 1.00, rendementMax: 1.30, rendementStep: 0.005,
     info: 'Saisir le MONTANT INVESTI DANS LE PROGRAMME GIRARDIN PD de l\'année (versement à l\'opérateur, à fonds perdus). Cash sortant. Mécanique one-shot : RI majorée encaissée l\'année suivante. Quote-part 44 % dans le plafond niches 18 k€.\n\nRendement = ratio RI / investissement. Marché 2026 typiquement 108–115 %. Boutons ± 0,5 % ou saisie clavier directe.',
@@ -703,8 +708,10 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'girardinAG', label: 'Girardin Industriel — Avec Agrément',
+    // D3.12 : idem girardinPD (cf. commentaire ci-dessus).
+    id: 'girardinAG', family: 'girardinAG', label: 'Girardin Industriel — Avec Agrément',
     levier: 2, cat: 'niche18', mode: 'taux-libre', inputKey: 'girardinAG',
+    nichePlafLabel: 'quote-part plafond : × 34 %',
     nature: 'versement-annuel', budget: 'cash',
     rendementDefaut: 1.08, rendementMin: 1.00, rendementMax: 1.25, rendementStep: 0.005,
     info: 'Saisir le MONTANT INVESTI DANS LE PROGRAMME GIRARDIN AG de l\'année (versement à l\'opérateur, à fonds perdus). Idem Plein Droit mais avec agrément ministériel (programmes > 250 k€). Cash sortant. Quote-part 34 % dans le plafond niches 18 k€.\n\nRendement = ratio RI / investissement. Marché 2026 typiquement 105–112 %.',
