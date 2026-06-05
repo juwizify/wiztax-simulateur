@@ -12,12 +12,12 @@ const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
 const ctx = vm.createContext({});
-vm.runInContext(fs.readFileSync(path.join(ROOT, 'js/params.js'), 'utf8'), ctx);
-vm.runInContext(fs.readFileSync(path.join(ROOT, 'js/calculator.js'), 'utf8'), ctx);
+vm.runInContext(fs.readFileSync(path.join(ROOT, 'core/params.js'), 'utf8'), ctx);
+vm.runInContext(fs.readFileSync(path.join(ROOT, 'core/calculator.js'), 'utf8'), ctx);
 const calc = (i) => vm.runInContext('calculerIR(' + JSON.stringify(i) + ')', ctx);
 
 const { LEVIERS_CATALOGUE, appliquerPreconisations, avantageEstime } =
-  require('../js/preconisations.js');
+  require('../core/preconisations.js');
 
 function makeInput(o = {}) {
   return Object.assign({

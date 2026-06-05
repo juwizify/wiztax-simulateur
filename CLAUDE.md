@@ -13,26 +13,26 @@ Destinée à être intégrée dans un vrai logiciel par un développeur.
 - Google Sheet original : https://docs.google.com/spreadsheets/d/1_0rPgviPknM7q37ouvSVIbcXNTeHo__Ys8-4EtG0Wfs/edit
 
 ## Structure
-- `js/params.js` — **source unique de vérité** des paramètres fiscaux + helpers
+- `core/params.js` — **source unique de vérité** des paramètres fiscaux + helpers
   de format `formatPct`/`formatEur`/`formatNum`. NE JAMAIS modifier une valeur
   sans avoir vérifié la source officielle et mis à jour `lastVerified` dans
   `paramsRegistry.js`.
-- `js/paramsRegistry.js` — **registre éditorial** : organisation de l'onglet
+- `core/paramsRegistry.js` — **registre éditorial** : organisation de l'onglet
   Paramètres fiscaux, libellés, sources officielles (URL + référence légale).
   Les VALEURS sont lues depuis PARAMS via les tokens `{{path|fmt}}` — aucun
   chiffre fiscal hardcodé dans ce fichier.
-- `js/paramInject.js` — résolveur des tokens `{{path|fmt}}` au DOM ready.
+- `demo/paramInject.js` — résolveur des tokens `{{path|fmt}}` au DOM ready.
   Aucun nombre fiscal ne doit apparaître en dur dans le HTML / data-tip ;
   toujours passer par un token (ex. `{{ps.foncierNu|pct}}` → « 17,2 % »).
-- `js/paramsTab.js` — générateur dynamique des cards de l'onglet Paramètres
+- `demo/paramsTab.js` — générateur dynamique des cards de l'onglet Paramètres
   fiscaux depuis `paramsRegistry.js`. L'HTML statique a disparu.
-- `js/calculator.js` — moteur de calcul pur (étapes 1 à 11), pas de DOM ici
-- `js/preconisations.js` — **catalogue unique des leviers fiscaux** (`LEVIERS_CATALOGUE`).
+- `core/calculator.js` — moteur de calcul pur (étapes 1 à 11), pas de DOM ici
+- `core/preconisations.js` — **catalogue unique des leviers fiscaux** (`LEVIERS_CATALOGUE`).
   Source éditoriale unique consommée par : `renderLeviersOnglet()` (cards onglet
   Leviers fiscaux) + `renderSimulateurFormRows(targetEl, family)` (form-rows
   Simulateur). Tout enrichissement (label, taux, plafond, tooltip, liens, params)
   passe par le catalogue, jamais en HTML statique.
-- `js/app.js` — lecture des inputs, affichage des résultats, navigation onglets
+- `demo/app.js` — lecture des inputs, affichage des résultats, navigation onglets
 - `css/styles.css` — design system + composants. **Banque centrale** : avant
   d'inventer une nouvelle classe, ouvrir l'en-tête du fichier (inventaire
   des composants) et utiliser/étendre l'existant. Spec : `tasks/design-system-spec.md`.
