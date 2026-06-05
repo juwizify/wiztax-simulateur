@@ -17,10 +17,10 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
-const paramsSrc = fs.readFileSync(path.join(ROOT, 'js/params.js'), 'utf8');
-const calculatorSrc = fs.readFileSync(path.join(ROOT, 'js/calculator.js'), 'utf8');
+const paramsSrc = fs.readFileSync(path.join(ROOT, 'core/params.js'), 'utf8');
+const calculatorSrc = fs.readFileSync(path.join(ROOT, 'core/calculator.js'), 'utf8');
 const { LEVIERS_CATALOGUE, appliquerPreconisations, avantageEstime } =
-  require('../js/preconisations.js');
+  require('../core/preconisations.js');
 
 const ctx = vm.createContext({});
 vm.runInContext(paramsSrc, ctx, { filename: 'params.js' });
