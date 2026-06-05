@@ -459,6 +459,10 @@ document.addEventListener('DOMContentLoaded', () => {
       // D3.12 : Girardin PD + AG (RI saisie directe, sans slider rendement)
       ['simGirardinPD', 'girardinPD'],
       ['simGirardinAG', 'girardinAG'],
+      // D3.13 : PER (sous-champ perPlafondManuel + cellule cap dynamique)
+      //         EHPAD (sous-champ ehpadNbPers)
+      ['simPer', 'per'],
+      ['simEhpad', 'ehpad'],
     ].forEach(([id, fam]) => {
       const el = document.getElementById(id);
       if (el) renderSimulateurFormRows(el, fam);

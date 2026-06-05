@@ -69,10 +69,25 @@ const LEVIERS_CATALOGUE = [
   // par renderLeviersOnglet() pour générer dynamiquement les cards de l'onglet
   // Leviers fiscaux. Cf. tasks/d3.1-irpme-spec.md et la spec F2 à venir.
   {
-    id: 'per', label: 'PER (Plan d\'Épargne Retraite)',
+    // D3.13 : ajout family + secondaryInputs (perPlafondManuel) + customRightCell.
+    // Visible en mode simple (PER = levier patrimonial très courant).
+    // Cellule de droite custom : `per-cap-live` mise à jour dynamiquement
+    // par app.js (set('per-cap-live', fmt(d.perCap))) à chaque recalcul.
+    id: 'per', family: 'per', label: 'PER (Plan d\'Épargne Retraite)',
     levier: 1, cat: 'hors', mode: 'versement-direct', inputKey: 'per',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir le VERSEMENT VOLONTAIRE de l\'année sur le PER. Cash sortant pour le client (épargne bloquée jusqu\'à la retraite). Déduction du revenu imposable → économie ≈ versement × TMI. Plafond auto = 10 % des revenus pro (cap 37 680 €), par déclarant.',
+    inSimpleMode: true,
+    customRightCell: 'per-cap',
+    titleLong: 'Versements PER (part déductible)',
+    secondaryInputs: [
+      {
+        key: 'perPlafondManuel',
+        label: '↳ Plafond PER manuel (option, cases 6PS/6PT)',
+        tip: 'Si tu connais ton plafond exact (lu sur ton avis d\'imposition, section « Plafond épargne retraite »), saisis-le ici pour ÉCRASER le calcul automatique.\n\nUtile notamment quand tu as accumulé des plafonds non utilisés des 3 dernières années (reportables) — ton plafond réel est souvent supérieur au calcul auto.\n\nLaisser à 0 pour utiliser le calcul automatique.\n\nLe plafond saisi ici est appliqué au foyer entier (somme des cases 6PS + 6PT).',
+        inSimpleMode: false,    // sous-champ avancé même si PER principal est en mode simple
+      },
+    ],
+    info: 'Cases 6NS / 6NT (versements) et 6PS / 6PT (plafond manuel) de la déclaration. Inclut aussi PERP, PREFON, COREM, CGOS (mêmes règles fiscales, cases 6RS/6RT).\n\nÀ saisir : VERSEMENT VOLONTAIRE de l\'année. Cash sortant (épargne bloquée jusqu\'à la retraite, sauf déblocage anticipé : achat RP, accidents de la vie).\n\nDéduction du revenu imposable → économie ≈ versement × TMI.\n\nPlafond auto-calculé : max(4 710 €, min(10 % × revenus pro, 37 680 €)). Non déductible pour les 70 ans et plus (LF 2026).\n\n⚠ Le plafond auto ne tient pas compte du REPORT des plafonds non utilisés sur 3 ans. Si tu connais ton vrai plafond (avis d\'imposition), saisis-le dans le sous-champ ci-dessous pour écraser le calcul.',
     // ── Enrichissement pour l'onglet Leviers fiscaux (générateur F3) ──
     sectionGroup: 'epargne-retraite',
     tagType: 'Déduction du revenu imposable',
@@ -236,10 +251,25 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'ehpad', label: 'Frais EHPAD ascendants (25%)',
+    // D3.13 : ajout family + secondaryInput (ehpadNbPers).
+    // Reste en .advanced (cas spécifique aidants familiaux).
+    id: 'ehpad', family: 'ehpad', label: 'Frais EHPAD ascendants (25%)',
     levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'ehpadFrais',
     nature: 'depenses-annuelles', budget: 'cash',
-    info: 'Saisir les DÉPENSES D\'HÉBERGEMENT ET DE DÉPENDANCE de l\'année facturées par l\'EHPAD pour un ascendant. Cash sortant. Réduction 25 %, plafond 10 000 € par personne hébergée.',
+    nichePlafLabel: 'crédit 25 % · plaf. dép. 10 000 €/personne',
+    titleLong: 'Frais EHPAD pour ascendants (25 %)',
+    secondaryInputs: [
+      {
+        key: 'ehpadNbPers',
+        label: '↳ Nombre de personnes hébergées',
+        tip: 'Une cellule par personne hébergée : le plafond annuel de 10 000 € de dépenses est appliqué × ce nombre.\n\nSaisir au moins 1 pour utiliser le crédit. Exemple : 2 ascendants en EHPAD → plafond global 20 000 € de dépenses.',
+        defaultValue: 1,
+        min: 1,
+        step: 1,
+        inSimpleMode: false,
+      },
+    ],
+    info: 'Crédit d\'impôt 25 % sur les dépenses d\'hébergement et de dépendance d\'un ascendant en EHPAD ou EHPA. Cash sortant.\n\nÀ saisir : MONTANT TOTAL DES DÉPENSES facturées par l\'établissement (frais d\'hébergement + dépendance, hors frais médicaux).\n\nPlafond : 10 000 € de dépenses retenues par personne hébergée et par an → crédit max 2 500 €/personne.\n\nHors plafond des niches fiscales.',
     sectionGroup: 'famille-quotidien',
     tagType: 'Réduction d\'impôt',
     titleLong: 'Frais EHPAD pour ascendants (25 %)',
@@ -1335,19 +1365,46 @@ function renderSimulateurFormRows(targetEl, family) {
     //     les leviers qui ne sont ni dans le plafond niches ni hors plafond
     //     mais dans une autre logique, ex Jeanbrun = déduction foncière).
     const cls = lev.inSimpleMode ? 'form-row' : 'form-row advanced';
-    const nicheCell = lev.showNicheCell === false ? '' : `<div class="niche-cell">
+    // Cellule de droite — 3 cas :
+    //   - `customRightCell: 'per-cap'` → cellule custom (plafond PER dynamique
+    //     mis à jour côté JS via `set('per-cap-live', ...)`).
+    //   - `showNicheCell: false` → pas de cellule (Jeanbrun, déduction foncière).
+    //   - défaut → niche-cell standard (marqueur de plafond niches + sous-texte
+    //     nichePlafLabel optionnel).
+    let rightCell;
+    if (lev.customRightCell === 'per-cap') {
+      rightCell = `<div class="per-cap-note">Plafond déductible : <strong id="per-cap-live">—</strong></div>`;
+    } else if (lev.showNicheCell === false) {
+      rightCell = '';
+    } else {
+      rightCell = `<div class="niche-cell">
         <span class="niche-marker ${nicheClass}">${escHtml(nicheLabel)}</span>
         ${lev.nichePlafLabel ? `<span class="niche-plaf">${escHtml(lev.nichePlafLabel)}</span>` : ''}
       </div>`;
+    }
     // data-source-catalogue : marqueur dev pour le bouton « Highlight catalogue ».
-    return `<div class="${cls}" data-source-catalogue="${escHtml(lev.id)}">
+    const mainRow = `<div class="${cls}" data-source-catalogue="${escHtml(lev.id)}">
       <label for="${escHtml(lev.inputKey)}">
         ${escHtml(lev.titleLong || lev.label)}
         <i class="tip" data-tip="${escHtml(lev.info || '')}">i</i>
       </label>
       ${inputCell}
-      ${nicheCell}
+      ${rightCell}
     </div>`;
+    // Form-rows secondaires (sous-champs) — utilisé par PER (perPlafondManuel)
+    // et EHPAD (ehpadNbPers). Chacune est une form-row à part avec son propre
+    // input. Le préfixe ↳ dans le label marque la subordination.
+    const secondaries = (lev.secondaryInputs || []).map(sub => {
+      const subCls = sub.inSimpleMode ? 'form-row' : 'form-row advanced';
+      const subTip = sub.tip
+        ? `<i class="tip tip-down" data-tip="${escHtml(sub.tip)}">i</i>` : '';
+      const subStep = sub.step ? ` step="${escHtml(String(sub.step))}"` : '';
+      return `<div class="${subCls}" data-source-catalogue="${escHtml(lev.id)}.${escHtml(sub.key)}">
+        <label for="${escHtml(sub.key)}">${escHtml(sub.label)} ${subTip}</label>
+        <input type="number" id="${escHtml(sub.key)}" value="${escHtml(String(sub.defaultValue ?? 0))}" min="${escHtml(String(sub.min ?? 0))}"${subStep}>
+      </div>`;
+    }).join('');
+    return mainRow + secondaries;
   }).join('');
   targetEl.innerHTML = html;
 }

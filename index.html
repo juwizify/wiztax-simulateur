@@ -341,22 +341,11 @@
         <h2>C — Charges déductibles du revenu</h2>
         <div class="form-grid">
 
-          <div class="form-row">
-            <label for="per">
-              Versements PER (part déductible)
-              <i class="tip" data-tip="Cases 6NS / 6NT de la déclaration.&#10;Plan d'Épargne Retraite — versements volontaires.&#10;Inclut aussi les anciens contrats PERP, PREFON, COREM, CGOS (mêmes règles fiscales, cases 6RS/6RT).&#10;&#10;⚙ Plafond calculé automatiquement :&#10;max(4 710 €, min(10 % × revenus pro, 37 680 €))&#10;&#10;Le simulateur utilise les revenus N comme proxy des revenus N-1.&#10;Non déductibles pour les plus de 70 ans (LF 2026).&#10;&#10;⚠ Le plafond auto ne tient pas compte du REPORT des plafonds non utilisés sur 3 ans. Si tu connais ton vrai plafond (sur ton avis d'imposition), saisis-le ci-dessous pour écraser le calcul automatique.">i</i>
-            </label>
-            <input type="number" id="per" value="0" min="0">
-            <div class="per-cap-note">Plafond déductible : <strong id="per-cap-live">—</strong></div>
-          </div>
-
-          <div class="form-row advanced">
-            <label for="perPlafondManuel">
-              ↳ Plafond PER manuel (option, cases 6PS/6PT)
-              <i class="tip tip-down" data-tip="Si tu connais ton plafond exact (lu sur ton avis d'imposition, section « Plafond épargne retraite »), saisis-le ici pour ÉCRASER le calcul automatique.&#10;&#10;Utile notamment quand tu as accumulé des plafonds non utilisés des 3 dernières années (reportables) — ton plafond réel est souvent supérieur au calcul auto.&#10;&#10;Laisser à 0 pour utiliser le calcul automatique.&#10;&#10;Le plafond saisi ici est appliqué au foyer entier (somme des cases 6PS + 6PT).">i</i>
-            </label>
-            <input type="number" id="perPlafondManuel" value="0" min="0">
-          </div>
+          <!-- PER (D3.13) — form-row principale + sous-champ perPlafondManuel
+               générés depuis LEVIERS_CATALOGUE (family:'per'). Cellule de droite
+               custom : `per-cap-live` mise à jour dynamiquement par app.js
+               (set('per-cap-live', fmt(d.perCap))) à chaque recalcul. -->
+          <div id="simPer"></div>
 
           <div class="form-row">
             <label for="pensionsAlim">
@@ -441,25 +430,10 @@
             </div>
           </div>
 
-          <div class="form-row advanced">
-            <label for="ehpadFrais">
-              Frais EHPAD ascendants (7CD)
-              <i class="tip" data-tip="Cases 7CD / 7CE / 7CF de la déclaration (art. 199 quindecies CGI).&#10;Frais d'hébergement et de dépendance facturés par un EHPAD ou un établissement assimilé pour un ou plusieurs ascendants (parents, grands-parents) que vous prenez en charge.&#10;&#10;Réduction d'impôt de 25 % des dépenses, plafonnées à 10 000 € PAR personne hébergée.&#10;&#10;Si plusieurs ascendants en EHPAD : indiquer le nombre de personnes hébergées ci-dessous (multiplie le plafond).&#10;&#10;⚠ HORS plafond des niches fiscales.&#10;⚠ Non cumulable avec la déduction des pensions alimentaires versées au même ascendant.">i</i>
-            </label>
-            <input type="number" id="ehpadFrais" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-hors">hors plafond niches</span>
-              <span class="niche-plaf">25 % · plaf. 10 000 €/personne</span>
-            </div>
-          </div>
-
-          <div class="form-row advanced">
-            <label for="ehpadNbPers">
-              ↳ dont nombre d'ascendants hébergés
-              <i class="tip tip-down" data-tip="Nombre d'ascendants hébergés en EHPAD (1 par défaut).&#10;Le plafond de 10 000 € est multiplié par ce nombre.&#10;Ex : 2 parents en EHPAD → plafond 20 000 € de dépenses retenues.">i</i>
-            </label>
-            <input type="number" id="ehpadNbPers" value="1" min="1" step="1">
-          </div>
+          <!-- EHPAD (D3.13) — form-row principale + sous-champ ehpadNbPers
+               générés depuis LEVIERS_CATALOGUE (family:'ehpad'). Le plafond
+               de 10 000 €/personne est multiplié par ehpadNbPers côté moteur. -->
+          <div id="simEhpad"></div>
 
           <div class="form-row advanced">
             <label for="pinel">
