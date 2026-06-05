@@ -65,7 +65,7 @@ function makeInput(o = {}) {
     optionPFU: 'pfu', autresRevenus: 0,
     per: 0, perPlafondManuel: 0, pensionsAlim: 0, nbBeneficiairesPA: 0,
     csgDeductible: 0, autresCharges: 0,
-    dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
+    dons: 0, dons7UD: 0, pinel: 0, denormandie: 0, denormandieDuree: '9', girardinPD: 0, girardinAG: 0,
     fcpiJei: 0, fipCorse: 0, gfi: 0, gfiZone: 'standard', irPme: 0,    // fcpi retiré D3.4 ; gfiZone PR-C
     malraux: 0, malrauxTravauxAnterieurs: 0,   // PR-C : cumul 4 ans
     locAvantages: 0,
@@ -171,9 +171,13 @@ function oracleCalc(input) {
   const jbAmort = Math.min(i.jeanbrunAmort || 0, jbPlaf);
 
   const foncAvant = i.foncierReel - jbAmort;
-  const foncierReelNet = foncAvant >= 0
-    ? foncAvant
-    : Math.max(foncAvant, -10700);
+  // Foncier réel positif → revenu foncier (entre dans RBG + PS).
+  // Foncier réel négatif → déficit traité comme charge pure déductible (cap
+  // 10 700 €/an), pas d'effet PS. Cf. calculator.js étape 1 pour la doc.
+  const foncierReelNet      = Math.max(0, foncAvant);
+  const deficitFoncImputable = foncAvant < 0
+    ? Math.min(-foncAvant, 10700)
+    : 0;
 
   const meuClNet = i.meubleClasse * 0.50;
   const meuNcNet = i.meubleNonClasse * 0.70;
@@ -208,7 +212,7 @@ function oracleCalc(input) {
     : rbg;
   const pensionsAlim = Math.min(i.pensionsAlim, paCap);
 
-  const rni = Math.max(0, rbg - perDed - pensionsAlim - i.csgDeductible - i.autresCharges);
+  const rni = Math.max(0, rbg - perDed - deficitFoncImputable - pensionsAlim - i.csgDeductible - i.autresCharges);
 
   // --- Étape 3-4 : QF + plafonnement ---
   const parts = oracleParts(i);
@@ -270,12 +274,26 @@ function oracleCalc(input) {
   // PS recouvrés via avis (intégrés à l'impôt à payer).
   // Pour les RCM (dividendes/intérêts), le PFNL bancaire (2CK) ne couvre
   // que la part IR — la part PS reste donc due côté avis IR.
+  // PS « voie de rôle » conformes à l'avis IR officiel (PR-J) :
+  // décomposition CSG-CRDS / Solidarité, arrondi à l'euro par bloc.
+  // Source : capture avis IR impots.gouv.fr du contribuable de référence.
+  const foncierNuBase = microFoncierNet + foncierReelNet;
+  const lmnpBase      = meuClNet + meuNcNet + autMeuNet;
+  const baseMobilier  = i.dividendes + (i.interets || 0) + i.pv;
+  const baseTotalePS  = foncierNuBase + baseMobilier + lmnpBase;
+  // CSG (9,2 ou 10,6) + CRDS (0,5) — taux par catégorie
+  const psCsgCrdsFonciers   = Math.round(foncierNuBase * (0.092 + 0.005));
+  const psCsgCrdsCasGeneral = Math.round((baseMobilier + lmnpBase) * (0.106 + 0.005));
+  // Solidarité 7,5 % — taux unique sur l'assiette totale
+  const psSolidarite        = Math.round(baseTotalePS * 0.075);
+  const psRole              = psCsgCrdsFonciers + psCsgCrdsCasGeneral + psSolidarite;
+  // Pour rétro-compat / debug — détaillés non arrondis (info)
   const psDividendes = i.dividendes * 0.186;
   const psInterets   = (i.interets || 0) * 0.186;
   const psPV         = i.pv * 0.186;
-  const fonciersNets = microFoncierNet + foncierReelNet + meuClNet + meuNcNet + autMeuNet;
-  const psFoncier    = Math.max(0, fonciersNets) * 0.186;
-  const psRole       = psDividendes + psInterets + psPV + psFoncier;
+  const psFoncierNu  = foncierNuBase * 0.172;
+  const psLMNP       = lmnpBase * 0.186;
+  const psFoncier    = psFoncierNu + psLMNP;
   // PS prélevés à la source ET libératoires (info, exclus de l'impôt à payer)
   // AV reste à 17,2 % — non concernée par la CFA LFSS 2026.
   const psAV         = avProduits * 0.172;
@@ -341,6 +359,12 @@ function oracleCalc(input) {
   }
 
   const redPinel = i.pinel;                                   // pas de cap V1
+  // Denormandie — invest cappé à 300 000 €, étalé sur durée 6/9/12 ans.
+  const denoTauxMap = { '6': 0.12, '9': 0.18, '12': 0.21 };
+  const denoDureeCle = i.denormandieDuree || '9';
+  const denoDureeNum = parseInt(denoDureeCle, 10) || 9;
+  const denoInvestRetenu = Math.min(i.denormandie || 0, 300000);
+  const redDenormandie = denoInvestRetenu * (denoTauxMap[denoDureeCle] || 0.18) / denoDureeNum;
   const redGirPD = i.girardinPD;                              // pas de cap (panier majoré)
   const redGirAG = i.girardinAG;
   // redFCPI retiré en D3.4 — dispositif FCPI classique supprimé au 21/02/2026.
@@ -391,7 +415,7 @@ function oracleCalc(input) {
   const redSofica = Math.min(i.sofica || 0, versSoficaEff) * tauxSoficaOr;
   const redAutres = i.autresReductions;
 
-  const totalReductions = redDons + redPinel + redGirPD + redGirAG
+  const totalReductions = redDons + redPinel + redDenormandie + redGirPD + redGirAG
     + redFcpiJei + redFipCorse + redGfi
     + redIrPme + redIrPmeEsus + redIrPmeMH
     + redIrPmeJei + redIrPmeJeii + redIrPmeJeir
@@ -420,7 +444,7 @@ function oracleCalc(input) {
   // Poche 2 (+8 000 €) : RÉSERVÉE aux niche18 (Girardin × quote-part + SOFICA)
   // IR-PME : seuls irPme/irPmeEsus/irPmeMH dans niche10.
   // JEI direct, JEII, JEIR, FCPI-JEI sont HORS plafond niches (art. 200-0 A).
-  const ri10Panier = redPinel
+  const ri10Panier = redPinel + redDenormandie
     + redFipCorse + redGfi
     + redIrPme + redIrPmeEsus + redIrPmeMH
     + redLocAv + redAutres
@@ -445,7 +469,7 @@ function oracleCalc(input) {
   // --- Étape 11 : impôt net ---
   // IR-PME : seuls irPme/irPmeEsus/irPmeMH passent par le facteur niche10.
   // JEI direct / JEII / JEIR / FCPI-JEI sont HORS plafond niches (art. 200-0 A).
-  const redNiche10Retenue = (redPinel + redFipCorse + redGfi
+  const redNiche10Retenue = (redPinel + redDenormandie + redFipCorse + redGfi
     + redIrPme + redIrPmeEsus + redIrPmeMH
     + redLocAv + redAutres) * facteur10;
   const redNiche18Retenue = (redGirPD + redGirAG + redSofica) * facteur18;
@@ -473,15 +497,18 @@ function oracleCalc(input) {
   // pensions alim, CSG déductible, autres) NE réduisent PAS le RFR.
   const hsExoRFR1 = Math.min(i.heuresSupExo1 || 0, 7500);
   const hsExoRFR2 = Math.min(i.heuresSupExo2 || 0, 7500);
+  // PR-X : micro-foncier en NET (abattement non réintégré au RFR, confirmé
+  // par capture avis IR officiel).
   const rfr = Math.max(0,
     salNet + hsExoRFR1 + hsExoRFR2
     + penNet
     + i.bncMicro1 + i.bncMicro2 + i.bncReel1 + i.bncReel2
-    + i.microFoncier + foncierReelNet
+    + microFoncierNet + foncierReelNet
     + i.meubleClasse + i.meubleNonClasse + (i.autresMeubles || 0)
     + i.dividendes + (i.interets || 0) + i.pv
     + (i.avProduits75 || 0) + (i.avProduits128 || 0)
     + i.autresRevenus
+    - deficitFoncImputable
   );
 
   const cs1 = isCouple ? 500000 : 250000;
@@ -597,6 +624,11 @@ function generateProfile(idx) {
   if (aleas < 0.08) profile.dons7UD = randInt(100, 4000);
   if (rand() < 0.08) profile.dons = randInt(100, 3000);
   if (rand() < 0.05) profile.pinel = randInt(2000, 10000);
+  // Denormandie — invest annuel total (sémantique investissement PR-U).
+  if (rand() < 0.05) {
+    profile.denormandie = randInt(50000, 400000);
+    profile.denormandieDuree = (['6','9','12'])[Math.floor(rand() * 3)];
+  }
   if (rand() < 0.04) profile.girardinPD = randInt(1000, 6000);
   if (rand() < 0.03) {
     // D3.2 sémantique investissement : on saisit un MONTANT SOUSCRIT

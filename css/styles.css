@@ -223,16 +223,30 @@ header span {
 ───────────────────────────────────────────── */
 .sim-layout {
   display: grid;
-  /* PR-F : la zone inputs ne dépasse plus 880 px, le layout est centré dans
-     la page jusqu'à 1280 px de viewport. Évite les espaces vides énormes sur
-     les grands écrans. Sur petit écran, minmax(0, 880px) se contracte
-     naturellement à la place disponible. */
-  grid-template-columns: minmax(0, 880px) 300px;
+  grid-template-columns: 1fr 300px;
   gap: 24px;
   padding: 28px 40px;
-  max-width: 1280px;
-  margin: 0 auto;
   align-items: start;
+  /* PR-F : layout centré dans une largeur de lecture confortable, plus de
+     stretching infini sur grands écrans. */
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* PR-F (refonte propre) — Sections en 2 colonnes explicites via grid +
+   grid-auto-flow: column, qui place les sections par colonne dans l'ordre
+   du HTML. Résultat : A (Situation) + B (Revenus) à gauche, C (Charges)
+   + D (Réductions) à droite — découpage logique fiscale. Sur petit écran
+   (< 1100 px), 1 seule colonne (toutes empilées). */
+@media (min-width: 1100px) {
+  .inputs-col {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    grid-auto-flow: column;
+    column-gap: 24px;
+    row-gap: 16px;
+  }
 }
 
 /* ─────────────────────────────────────────────
@@ -264,42 +278,6 @@ header span {
   padding: 8px 20px 16px;
 }
 
-/* PR-F : sur écran ≥ 1100 px, les form-rows se mettent en grille 2 colonnes
-   pour diviser le scroll vertical par ~2. Les wrappers générés par
-   renderSimulateurFormRows (simIrPme, simSofica, etc.) sont mis en
-   display:contents pour que leurs form-rows enfantes participent
-   directement au grid 2-col de .form-grid (sinon elles seraient
-   empilées DANS le wrapper, qui occuperait 1 seule cellule).
-   Les sous-champs (perPlafondManuel, ehpadNbPers, jeanbrunCategorie,
-   malrauxTravauxAnterieurs, soficaTaux, locAvantagesPalier, etc.)
-   sont forcés à span 2 colonnes pour rester visuellement attachés
-   à leur parent (sinon ils flottent dans une autre cellule). */
-@media (min-width: 1100px) {
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 32px;
-    row-gap: 0;
-  }
-  /* Wrappers de leviers générés : transparents pour le grid parent */
-  #simIrPme, #simSofica, #simFipCorse, #simGfi, #simMalraux,
-  #simLocAvantages, #simJeanbrun, #simDons7UD, #simDons7UF,
-  #simEmploiDom, #simGardeEnf, #simSyndic, #simGirardinPD,
-  #simGirardinAG, #simPer, #simEhpad {
-    display: contents;
-  }
-  /* Sous-champs : forcer span 2-col pour rester sur leur propre ligne
-     juste après leur parent. Repérage par l'id de leur input numérique
-     (suffixes Manuel, NbPers, Anterieurs) ou de leur select de categorie. */
-  .form-grid > .form-row:has(#perPlafondManuel),
-  .form-grid > .form-row:has(#ehpadNbPers),
-  .form-grid > .form-row:has(#malrauxTravauxAnterieurs),
-  .form-grid > .form-row:has(#irPmeJeiJeirImputeAnterieur),
-  .form-grid > .form-row:has(#nbBeneficiairesPA) {
-    grid-column: 1 / -1;
-  }
-}
-
 /* Sous-section : titre catégorie à l'intérieur d'une section-card */
 .form-subsection {
   margin: 16px 0 4px;
@@ -321,24 +299,91 @@ header span {
   margin: 0;
 }
 
+/* PR-F (refonte propre) — Form-row en grille à placements EXPLICITES
+   (sans grid-template-areas qui pose des problèmes de cascade avec :has()).
+   Pattern Stripe-style :
+   - Ligne 1 : label en col 1, input en col 2
+   - Ligne 2 (si présente) : niche-cell en col 1, vide en col 2
+   La niche-cell apparaît donc juste sous le label, alignée à gauche. */
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 130px 130px;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  column-gap: 12px;
+  row-gap: 2px;
+  padding: 8px 0;
   align-items: center;
-  padding: 7px 0;
-  /* Pas de border-bottom — séparation par espace seul (règle no-line) */
+}
+.form-row > label {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+}
+.form-row > .niche-cell,
+.form-row > .per-cap-note {
+  /* Indicateurs contextuels (badge niche, plafond PER dynamique) : se posent
+     sous le label, alignés à gauche, jamais dans la cellule input. */
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
+}
+/* Input/select/wrapper : col 2, span sur les 2 lignes pour rester centré
+   visuellement même quand un indicateur est sur la ligne 2.
+   ⚠ `:where()` neutralise la spécificité des `:not(...)` pour que les règles
+   plus spécifiques (cas D1/D2 ci-dessous) puissent override sans collision.
+   Sans cette précaution, `:not(label):not(.niche-cell):not(.per-cap-note)`
+   apporte 3 classes de spécificité et bat `:has(> input + input) > input:nth-of-type(2)`
+   → sal2 retombait en col 2 au lieu de col 3, masqué sous sal1. */
+.form-row > :where(:not(label):not(.niche-cell):not(.per-cap-note)) {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+/* Cas spécial : form-row à 2 inputs côte à côte (salaires D1/D2). On
+   bascule en grille 3 cols (label / D1 / D2). */
+.form-row:has(> input + input) {
+  grid-template-columns: minmax(0, 1fr) 100px 100px;
+}
+.form-row:has(> input + input) > label {
+  grid-column: 1;
+  grid-row: 1;
+}
+.form-row:has(> input + input) > input:nth-of-type(1) {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+}
+.form-row:has(> input + input) > input:nth-of-type(2) {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: center;
+}
+
+/* Cas spécial : form-row de headers (label vide + 2 .col-header
+   « Déclarant 1 », « Déclarant 2 »). */
+.form-row:has(.col-header) {
+  grid-template-columns: minmax(0, 1fr) 100px 100px;
+  padding: 6px 0 0;
+}
+.form-row:has(.col-header) > label { display: none; }
+.form-row:has(.col-header) > .col-header:nth-of-type(1) {
+  grid-column: 2;
+  grid-row: 1;
+}
+.form-row:has(.col-header) > .col-header:nth-of-type(2) {
+  grid-column: 3;
+  grid-row: 1;
 }
 .form-row label {
   font-family: var(--font-body);
-  font-size: .86rem;
+  font-size: .82rem;
   font-weight: 500;
-  color: var(--on-surface);   /* noir — plus lisible */
-  line-height: 1.4;
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
-  flex-wrap: wrap;
+  color: var(--on-surface);
+  line-height: 1.35;
+  display: inline-flex;     /* tooltip i en suffixe, pas en bloc */
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;        /* le label ne se découpe plus en plusieurs lignes inutiles */
 }
 .form-row .col-header {
   font-size: .75rem;
@@ -492,33 +537,57 @@ header span {
   padding: 0 2px;
 }
 
-.niche-cell { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+/* PR-F (refonte) — Niche-cell compacte affichée à côté du label, juste
+   un badge pill discret. Le sous-texte « niche-plaf » (crédit 50 % · plaf.
+   12 000 €...) est CACHÉ par défaut car redondant avec le tooltip i déjà
+   présent dans le label — il pousserait la mise en page sans valeur ajoutée. */
+.niche-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.niche-cell .niche-plaf {
+  display: none;
+}
 
-/* Indicateur de plafond PER sous le champ de saisie */
-.per-cap-note {
-  grid-column: 1 / -1;
-  font-size: .75rem;
-  color: var(--outline);
-  padding: 2px 0 4px;
+/* PR-F — Warning inline (cumul déficit foncier > 10 700 € notamment) :
+   message orange discret affiché sous une form-row pour signaler un cap
+   dépassé silencieusement par le moteur. */
+.form-warning {
+  margin: 6px 0 12px;
+  padding: 10px 14px;
+  background: #fef3c7;
+  border-left: 3px solid #d97706;
+  border-radius: 4px;
+  font-size: .78rem;
+  line-height: 1.45;
+  color: #78350f;
+}
+.form-warning strong {
+  color: #78350f;
+  font-weight: 600;
+}
+.form-warning em {
   font-style: italic;
+}
+
+/* Indicateur de plafond PER affiché sous le label (col 1 row 2 — cf. règle
+   .form-row > .per-cap-note plus haut). Style : italique discret, valeur en accent. */
+.per-cap-note {
+  font-size: .72rem;
+  color: var(--outline);
+  font-style: italic;
+  white-space: nowrap;
 }
 .per-cap-note strong {
   color: var(--accent);
   font-style: normal;
 }
 
-/* Carte "cadre temporel" dans l'onglet Paramètres */
-/* .param-card--scope : variante d'introduction (texte explicatif).
-   Subtle background pour la différencier sans liseré coloré. */
-.param-card--scope {
-  background: var(--surface-container-low);
-}
-.param-card--scope p {
-  font-size: .84rem;
-  color: var(--on-surface-variant);
-  line-height: 1.5;
-  margin: 0;
-}
+/* (Ancienne règle .param-card--scope retirée : la card « Cadre temporel »
+   utilise maintenant le composant .param-card-body défini plus bas, comme
+   toute card en mode texte libre — cf. js/paramsRegistry.js + paramsTab.js.) */
 
 /* ─────────────────────────────────────────────
    PANNEAU RÉSULTATS
@@ -671,7 +740,11 @@ header span {
 #parametres {
   padding: 28px 40px;
 }
-#parametres.active {
+/* Le grid 2 colonnes est porté par le CONTAINER (cf. js/paramsTab.js)
+   plutôt que par l'onglet lui-même : ça permet au container d'être un
+   composant autonome et au reste de l'onglet d'avoir d'autres blocs hors
+   grille si besoin. Les enfants directs sont les .param-card. */
+#parametres-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
   gap: 20px;
@@ -696,6 +769,18 @@ header span {
   background: transparent;
   border-bottom: 1px solid var(--surface-container-high);
 }
+/* Corps texte (paragraphes libres ou listes) : padding cohérent avec les
+   tables, pour que toutes les cards aient le même rythme intérieur, peu
+   importe leur type de contenu. */
+.param-card-body {
+  padding: 12px 20px 16px;
+  font-size: .84rem;
+  line-height: 1.55;
+  color: var(--on-surface);
+}
+.param-card-body p + p {
+  margin-top: 0.7em;
+}
 .param-table {
   width: 100%;
   border-collapse: collapse;
@@ -712,6 +797,13 @@ header span {
   font-size: .73rem;
   padding: 5px 20px 8px;
   font-style: italic;
+  background: var(--surface);
+  display: block;
+}
+.param-table .pt-note {
+  color: var(--on-surface-variant);
+  font-size: .73rem;
+  padding: 0 20px 8px;
   background: var(--surface);
   display: block;
 }
@@ -893,18 +985,9 @@ header span {
   border-bottom-color: var(--accent);
 }
 
-/* Footer sources */
-.leviers-footer {
-  margin-top: 24px;
-  padding: 14px 18px;
-  background: var(--surface-lowest);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-arch);
-  font-size: .78rem;
-  color: var(--on-surface-variant);
-  line-height: 1.65;
-  border-top: 3px solid #2E7D52;
-}
+/* (Ancien .leviers-footer retiré : les sources officielles vivent désormais
+   sur chaque card de levier via le champ `links` du catalogue. Plus de
+   liste agrégée en bas de page qui dupliquait et risquait de dériver.) */
 
 /* ─────────────────────────────────────────────
    RESPONSIVE
@@ -969,6 +1052,36 @@ header span {
 .preco-budget-suffix {
   color: rgba(0,0,0,0.5);
   font-weight: 600;
+}
+
+/* DEV button — apparence intentionnellement « pas finie » (dashed border + badge)
+   pour rappeler aux développeurs/PO que ce bouton doit être retiré ou flagé
+   avant prod publique. */
+.preco-dev-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: .78rem;
+  font-weight: 500;
+  color: #78350f;
+  background: #fef3c7;
+  border: 1px dashed #d97706;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.preco-dev-btn:hover {
+  background: #fde68a;
+}
+.preco-dev-badge {
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .5px;
+  padding: 1px 5px;
+  background: #d97706;
+  color: white;
+  border-radius: 3px;
 }
 
 .preco-table-wrap {

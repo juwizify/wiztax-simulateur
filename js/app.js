@@ -53,7 +53,7 @@ function defaultInputs() {
     per: 0, perPlafondManuel: 0, pensionsAlim: 0, nbBeneficiairesPA: 0,
     csgDeductible: 0, autresCharges: 0,
     // Réductions
-    dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
+    dons: 0, dons7UD: 0, pinel: 0, denormandie: 0, denormandieDuree: '9', girardinPD: 0, girardinAG: 0,
     fcpiJei: 0, fipCorse: 0, gfi: 0, gfiZone: 'standard',    // fcpi (classique) retiré en D3.4 ; gfiZone : PR-C
     // IR-PME — 7 sous-dispositifs (cf. tasks/d3.1-irpme-spec.md)
     irPme: 0,        // PME standard 18 %         → niche10
@@ -124,6 +124,11 @@ function getInputs() {
     fraisScolSup:     v('fraisScolSup'),
     ehpadFrais: v('ehpadFrais'), ehpadNbPers: v('ehpadNbPers'),
     pinel: v('pinel'),
+    // Denormandie — art. 199 novovicies (volet ancien). Sémantique
+    // INVESTISSEMENT : input.denormandie = invest annuel total, moteur étale
+    // RI = invest × tauxTotal / durée. Cf. js/preconisations.js entrée 'denormandie'.
+    denormandie: v('denormandie'),
+    denormandieDuree: (document.getElementById('denormandieDuree') || {}).value || '9',
     girardinPD: v('girardinPD'), girardinAG: v('girardinAG'),
     // FCPI classique : retiré du moteur en D3.4 — dispositif supprimé au
     // 21/02/2026 (LF 2026). Seul FCPI-JEI subsiste (taux 30 %, family ir-pme).
@@ -214,6 +219,10 @@ function updateResults(d, input) {
   // Totaux RETENUS (effectivement déduits de l'impôt), pas les bruts.
   set('res-reductions',  fmt(d.reductionsAppliquees));
   set('res-credits',     fmt(d.creditsAppliques));
+  // « Impôt sur le revenu net » = part IR pure (sans PS). Aligné sur la
+  // ligne « Impôt sur le revenu net » de l'avis IR officiel impots.gouv.fr,
+  // qui distingue cette part du total à payer.
+  set('res-ir-pur',      fmt(Math.max(0, (d.impotNet || 0) - (d.psRole || 0))));
   // Plafond PER live (sous le champ de saisie)
   set('per-cap-live',    fmt(d.perCap));
 
@@ -244,6 +253,28 @@ function updateResults(d, input) {
 
   // Parts dans le simulateur
   set('parts-affichage', fmtParts(d.parts) + ' parts');
+
+  // Warning cumul déficit foncier + Jeanbrun > plafond (art. 156-I-3° CGI).
+  // Le moteur a tronqué le surplus à -10 700 € imputable sur revenu global ;
+  // on signale visuellement à l'utilisateur que sa saisie au-delà n'a aucun
+  // effet sur l'impôt courant (en réalité reportable 10 ans, non simulé V1).
+  const deficitWarnEl = document.getElementById('deficitFoncierWarning');
+  if (deficitWarnEl) {
+    const surplus = d.deficitFoncierSurplus || 0;
+    if (surplus > 0.5) {
+      deficitWarnEl.hidden = false;
+      deficitWarnEl.innerHTML =
+        '⚠ <strong>Plafond déficit foncier dépassé</strong> de '
+        + fmt(surplus)
+        + '. Le déficit imputable sur le revenu global est plafonné à 10 700 €/an, '
+        + '<em>partagé</em> entre le déficit foncier classique et l\'amortissement Jeanbrun '
+        + '(art. 156-I-3° CGI). Le surplus est ignoré dans le calcul courant '
+        + '(en pratique reportable 10 ans sur revenus fonciers, non simulé).';
+    } else {
+      deficitWarnEl.hidden = true;
+      deficitWarnEl.innerHTML = '';
+    }
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -288,21 +319,28 @@ function updateCalcDetaille(d) {
     ['cd-sdec',    'Seuil de décote',                            d.seuilDecote,       ''],
     ['cd-dec',     'Montant de la décote',                       d.decote,            ''],
     ['cd-adec',    '▶ IMPÔT APRÈS DÉCOTE',                     d.impotApresDecote,  'total'],
-    // Étape 6 — IR mobilier PFU
-    ['cd-irmob',   'IR mobilier (PFU 12,8 %) — div + intérêts + PV', d.irMobilier,   ''],
+    // Étape 6 — IR mobilier PFU. Libellés interpolés depuis PARAMS via les
+    // helpers `formatPct`/`formatEur` exposés globalement par params.js. Toute
+    // valeur fiscale doit venir de PARAMS — ne JAMAIS la hardcoder en string.
+    ['cd-irmob',   `IR mobilier (PFU ${formatPct(PARAMS.ps.pfuIr)}) — div + intérêts + PV`, d.irMobilier, ''],
     // Étape 6bis — IR AV > 8 ans
-    ['cd-avbrut',  'Produits AV bruts (7,5 % + 12,8 %)',         (d.avAbattement || 0) + (d.avImposable || 0), ''],
-    ['cd-avabat',  '− Abattement annuel utilisé',                d.avAbattement,      'Imputé en priorité sur 12,8 %'],
+    ['cd-avbrut',  `Produits AV bruts (${formatPct(PARAMS.ps.avIr75)} + ${formatPct(PARAMS.ps.pfuIr)})`, (d.avAbattement || 0) + (d.avImposable || 0), ''],
+    ['cd-avabat',  '− Abattement annuel utilisé',                d.avAbattement,      `Imputé en priorité sur ${formatPct(PARAMS.ps.pfuIr)}`],
     ['cd-avimpos', '= Produits imposables',                       d.avImposable,       ''],
-    ['cd-irav',    '▶ IR sur produits AV (7,5 % et 12,8 %)',     d.irAV,              'total'],
-    ['cd-pfnlav',  '− PFNL prélevé à la source par la banque',   d.pfnlAV,            'av75 × 7,5% + av128 × 12,8% (crédit auto)'],
+    ['cd-irav',    `▶ IR sur produits AV (${formatPct(PARAMS.ps.avIr75)} et ${formatPct(PARAMS.ps.pfuIr)})`, d.irAV, 'total'],
+    ['cd-pfnlav',  '− PFNL prélevé à la source par la banque',   d.pfnlAV,            `av75 × ${formatPct(PARAMS.ps.avIr75)} + av128 × ${formatPct(PARAMS.ps.pfuIr)} (crédit auto)`],
     // Étape 7 — PS
-    ['cd-psdiv',   'PS dividendes (18,6 %) — voie de rôle',      d.psDividendes,      'Le PFNL bancaire (2CK) ne couvre que l\'IR, pas les PS'],
-    ['cd-psint',   'PS intérêts (18,6 %) — voie de rôle',        d.psInterets,        'Le PFNL bancaire (2CK) ne couvre que l\'IR, pas les PS'],
-    ['cd-pspv',    'PS plus-values mobilières (18,6 %) — voie de rôle', d.psPV,       'À payer via avis IR'],
-    ['cd-psfon',   'PS foncier (18,6 %) — voie de rôle',         d.psFoncier,         'À payer via avis IR'],
+    ['cd-psdiv',   `PS dividendes (${formatPct(PARAMS.ps.mobilier)}) — voie de rôle`,  d.psDividendes, 'Le PFNL bancaire (2CK) ne couvre que l\'IR, pas les PS'],
+    ['cd-psint',   `PS intérêts (${formatPct(PARAMS.ps.mobilier)}) — voie de rôle`,    d.psInterets,   'Le PFNL bancaire (2CK) ne couvre que l\'IR, pas les PS'],
+    ['cd-pspv',    `PS plus-values mobilières (${formatPct(PARAMS.ps.mobilier)}) — voie de rôle`, d.psPV, 'À payer via avis IR'],
+    ['cd-psfonNu', `PS foncier nu (${formatPct(PARAMS.ps.foncierNu)}) — voie de rôle`, d.psFoncierNu, 'Taux maintenu LFSS 2026 — non concerné par la hausse'],
+    ['cd-psLMNP',  `PS LMNP (${formatPct(PARAMS.ps.lmnp)}) — voie de rôle`,            d.psLMNP,      'Taux relevé par LFSS 2026 (CSG +1,4 pt)'],
+    // Calcul officiel arrondi par bloc (avis IR impots.gouv.fr) — PR-J
+    ['cd-psCsgCrdsFon', '▸ Montant CSG-CRDS fonciers (9,7 %)',                         d.psCsgCrdsFonciers,    'arrondi à l\'euro le plus proche'],
+    ['cd-psCsgCrdsCG',  '▸ Montant CSG-CRDS cas général (11,1 %)',                     d.psCsgCrdsCasGeneral,  'arrondi à l\'euro le plus proche'],
+    ['cd-psSolid',      '▸ Montant prélèvement de solidarité (7,5 %)',                 d.psSolidarite,         'arrondi à l\'euro le plus proche'],
     ['cd-psrol',   '▶ Sous-total PS dus via avis IR',            d.psRole,            'total'],
-    ['cd-psav',    'PS sur produits AV (17,2 %) — prélevés source', d.psAV,           'Libératoires : auto-imputés par le simulateur officiel'],
+    ['cd-psav',    `PS sur produits AV (${formatPct(PARAMS.ps.av)}) — prélevés source`, d.psAV,        'Libératoires : auto-imputés par le simulateur officiel'],
     ['cd-pssrc',   '▶ Sous-total PS prélevés à la source',       d.psSource,          'INFO — n\'entre pas dans l\'impôt à payer'],
     ['cd-tps',     '▶ TOTAL PS (charge fiscale globale)',        d.totalPS,           'source + avis'],
     // Étape 8 — Réductions
@@ -310,7 +348,8 @@ function updateCalcDetaille(d) {
     ['cd-rscol',     'Frais de scolarité 7EA/7EC/7EF — HORS NICHE', d.fraisScol,      ''],
     ['cd-rehpad',    'EHPAD ascendants 7CD (25 %) — HORS NICHE',  d.redEhpad,         ''],
     ['cd-rmalraux',  'Loi Malraux 7NX/7NY (22/30 %) — HORS NICHE', d.redMalraux,      ''],
-    ['cd-rpinel',    'Pinel / Denormandie — NICHE 10k',            d.redPinel,        ''],
+    ['cd-rpinel',    'Pinel — NICHE 10k',                          d.redPinel,        'Dispositif fermé fin 2024 — saisies réservées aux engagements existants'],
+    ['cd-rdeno',     'Denormandie — NICHE 10k',                    d.redDenormandie,  'Ancien rénové, prolongé jusqu\'au 31/12/2027'],
     ['cd-rgpd',      'Girardin plein droit — NICHE 18k (44%)',     d.redGirardinPD,   ''],
     ['cd-rgag',      'Girardin avec agrément — NICHE 18k (34%)',   d.redGirardinAG,   ''],
     // FCPI classique (cd-rfcpi) : retiré en D3.4 — dispositif supprimé 21/02/2026.
@@ -337,7 +376,7 @@ function updateCalcDetaille(d) {
     // Étape 11
     ['cd-apd',     'Impôt après décote',                         d.impotApresDecote,  ''],
     ['cd-irm2',    '+ IR mobilier (PFU sur div/intérêts/PV)',     d.irMobilier,        ''],
-    ['cd-irav2',   '+ IR sur AV > 8 ans (7,5 % et 12,8 %)',       d.irAV,              ''],
+    ['cd-irav2',   `+ IR sur AV > 8 ans (${formatPct(PARAMS.ps.avIr75)} et ${formatPct(PARAMS.ps.pfuIr)})`, d.irAV, ''],
     ['cd-rapp',    '− Réductions appliquées',                     d.reductionsAppliquees, 'plafonnées à l\'impôt et aux niches'],
     ['cd-capp',    '− Crédits appliqués (niches)',                d.creditsAppliques,  ''],
     ['cd-csynd2',  '− Crédit cotisations syndicales (hors niches)', d.credSyndic,      ''],
@@ -449,6 +488,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (simMalraux) renderSimulateurFormRows(simMalraux, 'malraux');
     const simLocAvantages = document.getElementById('simLocAvantages');
     if (simLocAvantages) renderSimulateurFormRows(simLocAvantages, 'locAvantages');
+    // PR-U : Denormandie (volet ancien de l'art. 199 novovicies CGI).
+    // Sémantique investissement : input total + select durée 6/9/12 ans.
+    const simDenormandie = document.getElementById('simDenormandie');
+    if (simDenormandie) renderSimulateurFormRows(simDenormandie, 'denormandie');
     // D3.11 : 6 leviers restants migrés vers le générateur catalogue.
     // Jeanbrun = input déficit + select catégorie ; les 5 autres = simple input.
     [
@@ -773,6 +816,31 @@ function initPreconisations() {
       renderPreconisations();
     });
   });
+  // Bouton DEV — remplit toutes les préconisations à 1 000 €. Utile pour
+  // tester rapidement l'effet cumulé et les caps. À retirer/masquer
+  // derrière un flag avant prod publique.
+  const devBtn = document.getElementById('precoDevFillAll');
+  if (devBtn) {
+    devBtn.addEventListener('click', devFillAllLevers1000);
+  }
+}
+
+// Helper DEV : reset + crée une ligne par dispositif du catalogue à 1 000 €.
+function devFillAllLevers1000() {
+  if (typeof window.PRECONISATIONS === 'undefined') return;
+  const P = window.PRECONISATIONS;
+  P.reset();
+  P.LEVIERS_CATALOGUE.forEach(l => {
+    // Pinel est marqué dispositif fermé (LF 2024 art. 168) — pas pertinent
+    // pour un test de préconisation neuve.
+    if (l.id === 'pinel') return;
+    P.addLever({ leverId: l.id });
+    const rows = P.getState().preconisations;
+    const lastId = rows[rows.length - 1].id;
+    P.updateLever(lastId, 'montant', 1000);
+  });
+  renderPreconisations();
+  refreshPreconisationsCalculs();
 }
 
 // Render structurel : recrée toutes les lignes des 3 sections.
@@ -818,11 +886,10 @@ function renderPreconisations() {
       const tip = document.createElement('i');
       tip.className = 'tip tip-down preco-lever-tip';   // tip-down : ouvre vers le bas (sécurise pour la 1ʳᵉ ligne)
       tip.textContent = 'i';
-      let tipText = levSelected.info;
-      if (levSelected.budget === 'exclu') {
-        tipText = '⚠ EXCLU du budget annuel (financement crédit, manque à gagner ou amortissement)\n\n' + tipText;
-      }
-      tip.setAttribute('data-tip', tipText);
+      // Le tooltip affiche directement l'info éditorial du catalogue.
+      // Le champ `budget: 'exclu'` reste utilisé silencieusement par le calcul
+      // du « Budget alloué » (cf. plus bas) — pas besoin de l'exposer ici.
+      tip.setAttribute('data-tip', levSelected.info);
       tdLev.appendChild(tip);
       // Pastille catégorie uniquement (Niche 10k / 18k / Hors / Foncier).
       // Les pastilles "nature" (perdu/reportable) ont été retirées : elles
@@ -1139,12 +1206,17 @@ function refreshPreconisationsCalculs() {
   const boxL2 = document.getElementById('precoWarningsL2');
 
   warnings.forEach(w => {
-    if (!boxL2) return;
     if (w.type === 'surdimensionnement') return; // rendu enrichi ci-dessous
+    // Routage par section : un warning peut déclarer `section: 'L1'|'L2'|'L3'`
+    // pour s'afficher dans la bonne bande. Fallback L2 (historique) si absent.
+    const target = w.section
+      ? document.getElementById('precoWarnings' + w.section)
+      : boxL2;
+    if (!target) return;
     const chip = document.createElement('div');
     chip.className = 'preco-warning preco-warning-' + w.level;
     chip.textContent = (w.level === 'info' ? 'ℹ ' : '⚠ ') + w.message;
-    boxL2.appendChild(chip);
+    target.appendChild(chip);
   });
 
   // Box "surdimensionnement" enrichie : liste les dispositifs L2 actifs
