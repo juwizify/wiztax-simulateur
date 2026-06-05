@@ -575,15 +575,15 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    // Sémantique D3.3 : input.gfi = MONTANT SOUSCRIT (cash), RI = invest × 18 %
+    // Sémantique D3.3 : input.gfi = MONTANT SOUSCRIT (cash), RI = invest × taux zone
     // plafonné à versCouple(PD.gfi) = 50 000 € / 100 000 €.
-    // Arbitrage BOFiP en attente (audit-preco-vs-leviers.md) : taux 25 % en zone
-    // éligible reste à modéliser. V1 = 18 % uniformément.
-    id: 'gfi', family: 'gfi', label: 'GFI Forestier (18%)',
+    // PR-C : taux variable selon input.gfiZone (standard 18 % / éligible 25 %).
+    // Zone éligible = massifs déficitaires en gestion durable (CGI 199 decies H I 2°).
+    id: 'gfi', family: 'gfi', label: 'GFI Forestier (18-25 %)',
     levier: 2, cat: 'niche10', mode: 'versement-direct', inputKey: 'gfi',
-    taux: PD.gfi.taux,    // 0.18 — constante éditoriale pour avantageEstime + tooltips
+    paramKey: 'gfiZone',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de Groupement Forestier d\'Investissement. Cash sortant. Réduction 18 % (jusqu\'à 25 % en zone éligible). Plafond 50 k€ / 100 k€. Avantages annexes IFI et succession.',
+    info: 'Saisir le MONTANT DE LA SOUSCRIPTION DE L\'ANNÉE en parts de Groupement Forestier d\'Investissement. Cash sortant.\n\nTaux selon la zone du massif forestier :\n· Standard : 18 %\n· Zone éligible : 25 % (massifs déficitaires en gestion durable certifiée — PEFC / FSC — voir doc du GFI sur l\'éligibilité de chaque parcelle)\n\nPlafond annuel de souscription : 50 000 € (célib) / 100 000 € (couple).\n\nAvantages annexes : exonération partielle d\'IFI (75 % de la valeur des bois) + abattement 75 % sur droits de mutation à titre gratuit (succession/donation), sous conditions d\'engagement de gestion durable.',
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
     titleLong: 'GFI — Groupement Forestier d\'Investissement',
@@ -608,6 +608,14 @@ const LEVIERS_CATALOGUE = [
     links: [
       { label: 'BOFiP — BOI-IR-RICI-60-20-20 (DEFI Forêt incl. GFI)',
         url: 'https://bofip.impots.gouv.fr/bofip/5537-PGP.html/identifiant=BOI-IR-RICI-60-20-20-20230614' },
+    ],
+    params: [
+      { name: 'zone', label: 'Zone du massif', defaultValue: 'standard',
+        options: [
+          { value: 'standard', label: 'Standard — taux 18 %' },
+          { value: 'eligible', label: 'Zone éligible — taux 25 % (massif déficitaire en gestion durable)' },
+        ]
+      },
     ],
   },
   {

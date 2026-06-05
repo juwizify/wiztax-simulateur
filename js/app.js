@@ -54,7 +54,7 @@ function defaultInputs() {
     csgDeductible: 0, autresCharges: 0,
     // Réductions
     dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
-    fcpiJei: 0, fipCorse: 0, gfi: 0,    // fcpi (classique) retiré en D3.4
+    fcpiJei: 0, fipCorse: 0, gfi: 0, gfiZone: 'standard',    // fcpi (classique) retiré en D3.4 ; gfiZone : PR-C
     // IR-PME — 7 sous-dispositifs (cf. tasks/d3.1-irpme-spec.md)
     irPme: 0,        // PME standard 18 %         → niche10
     irPmeEsus: 0,    // ESUS / SFS 25 %           → niche10
@@ -128,7 +128,8 @@ function getInputs() {
     // FCPI classique : retiré du moteur en D3.4 — dispositif supprimé au
     // 21/02/2026 (LF 2026). Seul FCPI-JEI subsiste (taux 30 %, family ir-pme).
     fcpiJei: v('fcpiJei'),
-    fipCorse: v('fipCorse'), gfi: v('gfi'),
+    fipCorse: v('fipCorse'),
+    gfi: v('gfi'), gfiZone: _sel('gfiZone', d.gfiZone),    // PR-C : zone éligible 25 %
     // IR-PME — 7 sous-dispositifs (cf. tasks/d3.1-irpme-spec.md)
     irPme:        v('irPme'),
     irPmeEsus:    v('irPmeEsus'),
