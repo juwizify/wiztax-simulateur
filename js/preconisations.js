@@ -127,9 +127,14 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'jeanbrun', label: 'Dispositif Jeanbrun (LF 2026)',
+    // D3.11 : ajout family pour génération form-row (input + select catégorie).
+    // showNicheCell: false → pas de cellule niche à droite (déduction foncière,
+    // pas une réduction d'impôt classique).
+    id: 'jeanbrun', family: 'jeanbrun', label: 'Dispositif Jeanbrun (LF 2026)',
     levier: 1, cat: 'foncier', mode: 'jeanbrun', inputKey: 'jeanbrunAmort',
     paramKey: 'jeanbrunCategorie',
+    showNicheCell: false,
+    titleLong: 'Déficit Jeanbrun annuel — bailleur privé (LF 2026)',
     nature: 'amortissement-annuel', budget: 'exclu',
     info: 'À SAISIR : le DÉFICIT JEANBRUN annuel que tu veux générer (= amortissement déductible des revenus fonciers, cf. tooltip détail HTML). Ce n\'est PAS du cash sortant → EXCLU du budget annuel. Le bien est généralement financé à crédit. Plafond annuel par catégorie : 8 / 10 / 12 k€ (intermédiaire / social / très social). Acquisitions éligibles : 21/02/2026 → 31/12/2028.',
     sectionGroup: 'immobilier-locatif',
@@ -171,10 +176,13 @@ const LEVIERS_CATALOGUE = [
   // ─── LEVIER 2 — RÉDUCTIONS D'IMPÔT ─────────────────────
   // 2.a) Hors plafond niches
   {
-    id: 'dons7UD', label: 'Dons « Coluche » (organismes d\'aide, 75%)',
+    // D3.11 : ajout family pour génération form-row depuis catalogue.
+    // inSimpleMode false → reste en .advanced (mode complet uniquement).
+    id: 'dons7UD', family: 'dons7UD', label: 'Dons « Coluche » (organismes d\'aide, 75%)',
     levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'dons7UD',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir le MONTANT DES DONS de l\'année à des organismes d\'aide aux personnes en difficulté (Restos du Cœur, Croix-Rouge, etc.). Cash sortant. Réduction 75 % jusqu\'à 2 000 €, surplus bascule sur le régime 7UF (66 %).',
+    nichePlafLabel: '75 % ≤ 2 000 € · surplus → 7UF',
+    info: 'Cases 7UD de la déclaration. Dons aux organismes d\'aide aux personnes en difficulté (Restos du Cœur, Croix-Rouge, Secours Populaire, Banque alimentaire) ou aux victimes de violences domestiques.\n\nÀ saisir : MONTANT DES DONS de l\'année. Cash sortant.\n\nRéduction 75 % sur les premiers 2 000 € (LF 2026). Au-delà, l\'excédent bascule automatiquement sur le régime 7UF (66 %).\n\nHors plafond des niches fiscales.',
     sectionGroup: 'dons',
     tagType: 'Réduction d\'impôt',
     titleLong: 'Dons aux organismes d\'aide aux personnes (Coluche)',
@@ -198,10 +206,13 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'dons7UF', label: 'Dons d\'intérêt général (66%)',
+    // D3.11 : visible en mode simple (les dons sont un usage quotidien).
+    id: 'dons7UF', family: 'dons7UF', label: 'Dons d\'intérêt général (66%)',
     levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'dons',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir le MONTANT DES DONS de l\'année à des associations / fondations / écoles d\'intérêt général. Cash sortant. Réduction 66 %, total dons plafonné à 20 % du RNI.',
+    inSimpleMode: true,
+    nichePlafLabel: '66 % · plafond 20 % du RNI',
+    info: 'Case 7UF de la déclaration. Dons à organismes d\'intérêt général : associations sportives, culturelles, environnementales, écoles, fondations reconnues d\'utilité publique, etc.\n\nÀ saisir : MONTANT DES DONS de l\'année. Cash sortant.\n\nRéduction 66 %, dans la limite de 20 % du revenu net imposable. Le surplus est reportable 5 ans (non simulé).\n\nHors plafond des niches fiscales.',
     sectionGroup: 'dons',
     tagType: 'Réduction d\'impôt',
     titleLong: 'Dons aux œuvres et organismes d\'intérêt général',
@@ -724,10 +735,13 @@ const LEVIERS_CATALOGUE = [
 
   // ─── LEVIER 3 — CRÉDITS D'IMPÔT (REMBOURSÉS SI IR = 0) ──
   {
-    id: 'emploiDom', label: 'Emploi à domicile (50%)',
+    // D3.11 : visible en mode simple (très utilisé par les ménages).
+    id: 'emploiDom', family: 'emploiDom', label: 'Emploi à domicile (50%)',
     levier: 3, cat: 'niche10', mode: 'versement-direct', inputKey: 'emploiDomicile',
     nature: 'depenses-annuelles', budget: 'cash',
-    info: 'Saisir les DÉPENSES DE L\'ANNÉE (salaires + charges sociales) pour un employé à domicile (ménage, jardinage, soutien scolaire, aide à la personne, etc.). Cash sortant. Crédit 50 %, plafond 12 000 € (15 000 € avec majoration enfants).',
+    inSimpleMode: true,
+    nichePlafLabel: 'crédit 50 % · plaf. dép. 12 000 € (+ majo enfants, max 15 000 €)',
+    info: 'Crédit d\'impôt REMBOURSABLE (même si IR = 0) pour les dépenses d\'emploi salarié à domicile : ménage, jardinage, soutien scolaire, aide à la personne, garde d\'enfants à domicile, etc.\n\nÀ saisir : MONTANT TOTAL DES DÉPENSES (salaires + charges sociales). Cash sortant.\n\nTaux : 50 %.\nPlafond de base : 12 000 €. Majoration : +1 500 € / enfant à charge plein, +750 € en garde alternée. Maximum global : 15 000 € de dépenses retenues.\n\nDans le plafond global niches 10 000 €.',
     sectionGroup: 'famille-quotidien',
     tagType: 'Crédit d\'impôt',
     titleLong: 'Emploi à domicile (50 %)',
@@ -752,10 +766,13 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'gardeEnf', label: 'Garde enfants < 6 ans (50%)',
+    // D3.11 : visible en mode simple.
+    id: 'gardeEnf', family: 'gardeEnf', label: 'Garde enfants < 6 ans (50%)',
     levier: 3, cat: 'niche10', mode: 'versement-direct', inputKey: 'gardeEnfants',
     nature: 'depenses-annuelles', budget: 'cash',
-    info: 'Saisir les DÉPENSES DE GARDE DE L\'ANNÉE pour enfants de moins de 6 ans (crèche, assistante maternelle, garderie périscolaire). Cash sortant. Crédit 50 %, plafond 3 500 € par enfant.',
+    inSimpleMode: true,
+    nichePlafLabel: 'crédit 50 % · plaf. dép. 3 500 €/enfant',
+    info: 'Crédit d\'impôt REMBOURSABLE pour les frais de garde des enfants à charge âgés de moins de 6 ans au 1er janvier : crèche, halte-garderie, assistante maternelle agréée, garderie périscolaire.\n\nÀ saisir : MONTANT TOTAL DES DÉPENSES de garde. Cash sortant.\n\nTaux : 50 %.\nPlafond : 3 500 € de dépenses par enfant (1 750 € en garde alternée).\n\nDans le plafond global niches 10 000 €.',
     sectionGroup: 'famille-quotidien',
     tagType: 'Crédit d\'impôt',
     titleLong: 'Garde d\'enfants < 6 ans (50 %)',
@@ -779,10 +796,12 @@ const LEVIERS_CATALOGUE = [
     ],
   },
   {
-    id: 'syndic', label: 'Cotisations syndicales (66%)',
+    // D3.11 : conserve .advanced (rare). Cases 7AC/7AE/7AG.
+    id: 'syndic', family: 'syndic', label: 'Cotisations syndicales (66%)',
     levier: 3, cat: 'hors', mode: 'versement-direct', inputKey: 'cotSyndicales',
     nature: 'versement-annuel', budget: 'cash',
-    info: 'Saisir la COTISATION SYNDICALE de l\'année (CGT, CFDT, FO, CFTC, Sud, etc.). Cash sortant. Crédit d\'impôt 66 %, plafond 1 % des salaires + alloc chômage + pensions.',
+    nichePlafLabel: 'crédit 66 % · plafond 1 % des revenus',
+    info: 'Cases 7AC / 7AE / 7AG de la déclaration (art. 199 quater C CGI). Cotisations versées à un syndicat (CGT, CFDT, FO, CFTC, Sud, etc.) par les salariés, retraités et demandeurs d\'emploi.\n\nÀ saisir : COTISATION ANNUELLE. Cash sortant.\n\nCrédit d\'impôt 66 % — REMBOURSABLE si supérieur à l\'impôt dû.\nPlafond automatique : 1 % des salaires + allocations chômage + pensions retraite et invalidité.\n\nHors plafond des niches fiscales.',
     sectionGroup: 'famille-quotidien',
     tagType: 'Crédit d\'impôt',
     titleLong: 'Cotisations syndicales (66 %)',
@@ -1300,16 +1319,27 @@ function renderSimulateurFormRows(targetEl, family) {
           ${selectHtml}
         </div>`
       : `<input type="number" id="${escHtml(lev.inputKey)}" value="0" min="0">`;
+    // Trois options de catalogue qui affinent le rendu :
+    //   - `inSimpleMode: true` → la form-row reste visible en mode simple
+    //     (pas de classe .advanced). Par défaut, .advanced (mode complet uniquement).
+    //   - `nichePlafLabel: '...'` → sous-texte affiché dans la niche-cell
+    //     (ex « crédit 50 % · plaf. dép. 12 000 € »).
+    //   - `showNicheCell: false` → masque la cellule de droite (utile pour
+    //     les leviers qui ne sont ni dans le plafond niches ni hors plafond
+    //     mais dans une autre logique, ex Jeanbrun = déduction foncière).
+    const cls = lev.inSimpleMode ? 'form-row' : 'form-row advanced';
+    const nicheCell = lev.showNicheCell === false ? '' : `<div class="niche-cell">
+        <span class="niche-marker ${nicheClass}">${escHtml(nicheLabel)}</span>
+        ${lev.nichePlafLabel ? `<span class="niche-plaf">${escHtml(lev.nichePlafLabel)}</span>` : ''}
+      </div>`;
     // data-source-catalogue : marqueur dev pour le bouton « Highlight catalogue ».
-    return `<div class="form-row advanced" data-source-catalogue="${escHtml(lev.id)}">
+    return `<div class="${cls}" data-source-catalogue="${escHtml(lev.id)}">
       <label for="${escHtml(lev.inputKey)}">
         ${escHtml(lev.titleLong || lev.label)}
         <i class="tip" data-tip="${escHtml(lev.info || '')}">i</i>
       </label>
       ${inputCell}
-      <div class="niche-cell">
-        <span class="niche-marker ${nicheClass}">${escHtml(nicheLabel)}</span>
-      </div>
+      ${nicheCell}
     </div>`;
   }).join('');
   targetEl.innerHTML = html;

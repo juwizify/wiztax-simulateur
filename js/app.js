@@ -447,6 +447,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (simMalraux) renderSimulateurFormRows(simMalraux, 'malraux');
     const simLocAvantages = document.getElementById('simLocAvantages');
     if (simLocAvantages) renderSimulateurFormRows(simLocAvantages, 'locAvantages');
+    // D3.11 : 6 leviers restants migrés vers le générateur catalogue.
+    // Jeanbrun = input déficit + select catégorie ; les 5 autres = simple input.
+    [
+      ['simJeanbrun', 'jeanbrun'],
+      ['simDons7UD', 'dons7UD'],
+      ['simDons7UF', 'dons7UF'],
+      ['simEmploiDom', 'emploiDom'],
+      ['simGardeEnf', 'gardeEnf'],
+      ['simSyndic', 'syndic'],
+    ].forEach(([id, fam]) => {
+      const el = document.getElementById(id);
+      if (el) renderSimulateurFormRows(el, fam);
+    });
   }
 
   // Écouter tous les inputs : un seul handler (recalculer) — le périmètre

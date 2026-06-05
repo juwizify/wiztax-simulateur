@@ -257,25 +257,11 @@
             <input type="number" id="autresMeubles" value="0" min="0">
           </div>
 
-          <div class="form-row advanced">
-            <label for="jeanbrunAmort">
-              Déficit Jeanbrun annuel (LF 2026)
-              <i class="tip" data-tip="Jeanbrun (LF 2026, art. 28) = nouveau statut du BAILLEUR PRIVÉ. Acquisitions éligibles : 21/02/2026 → 31/12/2028.&#10;&#10;Ce n'est PAS une réduction d'impôt. C'est un AMORTISSEMENT déductible des revenus fonciers — qui CRÉE un déficit imputable sur le revenu global.&#10;&#10;À SAISIR : le déficit annuel que tu veux générer.&#10;Cap par catégorie (= amortissement max éligible) :&#10;· Intermédiaire (3,5 %) → 8 000 €&#10;· Social (4,5 %)         → 10 000 €&#10;· Très social (5,5 %)    → 12 000 €&#10;&#10;NB technique : techniquement le moteur soustrait ce montant du « Foncier réel » saisi plus haut, puis cap le déficit obtenu à 10 700 € (art. 156-I-3°). Si tu n'as pas d'autre foncier, le montant saisi EST le déficit imputable. Si tu as déjà des loyers, le déficit créé = (loyers nets) − (montant saisi).&#10;&#10;Économie ≈ déficit × (TMI + PS foncier 18,6 %).&#10;Exemple : 8 000 € de déficit, TMI 30 % → ~3 890 € d'économie.">i</i>
-            </label>
-            <input type="number" id="jeanbrunAmort" value="0" min="0">
-          </div>
-
-          <div class="form-row advanced">
-            <label for="jeanbrunCategorie">
-              ↳ Catégorie de loyer Jeanbrun
-              <i class="tip tip-down" data-tip="Plafond annuel du déficit Jeanbrun selon catégorie de loyer :&#10;· Intermédiaire (loyer libre plafonné par zonage) : 8 000 €&#10;· Social (loyer conventionné PLS-PLAI) : 10 000 €&#10;· Très social (loyer conventionné très social) : 12 000 €&#10;&#10;Sigles : PLS = Prêt Locatif Social. PLAI = Prêt Locatif Aidé d'Intégration (très social).">i</i>
-            </label>
-            <select id="jeanbrunCategorie">
-              <option value="intermediaire">Intermédiaire (plafond 8 000 €)</option>
-              <option value="social">Social (plafond 10 000 €)</option>
-              <option value="tres-social">Très social (plafond 12 000 €)</option>
-            </select>
-          </div>
+          <!-- Jeanbrun (D3.11) — form-row générée depuis LEVIERS_CATALOGUE
+               (family:'jeanbrun'). Input déficit + select catégorie empilés
+               (pattern SOFICA / D3.2). Tooltip détaillé conservé dans le
+               catalogue (info + params[0].label). -->
+          <div id="simJeanbrun"></div>
 
           <div class="form-subsection"><h3>Revenus de capitaux mobiliers (RCM)</h3></div>
 
@@ -409,65 +395,15 @@
         <h2>D — Réductions et crédits d'impôt</h2>
         <div class="form-grid">
 
-          <div class="form-row advanced">
-            <label for="dons7UD">
-              Dons « Coluche » (7UD, 75 %)
-              <i class="tip" data-tip="Case 7UD de la déclaration.&#10;Dons aux organismes d'aide aux personnes en difficulté (Restos du Cœur, Croix-Rouge, Secours Populaire, Banque alimentaire, etc.) ou aux victimes de violences domestiques.&#10;&#10;Réduction de 75 % sur les premiers 2 000 € (LF 2026).&#10;Au-delà de 2 000 €, l'excédent bascule automatiquement sur le régime 7UF (66 %).&#10;&#10;Hors plafond des niches fiscales.">i</i>
-            </label>
-            <input type="number" id="dons7UD" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-hors">hors plafond niches</span>
-              <span class="niche-plaf">75 % ≤ 2 000 € · surplus → 7UF</span>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <label for="dons">
-              Dons d'intérêt général (7UF, 66 %)
-              <i class="tip" data-tip="Case 7UF de la déclaration.&#10;Dons à organismes d'intérêt général : associations sportives, culturelles, environnementales, écoles, fondations reconnues d'utilité publique, etc.&#10;&#10;Réduction de 66 %, dans la limite de 20 % du revenu net imposable (le surplus est reportable 5 ans, non simulé).&#10;&#10;Hors plafond des niches fiscales.">i</i>
-            </label>
-            <input type="number" id="dons" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-hors">hors plafond niches</span>
-              <span class="niche-plaf">66 % · plafond 20 % du RNI</span>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <label for="emploiDomicile">
-              Emploi salarié à domicile
-              <i class="tip" data-tip="Crédit d'impôt (remboursable si supérieur à l'impôt).&#10;&#10;50% des dépenses — saisir le montant total des dépenses.&#10;&#10;Plafond de base : 12 000 €.&#10;Majorations : +1 500 € par enfant à charge, +750 € par enfant en garde alternée — plafond total max 15 000 €.&#10;&#10;Plafond global niches : 10 000 €.&#10;Art. 199 sexdecies-I-2° CGI.">i</i>
-            </label>
-            <input type="number" id="emploiDomicile" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-10k">niche 10 000 €</span>
-              <span class="niche-plaf">crédit 50 % · plaf. dép. 12 000 € (+ majo enfants, max 15 000 €)</span>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <label for="gardeEnfants">
-              Frais de garde enfants &lt; 6 ans
-              <i class="tip" data-tip="Crédit d'impôt (remboursable).&#10;&#10;50% des dépenses — saisir le montant total des dépenses.&#10;Plafond dépenses : 3 500 € par enfant.&#10;Plafond global niches : 10 000 €.">i</i>
-            </label>
-            <input type="number" id="gardeEnfants" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-10k">niche 10 000 €</span>
-              <span class="niche-plaf">crédit 50 % · plaf. dép. 3 500 €/enfant</span>
-            </div>
-          </div>
-
-          <div class="form-row advanced">
-            <label for="cotSyndicales">
-              Cotisations syndicales (7AC/7AE/7AG)
-              <i class="tip" data-tip="Cases 7AC / 7AE / 7AG de la déclaration (art. 199 quater C CGI).&#10;Cotisations versées à un syndicat (CGT, CFDT, FO, CFTC, Sud, etc.) par les salariés, retraités et demandeurs d'emploi.&#10;&#10;Crédit d'impôt 66 % — REMBOURSABLE si supérieur à l'impôt dû.&#10;&#10;Plafond automatique : 1 % des salaires + allocations chômage + pensions retraite et invalidité.&#10;&#10;⚠ HORS plafond des niches fiscales — n'entre pas dans le 10 000 €.">i</i>
-            </label>
-            <input type="number" id="cotSyndicales" value="0" min="0">
-            <div class="niche-cell">
-              <span class="niche-marker niche-hors">hors plafond niches</span>
-              <span class="niche-plaf">crédit 66 % · plafond 1 % des revenus</span>
-            </div>
-          </div>
+          <!-- Dons / Emploi à domicile / Garde enfants / Syndic (D3.11) — form-rows
+               générées depuis LEVIERS_CATALOGUE (family:'dons7UD' / 'dons7UF' /
+               'emploiDom' / 'gardeEnf' / 'syndic'). inSimpleMode positionné par
+               levier. Tooltips détaillés conservés dans `info` du catalogue. -->
+          <div id="simDons7UD"></div>
+          <div id="simDons7UF"></div>
+          <div id="simEmploiDom"></div>
+          <div id="simGardeEnf"></div>
+          <div id="simSyndic"></div>
 
           <div class="form-row advanced">
             <label for="fraisScolCollege">
