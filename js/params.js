@@ -94,12 +94,10 @@ const PARAMS = {
       versementMaxCouple:  24000,
       taux: 0.30,
     },
-    // FCPI classique — extinction au 21/02/2026 (LF 2026)
-    fcpi: {
-      versementMax:        12000,
-      versementMaxCouple:  24000,
-      taux: 0.18,
-    },
+    // FCPI classique : RETIRÉ au 21/02/2026 (LF 2026 / loi 2026-103).
+    // Suppression complète du moteur. La mécanique FCPI subsiste uniquement
+    // via fcpiJei (FCPI investi en JEI, taux 30 %, art. 199 terdecies-0 A bis),
+    // qui reste un dispositif actif. Note historique conservée pour mémoire.
     // FIP Corse / Outre-mer — art. 199 terdecies-0 A bis
     fipCorse: {
       versementMax:        12000,

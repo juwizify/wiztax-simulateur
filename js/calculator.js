@@ -389,7 +389,6 @@ function calculerIR(input) {
   );
   const capRiMax = {
     sofica:       versSoficaEffectif * tauxMax(PD.sofica),                         // min(18k, 25%RNG) × 48 %
-    fcpi:         versCouple(PD.fcpi) * PD.fcpi.taux,                              // 12k/24k × 18 %
     fcpiJei:      versCouple(PD.fcpiJei) * PD.fcpiJei.taux,                        // 12k/24k × 30 %
     fipCorse:     versCouple(PD.fipCorse) * PD.fipCorse.taux,                      // 12k/24k × 30 %
     irPme:        versCouple(PD.irPme) * PD.irPme.taux,                            // 50k/100k × 25 %
@@ -415,7 +414,8 @@ function calculerIR(input) {
   det.redPinel       = input.pinel;             // Pinel : retiré du périmètre (fermé fin 2024). Pas de cap V1.
   det.redGirardinPD  = input.girardinPD;        // Girardin : pas de cap individuel, limité par panier majoré.
   det.redGirardinAG  = input.girardinAG;
-  det.redFCPI        = Math.min(input.fcpi || 0,         capRiMax.fcpi);
+  // det.redFCPI retiré — FCPI classique supprimé au 21/02/2026 (LF 2026).
+  // Seul FCPI-JEI subsiste (taux 30 %, art. 199 terdecies-0 A bis).
   det.redFcpiJei     = Math.min(input.fcpiJei || 0,      capRiMax.fcpiJei);
   det.redFipCorse    = Math.min(input.fipCorse || 0,     capRiMax.fipCorse);
   det.redGfi         = Math.min(input.gfi || 0,          capRiMax.gfi);
@@ -440,7 +440,6 @@ function calculerIR(input) {
   // Surplus écrasés par les caps individuels (pour affichage UI)
   det.capExcedents = {
     sofica:       Math.max(0, (input.sofica || 0)       - det.redSofica),
-    fcpi:         Math.max(0, (input.fcpi || 0)         - det.redFCPI),
     fcpiJei:      Math.max(0, (input.fcpiJei || 0)      - det.redFcpiJei),
     fipCorse:     Math.max(0, (input.fipCorse || 0)     - det.redFipCorse),
     irPme:        Math.max(0, (input.irPme || 0)        - det.redIrPme),
@@ -450,7 +449,7 @@ function calculerIR(input) {
   };
 
   det.totalReductions = det.redDons + det.redPinel + det.redGirardinPD + det.redGirardinAG
-    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
+    + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme + det.redLocAvantages
     + det.redSofica + det.redAutres;
 
   // ============================================================
@@ -496,7 +495,7 @@ function calculerIR(input) {
 
   // RI panier par catégorie
   const ri10Panier = det.redPinel
-    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme
+    + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme
     + det.redLocAvantages + det.redAutres
     + det.credDomicile + det.credGarde + det.credAutres;
   const ri18Panier = det.redGirardinPD * P.niches.girardinPdQuotePart
@@ -540,7 +539,7 @@ function calculerIR(input) {
   // Application des réductions avec plafonnement niches par catégorie.
   // Hors panier niches (toujours retenus) : dons, fraisScol, EHPAD, Malraux.
   const redNiche10Retenue = (det.redPinel
-    + det.redFCPI + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme
+    + det.redFcpiJei + det.redFipCorse + det.redGfi + det.redIrPme
     + det.redLocAvantages + det.redAutres) * facteur10;
   const redNiche18Retenue = (det.redGirardinPD + det.redGirardinAG + det.redSofica) * facteur18;
 

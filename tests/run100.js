@@ -304,7 +304,7 @@ function oracleCalc(input) {
   // SOFICA double plafond : min(18 000, 25 % RNG) × 48 %
   const versSoficaEff = Math.min(18000, rni * 0.25);
   const capSofica   = versSoficaEff * 0.48;
-  const capFCPI     = cv(12000, 24000) * 0.18;       // 2 160 / 4 320
+  // capFCPI retiré — FCPI classique supprimé au 21/02/2026 (LF 2026).
   const capFcpiJei  = cv(12000, 24000) * 0.30;       // 3 600 / 7 200
   const capFipCorse = cv(12000, 24000) * 0.30;       // 3 600 / 7 200
   const capIrPme    = cv(50000, 100000) * 0.25;      // 12 500 / 25 000
@@ -326,7 +326,7 @@ function oracleCalc(input) {
   const redPinel = i.pinel;                                   // pas de cap V1
   const redGirPD = i.girardinPD;                              // pas de cap (panier majoré)
   const redGirAG = i.girardinAG;
-  const redFCPI = Math.min(i.fcpi || 0,         capFCPI);
+  // redFCPI retiré — FCPI classique supprimé au 21/02/2026 (LF 2026).
   const redFcpiJei = Math.min(i.fcpiJei || 0,   capFcpiJei);
   const redFipCorse = Math.min(i.fipCorse || 0, capFipCorse);
   const redGfi = Math.min(i.gfi || 0,           capGfi);
@@ -345,7 +345,7 @@ function oracleCalc(input) {
   const redAutres = i.autresReductions;
 
   const totalReductions = redDons + redPinel + redGirPD + redGirAG
-    + redFCPI + redFcpiJei + redFipCorse + redGfi + redIrPme + redLocAv
+    + redFcpiJei + redFipCorse + redGfi + redIrPme + redLocAv
     + redSofica + redAutres;
 
   // --- Étape 9 : crédits ---
@@ -366,7 +366,7 @@ function oracleCalc(input) {
   // Poche 1 (10 000 €) : accessible à tous (niche10 + niche18)
   // Poche 2 (+8 000 €) : RÉSERVÉE aux niche18 (Girardin × quote-part + SOFICA)
   const ri10Panier = redPinel
-    + redFCPI + redFcpiJei + redFipCorse + redGfi + redIrPme
+    + redFcpiJei + redFipCorse + redGfi + redIrPme
     + redLocAv + redAutres
     + credDom + credGarde + credAutres;
   const ri18Panier = redGirPD * 0.44 + redGirAG * 0.34 + redSofica;
@@ -387,7 +387,7 @@ function oracleCalc(input) {
   const facteur18 = ri18Panier > 0 ? (poche1_18 + poche2_18) / ri18Panier : 1;
 
   // --- Étape 11 : impôt net ---
-  const redNiche10Retenue = (redPinel + redFCPI + redFcpiJei + redFipCorse
+  const redNiche10Retenue = (redPinel + redFcpiJei + redFipCorse
     + redGfi + redIrPme + redLocAv + redAutres) * facteur10;
   const redNiche18Retenue = (redGirPD + redGirAG + redSofica) * facteur18;
 
