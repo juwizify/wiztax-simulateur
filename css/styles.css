@@ -223,9 +223,15 @@ header span {
 ───────────────────────────────────────────── */
 .sim-layout {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  /* PR-F : la zone inputs ne dépasse plus 880 px, le layout est centré dans
+     la page jusqu'à 1280 px de viewport. Évite les espaces vides énormes sur
+     les grands écrans. Sur petit écran, minmax(0, 880px) se contracte
+     naturellement à la place disponible. */
+  grid-template-columns: minmax(0, 880px) 300px;
   gap: 24px;
   padding: 28px 40px;
+  max-width: 1280px;
+  margin: 0 auto;
   align-items: start;
 }
 
@@ -256,6 +262,42 @@ header span {
 ───────────────────────────────────────────── */
 .form-grid {
   padding: 8px 20px 16px;
+}
+
+/* PR-F : sur écran ≥ 1100 px, les form-rows se mettent en grille 2 colonnes
+   pour diviser le scroll vertical par ~2. Les wrappers générés par
+   renderSimulateurFormRows (simIrPme, simSofica, etc.) sont mis en
+   display:contents pour que leurs form-rows enfantes participent
+   directement au grid 2-col de .form-grid (sinon elles seraient
+   empilées DANS le wrapper, qui occuperait 1 seule cellule).
+   Les sous-champs (perPlafondManuel, ehpadNbPers, jeanbrunCategorie,
+   malrauxTravauxAnterieurs, soficaTaux, locAvantagesPalier, etc.)
+   sont forcés à span 2 colonnes pour rester visuellement attachés
+   à leur parent (sinon ils flottent dans une autre cellule). */
+@media (min-width: 1100px) {
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 32px;
+    row-gap: 0;
+  }
+  /* Wrappers de leviers générés : transparents pour le grid parent */
+  #simIrPme, #simSofica, #simFipCorse, #simGfi, #simMalraux,
+  #simLocAvantages, #simJeanbrun, #simDons7UD, #simDons7UF,
+  #simEmploiDom, #simGardeEnf, #simSyndic, #simGirardinPD,
+  #simGirardinAG, #simPer, #simEhpad {
+    display: contents;
+  }
+  /* Sous-champs : forcer span 2-col pour rester sur leur propre ligne
+     juste après leur parent. Repérage par l'id de leur input numérique
+     (suffixes Manuel, NbPers, Anterieurs) ou de leur select de categorie. */
+  .form-grid > .form-row:has(#perPlafondManuel),
+  .form-grid > .form-row:has(#ehpadNbPers),
+  .form-grid > .form-row:has(#malrauxTravauxAnterieurs),
+  .form-grid > .form-row:has(#irPmeJeiJeirImputeAnterieur),
+  .form-grid > .form-row:has(#nbBeneficiairesPA) {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Sous-section : titre catégorie à l'intérieur d'une section-card */
