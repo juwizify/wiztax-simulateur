@@ -618,7 +618,7 @@ const LEVIERS_CATALOGUE = [
     levier: 2, cat: 'niche10', mode: 'versement-direct', inputKey: 'locAvantagesDepenses',
     paramKey: 'locAvantagesPalier',
     nature: 'depenses-annuelles', budget: 'exclu',
-    info: 'Saisir les DÉPENSES (loyers décotés) DE L\'ANNÉE liées à la location à loyer modéré (ex-Cosse). Pas du cash sortant strict, plutôt un manque à gagner sur loyer → EXCLU du budget annuel. Le moteur calcule la RI = min(dépenses, 10 000 €) × 15/35/65 % selon palier de décote.',
+    info: 'Saisir les DÉPENSES (loyers décotés) DE L\'ANNÉE liées à la location à loyer modéré (ex-Cosse). Pas du cash sortant strict, plutôt un manque à gagner sur loyer → EXCLU du budget annuel.\n\nLe moteur calcule la RI = min(dépenses, 10 000 €) × taux applicable :\n· Loc 1 (décote 15 %) : 15 % sans intermédiation / 20 % avec\n· Loc 2 (décote 30 %) : 35 % sans / 40 % avec\n· Loc 3 (décote 45 %) : 65 % (intermédiation locative obligatoire, déjà incluse)\n\nIntermédiation locative (IML) = gestion confiée à une association agréée type Solibail. Le bailleur cède son mandat de gestion, l\'association garantit le loyer et les charges. En échange, taux fiscal majoré de +5 pts.',
     sectionGroup: 'immobilier-locatif',
     tagType: 'Réduction d\'impôt',
     titleLong: 'Loc\'Avantages — location à loyer modéré',
@@ -633,7 +633,7 @@ const LEVIERS_CATALOGUE = [
       { label: 'Ce que c\'est',
         text: 'Applicable sur l\'ensemble du territoire, sans obligation de travaux. En échange d\'un loyer modéré (locataire sous plafonds de ressources), le propriétaire obtient une réduction d\'impôt calculée sur les loyers perçus. Plus le loyer est bas, plus le taux est élevé. L\'intermédiation locative (via une association agréée) augmente le taux.' },
       { label: 'Calcul',
-        text: 'RI = min(loyers, 10 000 €) × taux applicable. Exemple Loc 2 sans intermédiation : 8 000 € × 35 % = 2 800 € de RI.' },
+        text: 'RI = min(loyers, 10 000 €) × taux applicable. Exemple Loc 2 sans intermédiation : 8 000 € × 35 % = 2 800 € de RI. Avec intermédiation locative : 8 000 € × 40 % = 3 200 € (+ 400 € grâce à l\'IML).' },
     ],
     refCGI: 'Art. 199 tricies CGI',
     refBofip: '—',
@@ -645,11 +645,16 @@ const LEVIERS_CATALOGUE = [
         url: 'https://www.service-public.gouv.fr/particuliers/actualites/A18077' },
     ],
     params: [
-      { name: 'palier', label: 'Palier de décote', defaultValue: 'loc1',
+      { name: 'palier', label: 'Palier de décote × intermédiation', defaultValue: 'loc1',
+        // Intermédiation locative (IML) = gestion confiée à une association
+        // agréée type Solibail. Augmente le taux loc1/loc2 de +5 pts.
+        // Loc 3 n'existe qu'avec intermédiation (déjà intégrée au taux 65 %).
         options: [
-          { value: 'loc1', label: 'Loc 1 — décote 15 % (RI 15 %)' },
-          { value: 'loc2', label: 'Loc 2 — décote 30 % (RI 35 %)' },
-          { value: 'loc3', label: 'Loc 3 — IML décote 45 % (RI 65 %)' },
+          { value: 'loc1',    label: 'Loc 1 — décote 15 %, sans intermédiation (RI 15 %)' },
+          { value: 'loc1-im', label: 'Loc 1 — décote 15 %, avec intermédiation (RI 20 %)' },
+          { value: 'loc2',    label: 'Loc 2 — décote 30 %, sans intermédiation (RI 35 %)' },
+          { value: 'loc2-im', label: 'Loc 2 — décote 30 %, avec intermédiation (RI 40 %)' },
+          { value: 'loc3',    label: 'Loc 3 — IML décote 45 % (RI 65 %, intermédiation obligatoire)' },
         ]
       },
     ],

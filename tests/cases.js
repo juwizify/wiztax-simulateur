@@ -658,6 +658,22 @@ const CASES = [
     // impôt net = 20 701 - 6 500 = 14 201
     expected: { impotNet: 14201, revenuReference: 90000, tmi: 0.41 },
   },
+  {
+    name: "Loc'Avantages Loc 1 + intermédiation (PR-C) : 100k sal + 8k dépenses → RI 1 600 €",
+    input: makeInput({ sal1: 100000, locAvantagesDepenses: 8000, locAvantagesPalier: 'loc1-im' }),
+    // Palier Loc 1 + intermédiation locative (IML) : taux 20 % (vs 15 % sans IML)
+    // RI = 8 000 × 20 % = 1 600 €
+    // impôt net = 20 701 - 1 600 = 19 101
+    expected: { impotNet: 19101, revenuReference: 90000, tmi: 0.41 },
+  },
+  {
+    name: "Loc'Avantages Loc 2 + intermédiation (PR-C) : 100k sal + 8k dépenses → RI 3 200 €",
+    input: makeInput({ sal1: 100000, locAvantagesDepenses: 8000, locAvantagesPalier: 'loc2-im' }),
+    // Palier Loc 2 + intermédiation locative (IML) : taux 40 % (vs 35 % sans IML)
+    // RI = 8 000 × 40 % = 3 200 €
+    // impôt net = 20 701 - 3 200 = 17 501
+    expected: { impotNet: 17501, revenuReference: 90000, tmi: 0.41 },
+  },
 
   // -------------------------------------------------------------------
   // Dispositif Jeanbrun (LF 2026) — amortissement déductible des fonciers
