@@ -1,0 +1,39 @@
+name: Tests
+
+# Lance les 3 suites de tests à chaque push sur main et à chaque PR.
+# Garantit qu'aucune régression fiscale ne passe en production sans signal.
+#
+# - tests/run.js          : cas dirigés (cas patrimoniaux types vérifiés ligne à ligne)
+# - tests/run100.js       : 100 profils aléatoires confrontés à un oracle indépendant
+# - tests/run_leviers.js  : pipeline catalogue → préconisations → calculator
+#
+# Si l'un échoue, le job est rouge et la PR ne peut pas être mergée.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run all test suites
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run directed test cases
+        run: node tests/run.js
+
+      - name: Run 100-case oracle vs calculator
+        run: node tests/run100.js
+
+      - name: Run leviers catalogue pipeline
+        run: node tests/run_leviers.js
