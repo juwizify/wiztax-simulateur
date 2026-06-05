@@ -67,7 +67,8 @@ function makeInput(o = {}) {
     csgDeductible: 0, autresCharges: 0,
     dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
     fcpiJei: 0, fipCorse: 0, gfi: 0, gfiZone: 'standard', irPme: 0,    // fcpi retiré D3.4 ; gfiZone PR-C
-    malraux: 0, locAvantages: 0,
+    malraux: 0, malrauxTravauxAnterieurs: 0,   // PR-C : cumul 4 ans
+    locAvantages: 0,
     sofica: 0, soficaTaux: '36',         // D3.2 : sémantique investissement
     autresReductions: 0,
     emploiDomicile: 0, gardeEnfants: 0, cotSyndicales: 0,
@@ -324,12 +325,16 @@ function oracleCalc(input) {
   const capMalraux    = 100000 * 0.30;                  // 30 000
   const capLocAv      = 10000 * 0.65;                   //  6 500
 
-  // Malraux — mode "travaux + zone" prioritaire, sinon fallback legacy
+  // Malraux — mode "travaux + zone" prioritaire, sinon fallback legacy.
+  // PR-C : cap pluri-annuel 400 000 € sur 4 ans glissants, troncature par
+  // malrauxTravauxAnterieurs (cumul N-1 + N-2 + N-3).
   let redMalraux;
   if ((i.malrauxTravaux || 0) > 0) {
     const tauxMalrauxZone = { 'spr-non': 0.22, 'spr-oui': 0.30 };
     const zone = i.malrauxZone || 'spr-non';
-    const travRet = Math.min(i.malrauxTravaux, 100000);
+    const cumulAnt = i.malrauxTravauxAnterieurs || 0;
+    const restantPluri = Math.max(0, 400000 - cumulAnt);
+    const travRet = Math.min(i.malrauxTravaux, 100000, restantPluri);
     redMalraux = travRet * (tauxMalrauxZone[zone] || tauxMalrauxZone['spr-non']);
   } else {
     redMalraux = Math.min(i.malraux || 0, capMalraux);

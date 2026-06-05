@@ -412,15 +412,31 @@ function calculerIR(input) {
 
   // Malraux — 2 modes acceptés :
   //   * NOUVEAU (Phase 2.5) : input.malrauxTravaux + input.malrauxZone
-  //     → RI = min(travaux, 100 000 €/an) × taux zone (22 % SPR sans PSMV / 30 % SPR-PSMV ou QAD).
+  //     → RI = travaux retenus × taux zone (22 % SPR sans PSMV / 30 % SPR-PSMV ou QAD).
   //   * LEGACY : input.malraux directement (RI saisie), conservé pour rétro-compat.
+  //
+  // PR-C : double plafonnement des travaux retenus (CGI art. 199 tervicies II al. 3) :
+  //   - Cap annuel : 100 000 € de travaux/an
+  //   - Cap pluri-annuel : 400 000 € sur 4 ans glissants. L'utilisateur saisit
+  //     dans `input.malrauxTravauxAnterieurs` le cumul des 3 années précédentes ;
+  //     le moteur tronque l'année courante à `400 000 − cumul antérieur`.
   if ((input.malrauxTravaux || 0) > 0) {
     const zone = input.malrauxZone || PD.malraux.tauxDefaut;
     const tauxZone = PD.malraux.taux[zone] || PD.malraux.taux[PD.malraux.tauxDefaut];
-    const travauxRetenus = Math.min(input.malrauxTravaux, PD.malraux.depensesParAnMax);
+    // Cap pluri-annuel : ce qui reste sur la fenêtre 4 ans glissants
+    const cumulAnt = input.malrauxTravauxAnterieurs || 0;
+    const restantPluri = Math.max(0, PD.malraux.depensesPluriAnMax - cumulAnt);
+    // Travaux retenus = min(saisis, cap annuel 100k, restant pluri-annuel)
+    const travauxRetenus = Math.min(
+      input.malrauxTravaux,
+      PD.malraux.depensesParAnMax,
+      restantPluri
+    );
     det.redMalraux = travauxRetenus * tauxZone;
+    det.malrauxTravauxRetenus = travauxRetenus;   // info UI (pour signaler les troncatures)
   } else {
     det.redMalraux = Math.min(input.malraux || 0, capRiMax.malraux);
+    det.malrauxTravauxRetenus = 0;
   }
 
   // Réductions dans le plafond niches

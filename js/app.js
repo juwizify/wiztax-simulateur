@@ -65,7 +65,7 @@ function defaultInputs() {
     // Plafond pluri-annuel JEI+JEIR (50k RI cumulée 2024-2028) : RI déjà
     // imputée 2024-2025 (input optionnel pour les investisseurs récurrents).
     irPmeJeiJeirImputeAnterieur: 0,
-    malraux: 0, malrauxTravaux: 0, malrauxZone: 'spr-non',
+    malraux: 0, malrauxTravaux: 0, malrauxTravauxAnterieurs: 0, malrauxZone: 'spr-non',  // PR-C : cumul 4 ans
     locAvantages: 0, locAvantagesDepenses: 0, locAvantagesPalier: 'loc1',
     // SOFICA (D3.2) : sémantique investissement = montant souscrit + taux choisi
     sofica: 0, soficaTaux: '36',
@@ -140,6 +140,7 @@ function getInputs() {
     irPmeJeiJeirImputeAnterieur: v('irPmeJeiJeirImputeAnterieur'),
     malraux: v('malraux'),               // legacy (RI directe) — UI n'expose plus ce champ
     malrauxTravaux: v('malrauxTravaux'),
+    malrauxTravauxAnterieurs: v('malrauxTravauxAnterieurs'),  // PR-C : cumul 4 ans
     malrauxZone: _sel('malrauxZone', d.malrauxZone),
     locAvantages: v('locAvantages'),     // legacy (RI directe) — UI n'expose plus ce champ
     locAvantagesDepenses: v('locAvantagesDepenses'),

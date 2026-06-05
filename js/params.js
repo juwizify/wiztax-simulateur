@@ -179,9 +179,16 @@ const PARAMS = {
       taux: { 'standard': 0.18, 'eligible': 0.25 },
       tauxDefaut: 'standard',
     },
-    // Malraux — art. 199 tervicies CGI
+    // Malraux — art. 199 tervicies CGI.
+    // Deux plafonds coexistent :
+    //   - plafond ANNUEL : 100 000 € de travaux retenus (depensesParAnMax)
+    //   - plafond PLURI-ANNUEL : 400 000 € de travaux cumulés sur 4 ans
+    //     glissants (CGI art. 199 tervicies II al. 3). L'utilisateur peut
+    //     saisir le cumul des années précédentes via `malrauxTravauxAnterieurs`
+    //     pour que le moteur tronque l'année courante en conséquence.
     malraux: {
-      depensesParAnMax: 100000,  // base travaux retenue, plafond annuel
+      depensesParAnMax: 100000,
+      depensesPluriAnMax: 400000,
       taux: { 'spr-non': 0.22, 'spr-oui': 0.30 },
       tauxDefaut: 'spr-non',
     },

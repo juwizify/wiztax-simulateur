@@ -303,7 +303,7 @@ const LEVIERS_CATALOGUE = [
     levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'malrauxTravaux',
     paramKey: 'malrauxZone',
     nature: 'depenses-annuelles', budget: 'exclu',
-    info: 'Loi Malraux (art. 199 tervicies CGI) — restauration d\'immeubles patrimoniaux donnés en location nue 9 ans.\n\nÀ saisir : MONTANT DES TRAVAUX éligibles engagés dans l\'année. Le moteur calcule la RI = min(travaux, 100 000 €/an) × taux zone.\n\nTaux selon zone du bien :\n· SPR sans PSMV → 22 %\n· SPR avec PSMV, ou QAD → 30 %\n\nSigles : SPR = Site Patrimonial Remarquable (ex « secteur sauvegardé »). PSMV = Plan de Sauvegarde et de Mise en Valeur (document d\'urbanisme renforcé). QAD = Quartier Ancien Dégradé (programme spécifique).\n\nGénéralement financé à crédit → EXCLU du budget cash annuel. HORS plafond niches 10 k€ : atout majeur du dispositif.',
+    info: 'Loi Malraux (art. 199 tervicies CGI) — restauration d\'immeubles patrimoniaux donnés en location nue 9 ans.\n\nÀ saisir : MONTANT DES TRAVAUX éligibles engagés dans l\'année. Le moteur calcule la RI = travaux retenus × taux zone.\n\nDouble plafonnement des travaux retenus :\n· Plafond annuel : 100 000 €/an\n· Plafond pluri-annuel : 400 000 € sur 4 ans glissants (CGI art. 199 tervicies II al. 3). Renseigner le cumul des 3 années précédentes dans le sous-champ pour que le moteur applique le bon plafond.\n\nTaux selon zone du bien :\n· SPR sans PSMV → 22 %\n· SPR avec PSMV, ou QAD → 30 %\n\nSigles : SPR = Site Patrimonial Remarquable (ex « secteur sauvegardé »). PSMV = Plan de Sauvegarde et de Mise en Valeur (document d\'urbanisme renforcé). QAD = Quartier Ancien Dégradé (programme spécifique).\n\nGénéralement financé à crédit → EXCLU du budget cash annuel. HORS plafond niches 10 k€ : atout majeur du dispositif.',
     sectionGroup: 'immobilier-locatif',
     tagType: 'Réduction d\'impôt',
     titleLong: 'Loi Malraux — restauration en Site Patrimonial Remarquable',
@@ -334,6 +334,14 @@ const LEVIERS_CATALOGUE = [
           { value: 'spr-non', label: 'SPR — secteur sauvegardé sans plan urbanisme renforcé (22 %)' },
           { value: 'spr-oui', label: 'SPR avec PSMV, ou QAD (quartier ancien dégradé) — taux 30 %' },
         ]
+      },
+    ],
+    secondaryInputs: [
+      {
+        key: 'malrauxTravauxAnterieurs',
+        label: '↳ Cumul travaux Malraux des 3 années précédentes',
+        tip: 'Plafond pluri-annuel : 400 000 € de travaux sur 4 ans glissants (CGI art. 199 tervicies II al. 3). Saisir ici le cumul des travaux Malraux retenus en N−1 + N−2 + N−3 (lu sur l\'avis d\'imposition ou les déclarations passées).\n\nLe moteur tronque automatiquement les travaux de l\'année courante à `400 000 − cumul antérieur`. Laisser à 0 si c\'est la première année de Malraux ou si le cumul antérieur est nul.\n\nExemple : 350 000 € déjà investis sur 3 ans → marge résiduelle 50 000 € pour cette année (la 4ᵉ).',
+        inSimpleMode: false,
       },
     ],
   },
