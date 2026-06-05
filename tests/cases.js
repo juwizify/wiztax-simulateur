@@ -260,7 +260,7 @@ const CASES = [
     // + PS = 1 000 × 18,6 % = 186 (dus via avis IR : 2CK ne couvre que l'IR)
     // total = 3 904 + 128 + 186 = 4 218
     // RFR = 40 000 + 1 000 = 41 000
-    // Pas d'imputation 2CK car pfnlVerse omis (D3.14 : conforme impots.gouv.fr).
+    // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
     expected: { impotNet: 4218, revenuReference: 37000, tmi: 0.30 },
   },
   {
@@ -271,7 +271,7 @@ const CASES = [
     // impôt brut = 4 203.99 → 4 204
     // + PS 186 (toujours dus même au barème)
     // total = 4 204 + 186 = 4 390
-    // Pas d'imputation 2CK car pfnlVerse omis (D3.14 : conforme impots.gouv.fr).
+    // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
     expected: { impotNet: 4390, revenuReference: 37000, tmi: 0.30 },
   },
 
@@ -287,7 +287,7 @@ const CASES = [
     // PS = 3 000 × 18,6 % = 558 (PV + div + int tous dus côté avis IR)
     // total = 3 904 + 384 + 558 = 4 846
     // RFR = 40 000 + 3 000 = 43 000
-    // Pas d'imputation 2CK car pfnlVerse omis (D3.14 : conforme impots.gouv.fr).
+    // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
     expected: { impotNet: 4846, revenuReference: 39000, tmi: 0.30 },
   },
   {
@@ -301,7 +301,7 @@ const CASES = [
     // + PS 558 (toujours dus)
     // total = 4 684 + 558 = 5 242
     // PFU plus avantageux ici de 396 € à TMI 30 %.
-    // Pas d'imputation 2CK car pfnlVerse omis (D3.14 : conforme impots.gouv.fr).
+    // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
     expected: { impotNet: 5242, revenuReference: 39000, tmi: 0.30 },
   },
 
@@ -762,7 +762,7 @@ const CASES = [
     // PS foncier = 4000 × 18.6% = 744 (CFA LFSS 2026)
     // Total PS = 1581
     // Total = 15904 + 576 + 1581 = 18061
-    // Pas d'imputation 2CK car pfnlVerse omis (D3.14 : conforme impots.gouv.fr).
+    // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
     expected: { impotNet: 18061, revenuReference: 80500, tmi: 0.30 },
   },
 
@@ -823,7 +823,7 @@ const CASES = [
     // PS mob = 5000 × 18.6% = 930 (div dus via avis IR)
     // RFR = 305000 → CEHR : (305000-250000)×3% = 1650
     // Total = 104974 + 640 + 930 + 1650 = 108194 (− ajustement décote/QF ≈ 107757)
-    // Pas d'imputation 2CK car pfnlVerse omis (D3.14 : conforme impots.gouv.fr).
+    // pfnlVerse omis → 2CK non imputé (saisie explicite, conforme impots.gouv.fr).
     expected: { impotNet: 107757, revenuReference: 290445, tmi: 0.45 },
   },
 

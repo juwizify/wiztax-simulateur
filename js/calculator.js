@@ -659,11 +659,11 @@ function calculerIR(input) {
   // sans plafond niches, imputé sur l'IR final. Si supérieur à l'impôt dû,
   // l'excédent est remboursé (impôt net peut devenir négatif).
   // - input.pfnlVerse : SAISI EXPLICITEMENT par l'utilisateur, comme la case
-  //   2CK du formulaire officiel impots.gouv.fr. Pas d'auto-imputation
-  //   intentionnelle (cf. D3.14 rollback) : le simulateur officiel ne devine
-  //   pas non plus, et auto-imputer casserait le cas dispense de prélèvement
-  //   (RFR < 25/50k intérêts, < 50/75k dividendes → banque ne prélève rien
-  //   → aucun 2CK à créditer). Le choix de saisie est volontaire.
+  //   2CK du formulaire officiel impots.gouv.fr. Choix de design délibéré :
+  //   le simulateur officiel ne devine pas non plus, et auto-imputer casserait
+  //   le cas dispense de prélèvement (RFR < 25/50k intérêts, < 50/75k
+  //   dividendes → banque ne prélève rien → aucun 2CK à créditer →
+  //   l'utilisateur laisse pfnlVerse vide).
   //   `det.pfnl2CKAuto` exposé en INFO uniquement (jamais consommé par le
   //   calcul) pour qu'une future UI puisse suggérer le montant à l'utilisateur.
   // - det.pfnlAV     : PFNL automatiquement prélevé sur les produits AV > 8 ans

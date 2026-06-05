@@ -452,8 +452,8 @@ function oracleCalc(input) {
 
   const credEff = (credDom + credGarde + credAutres) * facteur10;
 
-  // D3.14 rollback : pfnlVerse saisi explicitement (conforme impots.gouv.fr).
-  // Pas d'auto-imputation — cf. commentaire dans calculator.js.
+  // pfnlVerse saisi explicitement, conforme impots.gouv.fr (case 2CK manuelle).
+  // Cf. commentaire détaillé dans calculator.js.
   const pfnl = i.pfnlVerse || 0;
 
   let impotNet = Math.max(0,
