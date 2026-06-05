@@ -72,7 +72,7 @@ function makeInput(overrides = {}) {
     // fcpi (classique) retiré en D3.4 — dispositif supprimé au 21/02/2026.
     fcpiJei: 0,
     fipCorse: 0,
-    gfi: 0,
+    gfi: 0, gfiZone: 'standard',   // PR-C : zone éligible 25 % via gfiZone='eligible'
     irPme: 0,
     irPmeEsus: 0,
     irPmeMH: 0,
@@ -673,6 +673,21 @@ const CASES = [
     // RI = 8 000 × 40 % = 3 200 €
     // impôt net = 20 701 - 3 200 = 17 501
     expected: { impotNet: 17501, revenuReference: 90000, tmi: 0.41 },
+  },
+  {
+    name: "GFI zone standard (PR-C) : 100k sal + 10k investi → RI 1 800 € à 18 %",
+    input: makeInput({ sal1: 100000, gfi: 10000, gfiZone: 'standard' }),
+    // GFI 10 000 × 18 % (zone standard) = 1 800 €
+    // impôt net = 20 701 - 1 800 = 18 901
+    expected: { impotNet: 18901, revenuReference: 90000, tmi: 0.41 },
+  },
+  {
+    name: "GFI zone éligible (PR-C) : 100k sal + 10k investi → RI 2 500 € à 25 %",
+    input: makeInput({ sal1: 100000, gfi: 10000, gfiZone: 'eligible' }),
+    // GFI 10 000 × 25 % (massif déficitaire en gestion durable) = 2 500 €
+    // +700 € vs zone standard (gain de la majoration zone éligible)
+    // impôt net = 20 701 - 2 500 = 18 201
+    expected: { impotNet: 18201, revenuReference: 90000, tmi: 0.41 },
   },
 
   // -------------------------------------------------------------------

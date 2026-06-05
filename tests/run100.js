@@ -66,7 +66,7 @@ function makeInput(o = {}) {
     per: 0, perPlafondManuel: 0, pensionsAlim: 0, nbBeneficiairesPA: 0,
     csgDeductible: 0, autresCharges: 0,
     dons: 0, dons7UD: 0, pinel: 0, girardinPD: 0, girardinAG: 0,
-    fcpiJei: 0, fipCorse: 0, gfi: 0, irPme: 0,    // fcpi (classique) retiré D3.4
+    fcpiJei: 0, fipCorse: 0, gfi: 0, gfiZone: 'standard', irPme: 0,    // fcpi retiré D3.4 ; gfiZone PR-C
     malraux: 0, locAvantages: 0,
     sofica: 0, soficaTaux: '36',         // D3.2 : sémantique investissement
     autresReductions: 0,
@@ -340,7 +340,9 @@ function oracleCalc(input) {
   const redGirAG = i.girardinAG;
   // redFCPI retiré en D3.4 — dispositif FCPI classique supprimé au 21/02/2026.
   const redFipCorse = Math.min(i.fipCorse || 0, versFipCorseEff) * 0.30;
-  const redGfi      = Math.min(i.gfi || 0,      versGfiEff)      * 0.18;
+  // GFI — PR-C : taux variable selon i.gfiZone (standard 18 %, eligible 25 %).
+  const tauxGfi     = (i.gfiZone === 'eligible') ? 0.25 : 0.18;
+  const redGfi      = Math.min(i.gfi || 0,      versGfiEff)      * tauxGfi;
 
   // ─── IR-PME : sémantique post-F4 — input = MONTANT INVESTI (€) ───
   // RI = min(invest, versementMax) × taux (miroir calculator.js).

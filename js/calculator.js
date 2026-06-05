@@ -404,7 +404,8 @@ function calculerIR(input) {
     irPmeJeii:    versCouple(PD.irPmeJeii) * PD.irPmeJeii.taux,                    // 50k/100k × 40 % (JEII, LF 2026)
     irPmeJeir:    versCouple(PD.irPmeJeir) * PD.irPmeJeir.taux,                    // 50k/100k × 50 % (JEIR, art 199 terdecies-0 A ter)
     // GFI — pas dans capRiMax depuis D3.3 : sémantique = INVESTISSEMENT.
-    gfiRiMax:     versCouple(PD.gfi) * PD.gfi.taux,                                // 50k/100k × 18 % — info UI seule
+    // tauxMax(PD.gfi) = 25 % (zone éligible) ; RI max effective dépend de l'input.
+    gfiRiMax:     versCouple(PD.gfi) * tauxMax(PD.gfi),                            // 50k/100k × 25 % — info UI seule (zone éligible)
     malraux:      PD.malraux.depensesParAnMax * tauxMax(PD.malraux),               // 100 000 × 30 % = 30 000
     locAvantages: PD.locAvantages.depensesMax * tauxMax(PD.locAvantages),          // 10 000 × 65 % = 6 500
   };
@@ -433,11 +434,15 @@ function calculerIR(input) {
   // SOUSCRIT (cash). RI = min(invest, 12k/24k) × 30 %. Art. 199 terdecies-0 A bis CGI.
   const versFipCorseEff = versCouple(PD.fipCorse);
   det.redFipCorse    = Math.min(input.fipCorse || 0, versFipCorseEff) * PD.fipCorse.taux;
-  // GFI — sémantique investissement (post-D3.3) : input.gfi = MONTANT SOUSCRIT
-  // en parts de Groupement Forestier d'Investissement. RI = min(invest, 50k/100k) × 18 %.
+  // GFI — sémantique investissement : input.gfi = MONTANT SOUSCRIT en parts de
+  // Groupement Forestier d'Investissement. RI = min(invest, 50k/100k) × taux zone.
   // Art. 199 decies H CGI / BOI-IR-RICI-80.
+  // PR-C : taux variable selon input.gfiZone ∈ {standard 18 %, eligible 25 %}.
+  // Zone éligible = massifs déficitaires en gestion durable (cf. CGI art. 199 decies H I 2°).
   const versGfiEff = versCouple(PD.gfi);
-  det.redGfi         = Math.min(input.gfi || 0, versGfiEff) * PD.gfi.taux;
+  const _gfiZoneKey = input.gfiZone || PD.gfi.tauxDefaut;
+  const _gfiTaux = PD.gfi.taux[_gfiZoneKey] || PD.gfi.taux[PD.gfi.tauxDefaut];
+  det.redGfi         = Math.min(input.gfi || 0, versGfiEff) * _gfiTaux;
 
   // ─── IR-PME : saisie = MONTANT INVESTI (€), moteur calcule la RI ───
   // Sémantique 2026 (F4-IRPME.a) : l'utilisateur saisit ce qui figure sur sa

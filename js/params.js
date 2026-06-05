@@ -169,11 +169,15 @@ const PARAMS = {
     // (art. 199 terdecies-0 A bis et ter). Appliqué dans le moteur via input
     // `irPmeJeiJeirImputeAnterieur` (RI déjà imputée 2024-2025, optionnel).
     irPmeJeiJeirPlafondCumule: 50000,
-    // GFI — art. 199 decies H CGI (Groupements Forestiers d'Investissement)
+    // GFI — art. 199 decies H CGI (Groupements Forestiers d'Investissement).
+    // Taux standard 18 %, majoré à 25 % pour les acquisitions de forêts en
+    // zone éligible (massifs déficitaires en gestion durable, art. 199 decies H I 2°).
+    // L'utilisateur sélectionne `gfiZone` ∈ {standard, eligible} dans le Simulateur.
     gfi: {
       versementMax:        50000,
       versementMaxCouple: 100000,
-      taux: 0.18,
+      taux: { 'standard': 0.18, 'eligible': 0.25 },
+      tauxDefaut: 'standard',
     },
     // Malraux — art. 199 tervicies CGI
     malraux: {
