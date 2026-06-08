@@ -2,8 +2,8 @@
 
 Moteur de calcul fiscal français (revenus 2025 / déclaration 2026) avec catalogue de leviers d'optimisation et démo web. Conçu pour être **intégré dans un produit SaaS**, pas pour être utilisé tel quel comme produit final.
 
-- **Démo en ligne** : https://wizify.github.io/wiztax-simulateur/
-- **Repo** : https://github.com/wizify/wiztax-simulateur
+- **Démo en ligne** : https://juwizify.github.io/wiztax-simulateur/
+- **Repo** : https://github.com/juwizify/wiztax-simulateur
 - **Mainteneur** : Wizify (julien@wizify.fr)
 - **Statut** : moteur stable, 211 tests verts, paramètres LF 2026 / LFSS 2026 vérifiés au 2026-06-05.
 
