@@ -338,7 +338,9 @@
             <input type="number" id="avProduits128" value="0" min="0">
           </div>
 
-          <div class="form-row">
+          <!-- En mode simple : PFU forcé par défaut (pas de choix exposé au prospect).
+               Le sélecteur reste accessible en mode complet pour le CGP. -->
+          <div class="form-row advanced">
             <label for="optionPFU">
               Option imposition mobilier (case 2OP)
               <i class="tip" data-tip="Option GLOBALE qui s'applique à tous les revenus mobiliers du foyer : dividendes, intérêts (2TR) et plus-values.&#10;Cocher 2OP sur la déclaration officielle = choisir « Barème » ici.&#10;&#10;PFU (par défaut) : taux unique 31,4 % ({{ps.pfuIr|pct}} IR + {{ps.mobilier|pct}} PS, LFSS 2026 : CSG portée à 10,6 % via la Contribution Financière pour l'Autonomie). Simple, souvent avantageux à TMI ≥ 30 %.&#10;&#10;Barème progressif : dividendes (avec abattement 40 %), intérêts (sans abattement) et PV intégrés au revenu imposable + PS {{ps.mobilier|pct}} toujours dus. Peut être avantageux si TMI ≤ 11 % ou si vous avez beaucoup d'intérêts à faible montant.&#10;&#10;⚠ Le choix est global et irrévocable pour l'année.&#10;⚠ L'assurance-vie reste à {{ps.foncierNu|pct}} de PS (exclusion explicite LFSS 2026).">i</i>
@@ -546,8 +548,8 @@
                complète symétriquement la maille des crédits. -->
           <div class="form-row">
             <label for="autresReductions">
-              Autres réductions d'impôt
-              <i class="tip" data-tip="Catch-all pour FCPI JEI, FIP Corse/Outre-mer, Invest. PME (IR-PME variantes), et tout autre dispositif de réduction non listé individuellement. La saisie est directement la RI annuelle obtenue.">i</i>
+              Autres réductions d'impôt (mobilier)
+              <i class="tip" data-tip="Catch-all pour les réductions mobilières : SOFICA, Girardin (PD ou avec agrément), IR-PME (toutes variantes : ESUS, JEI, JEII, JEIR, MH), FCPI JEI, FIP Corse/Outre-mer, GFI forestier, et tout autre dispositif de réduction d'impôt non listé individuellement.&#10;&#10;Saisir directement le MONTANT DE LA RÉDUCTION d'impôt obtenue (pas le montant investi). Pour les dispositifs précis avec calcul automatique (taux × invest, plafonds), utiliser le mode complet.">i</i>
             </label>
             <input type="number" id="autresReductions" value="0" min="0">
             <div class="niche-cell">
@@ -556,7 +558,21 @@
           </div>
 
           <div class="form-row">
-            <label for="autresCredits">Autres crédits d'impôt</label>
+            <label for="autresReductionsImmo">
+              Réductions immobilières
+              <i class="tip" data-tip="Catch-all pour les réductions d'impôt liées à l'investissement immobilier : Pinel (millésimes ouverts), Denormandie, Scellier, Duflot, Censi-Bouvard, et tout autre dispositif immobilier non listé individuellement.&#10;&#10;Saisir directement le MONTANT DE LA RÉDUCTION d'impôt annuelle obtenue (pas le montant investi). Pour les dispositifs précis avec calcul automatique (étalement sur la durée, plafonds invest), utiliser le mode complet.">i</i>
+            </label>
+            <input type="number" id="autresReductionsImmo" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-10k">niche {{niches.plafond|eur}}</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="autresCredits">
+              Autres crédits d'impôt
+              <i class="tip" data-tip="Catch-all pour les crédits d'impôt non listés individuellement (transition énergétique CITE/MaPrimeRénov, services à domicile spécifiques, etc.).&#10;&#10;Saisir directement le MONTANT DU CRÉDIT d'impôt obtenu. Les crédits sont remboursables si supérieurs à l'impôt dû.">i</i>
+            </label>
             <input type="number" id="autresCredits" value="0" min="0">
             <div class="niche-cell">
               <span class="niche-marker niche-10k">niche {{niches.plafond|eur}}</span>

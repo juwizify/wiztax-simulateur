@@ -625,7 +625,13 @@ function calculerIR(input) {
   const _tauxSofica     = PD.sofica.taux[_tauxSoficaCle] || PD.sofica.taux[PD.sofica.tauxDefaut];
   const versSoficaRetenu = Math.min(input.sofica || 0, versSoficaEffectif);
   det.redSofica      = versSoficaRetenu * _tauxSofica;
-  det.redAutres      = input.autresReductions;  // catch-all, pas de cap
+  // catch-all : RI fourre-tout saisies en direct (lead-gen mode simple).
+  // `autresReductions` regroupe le mobilier (SOFICA, Girardin, IR-PME, FIP, GFI, …)
+  // et `autresReductionsImmo` regroupe l'immobilier (Pinel, Denormandie, Scellier, Duflot, …).
+  // Sommés dans `det.redAutres` pour le calcul ; conservés séparés pour traçabilité.
+  det.redAutresMobilier = input.autresReductions || 0;
+  det.redAutresImmo     = input.autresReductionsImmo || 0;
+  det.redAutres         = det.redAutresMobilier + det.redAutresImmo;  // catch-all, pas de cap
 
   // Surplus écrasés par les caps individuels (pour affichage UI).
   // Sémantique INVESTISSEMENT uniforme : surplus = montant saisi − ce qui a
