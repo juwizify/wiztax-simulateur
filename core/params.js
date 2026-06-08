@@ -42,7 +42,11 @@ const PARAMS = {
   abat: {
     sal:    { taux: 0.10, min: 509,   max: 14555 },
     pen:    { taux: 0.10, min: 454,   maxFoyer: 4439 },
-    bncMicro: { taux: 0.34, min: 305 },
+    bncMicro: { taux: 0.34, min: 305 },                  // micro-BNC (art. 102 ter CGI), plafond CA 77 700 €
+    // Micro-BIC (art. 50-0 CGI). 2 taux selon la nature de l'activité.
+    // Plancher d'abattement commun avec le BNC (305 € — symétrie BOFiP).
+    bicVentes:   { taux: 0.71, min: 305, plafond: 188700 },  // micro-BIC vente de biens / hébergement classique (CA ≤ 188 700 €)
+    bicServices: { taux: 0.50, min: 305, plafond:  77700 },  // micro-BIC services et prestations (CA ≤ 77 700 €)
     microFoncier: { taux: 0.30, plafond: 15000 },
     meubleClasse:    { taux: 0.50, plafond: 77700 },  // 5NG — chambres d'hôtes + meublé tourisme classé
     meubleNonClasse: { taux: 0.30, plafond: 15000 },  // 5NH — meublé tourisme non classé

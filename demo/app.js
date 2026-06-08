@@ -40,9 +40,12 @@ function defaultInputs() {
     fraisReels1: 0, fraisReels2: 0, heuresSupExo1: 0, heuresSupExo2: 0,
     pen1: 0, pen2: 0, pensInvalidite1: 0, pensInvalidite2: 0,
     pensAlimRecue1: 0, pensAlimRecue2: 0,
-    // BNC, foncier, meublé
+    // BNC, BIC, foncier, meublé
     bncMicro1: 0, bncMicro2: 0, bncReel1: 0, bncReel2: 0,
-    microFoncier: 0, foncierReel: 0,
+    bicVentes1: 0, bicVentes2: 0,
+    bicServices1: 0, bicServices2: 0,
+    bicReel1: 0, bicReel2: 0,
+    microFoncier: 0, foncierReel: 0, deficitFoncier: 0,
     meubleClasse: 0, meubleNonClasse: 0, autresMeubles: 0,
     jeanbrunAmort: 0, jeanbrunCategorie: 'intermediaire',
     // Mobilier
@@ -69,7 +72,7 @@ function defaultInputs() {
     locAvantages: 0, locAvantagesDepenses: 0, locAvantagesPalier: 'loc1',
     // SOFICA (D3.2) : sémantique investissement = montant souscrit + taux choisi
     sofica: 0, soficaTaux: '36',
-    autresReductions: 0,
+    autresReductions: 0, autresReductionsImmo: 0,
     // Crédits
     emploiDomicile: 0, gardeEnfants: 0, cotSyndicales: 0,
     fraisScolCollege: 0, fraisScolLycee: 0, fraisScolSup: 0,
@@ -102,7 +105,11 @@ function getInputs() {
     pensAlimRecue1: v('pensAlimRecue1'),   pensAlimRecue2: v('pensAlimRecue2'),
     bncMicro1: v('bncMicro1'), bncMicro2: v('bncMicro2'),
     bncReel1: v('bncReel1'),   bncReel2: v('bncReel2'),
+    bicVentes1:   v('bicVentes1'),   bicVentes2:   v('bicVentes2'),
+    bicServices1: v('bicServices1'), bicServices2: v('bicServices2'),
+    bicReel1:     v('bicReel1'),     bicReel2:     v('bicReel2'),
     microFoncier: v('microFoncier'), foncierReel: v('foncierReel'),
+    deficitFoncier: v('deficitFoncier'),
     meubleClasse: v('meubleClasse'), meubleNonClasse: v('meubleNonClasse'),
     autresMeubles: v('autresMeubles'),
     jeanbrunAmort: v('jeanbrunAmort'),
@@ -151,6 +158,7 @@ function getInputs() {
     sofica: v('sofica'),
     soficaTaux: _sel('soficaTaux', d.soficaTaux),
     autresReductions: v('autresReductions'),
+    autresReductionsImmo: v('autresReductionsImmo'),
     autresCredits: v('autresCredits'),
   };
 

@@ -5,7 +5,20 @@ Moteur de calcul fiscal français (revenus 2025 / déclaration 2026) avec catalo
 - **Démo en ligne** : https://juwizify.github.io/wiztax-simulateur/
 - **Repo** : https://github.com/juwizify/wiztax-simulateur
 - **Mainteneur** : Wizify (julien@wizify.fr)
-- **Statut** : moteur stable, 211 tests verts, paramètres LF 2026 / LFSS 2026 vérifiés au 2026-06-05.
+- **Statut** : moteur stable, 214 tests verts, paramètres LF 2026 / LFSS 2026 vérifiés au 2026-06-05.
+
+---
+
+## Le produit en 2 volets
+
+WizTax est conçu pour alimenter **deux parcours utilisateurs** distincts via le même moteur fiscal :
+
+1. **Lead-gen** — un CGP envoie à des prospects un lien vers le **mode simple** du Simulateur. Le particulier remplit un formulaire allégé (revenus principaux + dispositifs courants), obtient une simulation indicative de son IR, et le CGP capture le lead.
+2. **Outil pro CGP** — le CGP récupère ensuite la saisie du prospect et la complète en **mode complet** (tous les régimes BIC/BNC, tous les dispositifs IR-PME / SOFICA / Malraux / Pinel / etc., préconisations détaillées, plafonnement des niches).
+
+Architecture : **un seul questionnaire, deux niveaux d'exposition.** Le mode simple cache visuellement les champs avancés (classe CSS `.advanced`) et le moteur ignore leurs valeurs (cf. `getInputs()` dans `demo/app.js` : `if (mode-simple) { advanced fields → defaults }`).
+
+**Pour le dev qui intègre dans son SaaS** : reproduis ce modèle si pertinent, ou expose uniquement le mode complet. Les valeurs neutres (0, palier par défaut) garantissent que tout champ omis donne un calcul cohérent.
 
 ---
 
@@ -39,7 +52,7 @@ wiztax-simulateur/
 │   ├── paramInject.js         · résolveur de tokens {{path|fmt}} au DOM
 │   └── paramsTab.js           · générateur de l'onglet Paramètres
 │
-├── index.html       ← Démo (sert https://wizify.github.io/...)
+├── index.html       ← Démo (sert https://juwizify.github.io/...)
 ├── css/             ← Styles de la démo
 │
 ├── tests/           ← 211 tests qui verrouillent le comportement attendu
@@ -79,7 +92,7 @@ const result = calculerIR({ situation: 'celibataire', sal1: 50000, ...});
 ### Option 2 — Git submodule (suivre les évolutions)
 
 ```bash
-git submodule add https://github.com/wizify/wiztax-simulateur.git lib/wiztax
+git submodule add https://github.com/juwizify/wiztax-simulateur.git lib/wiztax
 ```
 
 Tu pointes ensuite sur `lib/wiztax/core/*.js`. Pour mettre à jour : `git submodule update --remote lib/wiztax`.

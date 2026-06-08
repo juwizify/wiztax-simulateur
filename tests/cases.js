@@ -31,6 +31,9 @@ function makeInput(overrides = {}) {
     // BNC
     bncMicro1: 0, bncMicro2: 0,
     bncReel1: 0,  bncReel2: 0,
+    bicVentes1: 0,   bicVentes2: 0,
+    bicServices1: 0, bicServices2: 0,
+    bicReel1: 0,     bicReel2: 0,
 
     // Foncier
     microFoncier: 0,
@@ -41,6 +44,7 @@ function makeInput(overrides = {}) {
     meubleNonClasse: 0,
     autresMeubles: 0,
     jeanbrunAmort: 0,
+    deficitFoncier: 0,
     jeanbrunCategorie: 'intermediaire',
 
     // Mobilier
@@ -399,24 +403,41 @@ const CASES = [
   // PS foncier dus uniquement sur résultat foncier net positif.
   // -------------------------------------------------------------------
   {
-    name: '4BC déficit modéré : 40k sal + foncier réel -5 000 €',
-    input: makeInput({ sal1: 40000, foncierReel: -5000 }),
-    // RBG = 36 000 - 5 000 = 31 000 (déficit sous plafond)
-    // QF=31 000 → tranche 2: 1 977.69 + tranche 3: (31 000-29 579)×0.30 = 426.30
-    // impôt = 2 403.99 → 2 404
-    // pas de PS (résultat foncier négatif)
-    // RFR = 40 000 + 0 + (-5 000) = 35 000
+    name: '4BC déficit modéré : 40k sal + déficit foncier 5 000 €',
+    input: makeInput({ sal1: 40000, deficitFoncier: 5000 }),
+    // RBG salaire = 36 000. Déficit foncier 5 000 < cap 10 700 → imputable intégralement.
+    // RNI = 36 000 - 5 000 = 31 000.
+    // QF=31 000 → 1 977.69 + (31 000-29 579)×0.30 = 426.30 → impôt 2 404
+    // Pas de PS sur le déficit (effet IR seulement).
+    // RFR = salNet 36 000 - déficit imputable 5 000 = 31 000
     expected: { impotNet: 2404, revenuReference: 31000, tmi: 0.30 },
   },
   {
-    name: '4BC déficit plafonné : 60k sal + foncier réel -15 000 € (plafond 10 700)',
-    input: makeInput({ sal1: 60000, foncierReel: -15000 }),
-    // sal net 60 000 - 6 000 = 54 000
-    // foncierReel plafonné à -10 700
-    // RBG = 54 000 - 10 700 = 43 300
-    // QF=43 300 → tranches: 1 977.69 + (43 300-29 579)×0.30 = 6 093.99 → 6 094
-    // pas de PS, pas de décote
-    // RFR = 60 000 + (-10 700) = 49 300 (et non 45 000 si non plafonné)
+    name: '4BC déficit plafonné : 60k sal + déficit foncier 15 000 € (cap 10 700)',
+    input: makeInput({ sal1: 60000, deficitFoncier: 15000 }),
+    // sal net 54 000. Déficit 15 000 > cap 10 700 → 4 300 € de surplus ignoré.
+    // RNI = 54 000 - 10 700 = 43 300.
+    // QF=43 300 → 1 977.69 + (43 300-29 579)×0.30 = 6 093.99 → 6 094
+    // RFR = 54 000 - 10 700 = 43 300
+    expected: { impotNet: 6094, revenuReference: 43300, tmi: 0.30 },
+  },
+  {
+    name: 'Combo Jeanbrun + déficit : Jeanbrun 10k > revenus 4k → excédent 6k rejoint déficit 5k saisi (cap 10 700)',
+    input: makeInput({
+      sal1: 60000,
+      foncierReel: 4000,                     // revenu foncier 4k
+      jeanbrunAmort: 10000,                  // amortissement 10k > revenus 4k
+      jeanbrunCategorie: 'social',           // plafond catégoriel 10k
+      deficitFoncier: 5000,                  // déficit foncier saisi explicite
+    }),
+    // foncierApresJeanbrun = 4 000 − 10 000 = −6 000
+    //   → foncierReel net = 0, excédent Jeanbrun = 6 000
+    // deficitTotal = 5 000 (saisi) + 6 000 (excédent JB) = 11 000 > cap 10 700
+    //   → deficitFoncierImputable = 10 700, surplus = 300 (exposé warning)
+    // sal net = 60 000 − 6 000 = 54 000 → RBG = 54 000 (foncier nul)
+    // RNI = 54 000 − 10 700 = 43 300
+    // QF=43 300 → 1 977,69 + (43 300 − 29 579) × 0,30 = 6 094
+    // RFR = sal net 54 000 + 0 (foncier) − déficit imputable 10 700 = 43 300
     expected: { impotNet: 6094, revenuReference: 43300, tmi: 0.30 },
   },
   {
@@ -828,8 +849,8 @@ const CASES = [
 
   // Profil 7 : Propriétaire en déficit foncier + EHPAD ascendant
   {
-    name: 'Profil 7 — 60k sal + foncier -8k + EHPAD 6k pour 1 ascendant',
-    input: makeInput({ sal1: 60000, foncierReel: -8000, ehpadFrais: 6000 }),
+    name: 'Profil 7 — 60k sal + déficit foncier 8k + EHPAD 6k pour 1 ascendant',
+    input: makeInput({ sal1: 60000, deficitFoncier: 8000, ehpadFrais: 6000 }),
     // sal net 54k - 8k déficit = RBG 46k (sous plafond -10700)
     // QF = 46k → 1977.69 + (46-29.579)×0.30 = 6903.99 → 6904
     // EHPAD : min(6000, 10000) × 25% = 1500
@@ -1134,6 +1155,37 @@ const CASES = [
     // RI 12 ans à 21 % total = 300 000 × 21 % / 12 = 5 250/an (dans panier niche10)
     // impotNet = 59 974 − 5 250 = 54 724
     expected: { impotNet: 54724, revenuReference: 185445, tmi: 0.45 },
+  },
+
+  // -------------------------------------------------------------------
+  // BIC — Bénéfices Industriels et Commerciaux (art. 50-0 CGI)
+  // 2 régimes micro (taux variable selon nature) + réel direct.
+  // RFR utilise le CA brut (avant abattement), comme pour le micro-BNC.
+  // -------------------------------------------------------------------
+  {
+    name: 'Micro-BIC ventes — célib 60k CA → abat 71 % → net 17 400 €',
+    input: makeInput({ sal1: 0, bicVentes1: 60000 }),
+    // abat = max(305, 60 000 × 71 %) = 42 600 → net = 17 400
+    // QF 17 400 (1 part) → barème 0 % jusqu'à 11 600 + 11 % × 5 800 = 638
+    // Décote (impôt < 1 982) = 897 − 638 × 45,25 % = 608,30 → impôt = 638 − 608,30 ≈ 30
+    // RFR = CA brut 60 000 (BNC/BIC entrent au brut dans le RFR, conforme avis officiel)
+    expected: { impotNet: 30, revenuReference: 60000, tmi: 0.11 },
+  },
+  {
+    name: 'Micro-BIC services — célib 30k CA → abat 50 % → net 15 000 €',
+    input: makeInput({ sal1: 0, bicServices1: 30000 }),
+    // abat = max(305, 30 000 × 50 %) = 15 000 → net = 15 000
+    // QF 15 000 → barème 0 % jusqu'à 11 600 + 11 % × 3 400 = 374
+    // Décote (impôt < 1 982) = 897 − 374 × 45,25 % ≈ 727 → impôt = 374 − 727 < 0 → 0
+    expected: { impotNet: 0, revenuReference: 30000, tmi: 0.11 },
+  },
+  {
+    name: 'BIC réel — célib 40k bénéfice net → ajouté tel quel au RBG',
+    input: makeInput({ sal1: 0, bicReel1: 40000 }),
+    // RBG = 40 000 (pas d'abattement, bénéfice déjà net), QF = 40 000 (1 part)
+    // Barème : 11 % × (29 579 − 11 600) + 30 % × (40 000 − 29 579)
+    //        = 1 977,69 + 3 126,30 = 5 103,99 → 5 104
+    expected: { impotNet: 5104, revenuReference: 40000, tmi: 0.30 },
   },
 ];
 

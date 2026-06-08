@@ -28,9 +28,11 @@ function makeInput(o = {}) {
     pen1: 0, pen2: 0, pensInvalidite1: 0, pensInvalidite2: 0,
     pensAlimRecue1: 0, pensAlimRecue2: 0,
     bncMicro1: 0, bncMicro2: 0, bncReel1: 0, bncReel2: 0,
+    bicVentes1: 0, bicVentes2: 0, bicServices1: 0, bicServices2: 0, bicReel1: 0, bicReel2: 0,
     microFoncier: 0, foncierReel: 0,
     meubleClasse: 0, meubleNonClasse: 0,
     jeanbrunAmort: 0, jeanbrunCategorie: 'intermediaire',
+    deficitFoncier: 0,
     dividendes: 0, interets: 0, pv: 0,
     avProduits75: 0, avProduits128: 0, pfnlVerse: 0,
     optionPFU: 'pfu', autresRevenus: 0,
@@ -135,9 +137,9 @@ const TESTS = [
   // Si un engagement Pinel existant est saisi par l'utilisateur, c'est via
   // l'onglet Simulateur uniquement, pas via les préconisations.
 
-  // Déficit foncier : 5000 € de travaux → input.foncierReel = -5000
-  // (cap imputation RG à -10 700). Delta IR ≈ 5000 × TMI = 1500.
-  { id: 'deficitFoncier', montant: 5000, key: 'foncierReel', expected: -5000, delta: 5000 * baseR.tmi, deltaTol: 5 },
+  // Déficit foncier : 5000 € → input.deficitFoncier = +5000 (sémantique investissement)
+  // Cap imputation RG à 10 700 €/an. Delta IR ≈ 5000 × TMI = 1500.
+  { id: 'deficitFoncier', montant: 5000, key: 'deficitFoncier', expected: 5000, delta: 5000 * baseR.tmi, deltaTol: 5 },
 
   // Jeanbrun : amortissement social 8000 (sous plafond 10k)
   // Pas un avantage IR direct → diminue revenus fonciers

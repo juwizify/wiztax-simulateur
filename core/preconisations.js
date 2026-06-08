@@ -57,8 +57,8 @@ const eur = (n) => n.toLocaleString('fr-FR') + ' €';
 //   - 'taux-variable' : taux dépend d'un paramètre additionnel listé dans
 //     `params[0].options[].taux` (Loc'Avantages palier, Malraux zone).
 //   - 'taux-libre' : rendement saisi par l'utilisateur (Girardin PD/AG).
-//   - 'deficit-foncier' : les travaux saisis viennent en déficit foncier
-//     (input.foncierReel négatif), pas en RI.
+//   - Le déficit foncier utilise 'versement-direct' avec inputKey 'deficitFoncier'
+//     (sémantique positif, traité comme charge déductible cap 10 700 €/an).
 //   - 'jeanbrun' : amortissement spécifique foncier (pas un avantage IR direct).
 // Mode 'taux' retiré en D3.5 (plus aucun usager après migration FIP/GFI).
 
@@ -120,7 +120,7 @@ const LEVIERS_CATALOGUE = [
   },
   {
     id: 'deficitFoncier', label: 'Déficit foncier (travaux)',
-    levier: 1, cat: 'foncier', mode: 'deficit-foncier', inputKey: 'foncierReel',
+    levier: 1, cat: 'foncier', mode: 'versement-direct', inputKey: 'deficitFoncier',
     nature: 'depenses-annuelles', budget: 'cash',
     inSimpleMode: true,   // PR-V — cas courant dans la liste « Type de charge »
     info: `Saisir le montant du déficit foncier. Vient diminuer le revenu global, plafonné à ${eur(P.plafonds.deficitFoncierMax)}/an. Économie = montant retenu × TMI.`,
@@ -154,7 +154,12 @@ const LEVIERS_CATALOGUE = [
     id: 'jeanbrun', family: 'jeanbrun', label: 'Dispositif Jeanbrun (LF 2026)',
     levier: 1, cat: 'foncier', mode: 'jeanbrun', inputKey: 'jeanbrunAmort',
     paramKey: 'jeanbrunCategorie',
-    inSimpleMode: true,   // PR-V — dispositif locatif neuf phare LF 2026
+    // Jeanbrun caché en mode simple (PR-J) : le lead-gen utilise UN SEUL champ
+    // « Déficit foncier (incl. Jeanbrun) » qui regroupe les 2 sémantiquement.
+    // L'utilisateur saisit son montant total de charge foncière, le moteur le
+    // traite via input.deficitFoncier (cap commun 10 700 €/an, acceptable en
+    // simplification lead-gen). Jeanbrun reste accessible en mode complet pour
+    // une saisie précise avec catégorie de loyer et plafond catégoriel.
     showNicheCell: false,
     titleLong: 'Déficit Jeanbrun annuel — bailleur privé (LF 2026)',
     nature: 'amortissement-annuel', budget: 'exclu',
@@ -200,10 +205,11 @@ const LEVIERS_CATALOGUE = [
   {
     // D3.11 : ajout family pour génération form-row depuis catalogue.
     // PR-V : passé en mode simple (cas courant — Coluche).
+    // dons7UD retiré du mode simple (PR-J) : le lead-gen utilise dons7UF (66 %) comme
+    // catch-all dons. Le 7UD reste accessible en mode complet pour les CGP.
     id: 'dons7UD', family: 'dons7UD', label: 'Dons « Coluche » (organismes d\'aide, 75%)',
     levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'dons7UD',
     nature: 'versement-annuel', budget: 'cash',
-    inSimpleMode: true,
     nichePlafLabel: '75 % ≤ 2 000 € · surplus → 7UF',
     info: `Saisir le montant des dons versés à un organisme d'aide aux personnes en difficulté (Restos du Cœur, Croix-Rouge, Secours Populaire, Banque alimentaire…) ou aux victimes de violences domestiques. Réduction d'impôt de ${pct(P.plafonds.dons75Taux)} sur les premiers ${eur(P.plafonds.dons75Plafond)} ; au-delà, l'excédent bascule automatiquement en régime classique à ${pct(P.plafonds.dons66Taux)}. Hors plafond niches.`,
     sectionGroup: 'dons',
@@ -264,7 +270,7 @@ const LEVIERS_CATALOGUE = [
     id: 'ehpad', family: 'ehpad', label: 'Frais EHPAD ascendants (25%)',
     levier: 2, cat: 'hors', mode: 'versement-direct', inputKey: 'ehpadFrais',
     nature: 'depenses-annuelles', budget: 'cash',
-    inSimpleMode: true,   // PR-V — cas aidant familial courant
+    // EHPAD retiré du mode simple (PR-J) — cas spécifique aidants familiaux.
     nichePlafLabel: 'crédit 25 % · plaf. dép. 10 000 €/personne',
     titleLong: 'Frais EHPAD pour ascendants (25 %)',
     secondaryInputs: [
@@ -694,7 +700,7 @@ const LEVIERS_CATALOGUE = [
     levier: 2, cat: 'niche18', mode: 'versement-direct', inputKey: 'sofica',
     paramKey: 'soficaTaux',
     nature: 'versement-annuel', budget: 'cash',
-    inSimpleMode: true,
+    // SOFICA retiré du mode simple (PR-J) — fond dans le champ « Autres RI » (fourre-tout mobilier).
     info: `Saisir le MONTANT DE LA SOUSCRIPTION DE L'ANNÉE en parts de SOFICA (financement cinéma/audiovisuel). Cash sortant. Choisir ensuite le taux selon le scénario de la SOFICA. Versement plafonné à min(${eur(PD.sofica.versementMax)}, ${pct(PD.sofica.plafondAssiettePctRng)} du RNG). Niche majorée ${eur(P.niches.plafondMajore)}. Conservation 5 ans.`,
     sectionGroup: 'investissement-financier',
     tagType: 'Réduction d\'impôt',
@@ -743,7 +749,7 @@ const LEVIERS_CATALOGUE = [
     levier: 2, cat: 'niche10', mode: 'versement-direct', inputKey: 'denormandie',
     paramKey: 'denormandieDuree',
     nature: 'investissement-immobilier', budget: 'exclu',
-    inSimpleMode: true,   // PR-V — catégorie « Immobilier » de la capture utilisateur
+    // Denormandie retiré du mode simple (PR-J) — fond dans le champ « Immobilier » (fourre-tout immo).
     info: `Saisir le montant total investi dans l'année (prix d'acquisition + travaux). Les travaux doivent représenter au moins 25 % du coût total. La réduction d'impôt s'étale sur la durée d'engagement de location choisie.\n\nRI annuelle = min(invest, ${eur(PD.denormandie.versementMax)}) × taux total / durée :\n· 6 ans : 12 % au total → 2 %/an\n· 9 ans : 18 % au total → 2 %/an\n· 12 ans : 21 % au total → 1,75 %/an\n\nPrix au m² plafonné à 5 500 €. Le bien doit se trouver dans une commune labellisée « Action Cœur de Ville » ou couverte par une Opération de Revitalisation du Territoire (ORT). Dans le plafond niches 10 000 €.\n\nAcquisitions éligibles jusqu'au 31/12/2027.`,
     sectionGroup: 'immobilier-locatif',
     tagType: 'Réduction d\'impôt',
@@ -1037,11 +1043,6 @@ function appliquerPreconisations(input, precos) {
       // p.paramValue est un nombre décimal (1.10 = 110 %).
       const rendement = parseFloat(p.paramValue) || lev.rendementDefaut;
       out[lev.inputKey] = (out[lev.inputKey] || 0) + p.montant * rendement;
-    }
-    else if (lev.mode === 'deficit-foncier') {
-      // Les travaux saisis VIENNENT EN DÉFICIT (= foncier négatif). Le
-      // moteur cap déjà l'imputation sur le revenu global à -10 700 €/an.
-      out.foncierReel = (out.foncierReel || 0) - p.montant;
     }
     else if (lev.mode === 'jeanbrun') {
       // Mode legacy spécifique — sera unifié vers versement-direct + paramKey

@@ -145,7 +145,43 @@ const warnings = computeWarnings(det);
 
 ## Tests = spec implicite
 
-Les fichiers [`tests/run.js`](../tests/run.js), [`tests/run100.js`](../tests/run100.js), [`tests/run_leviers.js`](../tests/run_leviers.js) couvrent **82 cas dirigés + 100 cas oracle + 29 leviers = 211 cas verts**. Si tu modifies quoi que ce soit dans `core/`, ces tests doivent rester verts. Inversement, si tu te demandes « est-ce que le moteur gère le cas X ? », cherche-le dans ces fichiers — il y est probablement.
+Les fichiers [`tests/run.js`](../tests/run.js), [`tests/run100.js`](../tests/run100.js), [`tests/run_leviers.js`](../tests/run_leviers.js) couvrent **85 cas dirigés + 100 cas oracle + 29 leviers = 214 cas verts**. Si tu modifies quoi que ce soit dans `core/`, ces tests doivent rester verts. Inversement, si tu te demandes « est-ce que le moteur gère le cas X ? », cherche-le dans ces fichiers — il y est probablement.
+
+## Mode simple vs mode complet (côté démo)
+
+La démo expose **un seul questionnaire avec deux niveaux** (cf. README racine pour le modèle produit). Côté moteur, cela ne change rien — `calculerIR(input)` traite n'importe quel input valide. C'est la **démo (`demo/app.js` + classe CSS `.advanced` dans `index.html` + flag `inSimpleMode` dans `LEVIERS_CATALOGUE`)** qui filtre.
+
+### Champs exposés en mode simple (lead-gen prospect)
+
+| Section | Champs | Couvre |
+|---|---|---|
+| **Situation** | `situation`, `nbEnfants`, `gardeAlternee`, `parentIsole` | Cas familiaux courants |
+| **Revenus** | `sal1`/`sal2`, `pen1`/`pen2`, `bncMicro1`/`bncMicro2`, `bicVentes1`/`bicServices1`, `dividendes` | Salaire, retraite, libéral, commerçant, artisan, dividendes (PFU forcé) |
+| **Charges** | `per`, `deficitFoncier`, `pensionsAlim`, `csgDeductible`, `autresCharges` | Épargne retraite, déficit foncier (un seul champ qui regroupe aussi l'amortissement Jeanbrun pour simplification lead-gen), pensions alim |
+| **RI / CI** | `dons` (7UF), `emploiDomicile`, `gardeEnfants`, `autresReductions`, `autresReductionsImmo`, `autresCredits` | Dons, emploi domicile, garde enfants, fourre-tout mobilier/immo |
+
+### Champs accessibles uniquement en mode complet
+
+- Sélecteur `optionPFU` (barème vs PFU) — PFU forcé par défaut en simple
+- `microFoncier`, `foncierReel`, `meubleClasse`, `meubleNonClasse`, `autresMeubles` (LMNP, micro-foncier)
+- `bncReel1`/`bncReel2`, `bicReel1`/`bicReel2`
+- `pensInvalidite`, `pensAlimRecue`, `allocChomage`, `heuresSupExo`, `fraisReels`
+- `interets`, `pv`, `avProduits75`, `avProduits128`, `pfnlVerse`
+- `jeanbrunAmort` + `jeanbrunCategorie` (sélecteur intermédiaire/social/très social) — en mode simple, l'amortissement Jeanbrun est saisi dans le même champ que le déficit foncier (cap commun 10 700 €/an)
+- Tous les dispositifs précis : SOFICA, Pinel, Denormandie, IR-PME (toutes variantes), Malraux, Loc'Avantages, GFI, FIP Corse, Girardin, EHPAD, dons 7UD (Coluche 75 %), frais scolaires, cotisations syndicales
+
+### Fourre-tout mode simple — sémantique « RI directe »
+
+`autresReductions` (mobilier) et `autresReductionsImmo` (immobilier) acceptent **le montant de la RI annuelle déjà calculé**, pas le montant investi. Inverse de la sémantique mode complet où le moteur calcule (invest × taux). Logique : en lead-gen, on ne demande pas au prospect de connaître les paramètres exacts (taux SOFICA selon engagement, durée Denormandie, etc.).
+
+Côté moteur : les deux sont sommés dans `det.redAutres` (catch-all, hors plafond niches individuel — entrent dans le panier 10 k).
+
+### Pour l'intégrateur SaaS
+
+Tu n'es **pas obligé de reproduire** le double parcours. Le moteur accepte n'importe quel sous-ensemble d'inputs (les champs omis sont traités comme 0 / valeur neutre). Tu peux exposer ton propre formulaire avec ta propre granularité. Le contrat est :
+
+- Tout champ de l'input schema (cf. `calculerIR(input)` ci-dessus) est **optionnel**, traité comme 0 si absent.
+- Les select (situation, optionPFU, gfiZone, etc.) ont une valeur par défaut documentée dans `defaultInputs()` (`demo/app.js`).
 
 ## Conventions importantes
 

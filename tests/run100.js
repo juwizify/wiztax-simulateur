@@ -57,9 +57,11 @@ function makeInput(o = {}) {
     pen1: 0, pen2: 0, pensInvalidite1: 0, pensInvalidite2: 0,
     pensAlimRecue1: 0, pensAlimRecue2: 0,
     bncMicro1: 0, bncMicro2: 0, bncReel1: 0, bncReel2: 0,
+    bicVentes1: 0, bicVentes2: 0, bicServices1: 0, bicServices2: 0, bicReel1: 0, bicReel2: 0,
     microFoncier: 0, foncierReel: 0,
     meubleClasse: 0, meubleNonClasse: 0, autresMeubles: 0,
     jeanbrunAmort: 0, jeanbrunCategorie: 'intermediaire',
+    deficitFoncier: 0,
     dividendes: 0, interets: 0, pv: 0,
     avProduits75: 0, avProduits128: 0, pfnlVerse: 0,
     optionPFU: 'pfu', autresRevenus: 0,
@@ -161,6 +163,14 @@ function oracleCalc(input) {
                     + (i.bncMicro2 - oracleAbatBNC(i.bncMicro2));
   const bncReelNet = i.bncReel1 + i.bncReel2;
 
+  // BIC — symétrie du BNC, 2 taux selon nature (art. 50-0 CGI)
+  const oracleAbatBic = (rev, taux) => rev > 0 ? Math.max(305, rev * taux) : 0;
+  const bicVentesNet = ((i.bicVentes1 || 0) - oracleAbatBic(i.bicVentes1 || 0, 0.71))
+                     + ((i.bicVentes2 || 0) - oracleAbatBic(i.bicVentes2 || 0, 0.71));
+  const bicServicesNet = ((i.bicServices1 || 0) - oracleAbatBic(i.bicServices1 || 0, 0.50))
+                       + ((i.bicServices2 || 0) - oracleAbatBic(i.bicServices2 || 0, 0.50));
+  const bicReelNet = (i.bicReel1 || 0) + (i.bicReel2 || 0);
+
   const microFoncierNet = i.microFoncier * 0.70;
 
   // Jeanbrun
@@ -169,14 +179,14 @@ function oracleCalc(input) {
                : jbCat === 'social'      ? 10000 : 8000;
   const jbAmort = Math.min(i.jeanbrunAmort || 0, jbPlaf);
 
-  const foncAvant = i.foncierReel - jbAmort;
-  // Foncier réel positif → revenu foncier (entre dans RBG + PS).
-  // Foncier réel négatif → déficit traité comme charge pure déductible (cap
-  // 10 700 €/an), pas d'effet PS. Cf. calculator.js étape 1 pour la doc.
-  const foncierReelNet      = Math.max(0, foncAvant);
-  const deficitFoncImputable = foncAvant < 0
-    ? Math.min(-foncAvant, 10700)
-    : 0;
+  // Sémantique explicite : foncierReel ≥ 0 (revenu) et deficitFoncier ≥ 0
+  // (déficit saisi). Jeanbrun s'impute d'abord sur foncierReel ; excédent
+  // rejoint le déficit total. Cap commun 10 700 €/an.
+  const foncAvant = (i.foncierReel || 0) - jbAmort;
+  const foncierReelNet = Math.max(0, foncAvant);
+  const excedJb = Math.max(0, -foncAvant);
+  const deficitTotal = (i.deficitFoncier || 0) + excedJb;
+  const deficitFoncImputable = Math.min(deficitTotal, 10700);
 
   const meuClNet = i.meubleClasse * 0.50;
   const meuNcNet = i.meubleNonClasse * 0.70;
@@ -188,6 +198,7 @@ function oracleCalc(input) {
   const pvNet  = isPFU ? 0 : i.pv;
 
   const rbg = salNet + penNet + bncMicroNet + bncReelNet
+            + bicVentesNet + bicServicesNet + bicReelNet
             + microFoncierNet + foncierReelNet
             + meuClNet + meuNcNet + autMeuNet
             + divNet + intNet + pvNet
@@ -198,9 +209,11 @@ function oracleCalc(input) {
   // plancher 4 710 € chacun, plafonds additionnés en mutualisation.
   const isCoupleForPER = i.situation === 'marie-pacse';
   const revPro1 = i.sal1 + (i.allocChomage1 || 0) + (i.heuresSupExo1 || 0)
-                + i.bncMicro1 + i.bncReel1;
+                + i.bncMicro1 + i.bncReel1
+                + (i.bicVentes1 || 0) + (i.bicServices1 || 0) + (i.bicReel1 || 0);
   const revPro2 = i.sal2 + (i.allocChomage2 || 0) + (i.heuresSupExo2 || 0)
-                + i.bncMicro2 + i.bncReel2;
+                + i.bncMicro2 + i.bncReel2
+                + (i.bicVentes2 || 0) + (i.bicServices2 || 0) + (i.bicReel2 || 0);
   const perCapOf = r => Math.max(4710, Math.min(r * 0.10, 37680));
   const perCapAuto = perCapOf(revPro1) + (isCoupleForPER ? perCapOf(revPro2) : 0);
   const perCap = (i.perPlafondManuel || 0) > 0 ? i.perPlafondManuel : perCapAuto;
@@ -495,6 +508,9 @@ function oracleCalc(input) {
     salNet + hsExoRFR1 + hsExoRFR2
     + penNet
     + i.bncMicro1 + i.bncMicro2 + i.bncReel1 + i.bncReel2
+    + (i.bicVentes1 || 0) + (i.bicVentes2 || 0)
+    + (i.bicServices1 || 0) + (i.bicServices2 || 0)
+    + (i.bicReel1 || 0) + (i.bicReel2 || 0)
     + microFoncierNet + foncierReelNet
     + i.meubleClasse + i.meubleNonClasse + (i.autresMeubles || 0)
     + i.dividendes + (i.interets || 0) + i.pv
@@ -573,6 +589,10 @@ function generateProfile(idx) {
       profile.sal1 = randInt(20000, 70000);
       profile.bncMicro1 = randInt(0, 20000);
       profile.microFoncier = randInt(0, 15000);
+      // BIC pro injecté avec faible probabilité (couvre commerçants/artisans)
+      if (rand() < 0.20) profile.bicVentes1 = randInt(5000, 40000);
+      else if (rand() < 0.20) profile.bicServices1 = randInt(5000, 25000);
+      else if (rand() < 0.10) profile.bicReel1 = randInt(10000, 50000);
       break;
     case 'foncier-heavy':
       profile.sal1 = randInt(30000, 80000);
@@ -631,6 +651,9 @@ function generateProfile(idx) {
   }
   if (rand() < 0.06) profile.fcpiJei = randInt(200, 2000);
   if (rand() < 0.05) profile.malrauxTravaux = randInt(5000, 25000);
+  // Déficit foncier saisi (sémantique investissement PR-J) : cap commun 10 700 €.
+  // Couvre la nouvelle articulation oracle/moteur (Jeanbrun excédent + déficit).
+  if (rand() < 0.08) profile.deficitFoncier = randInt(2000, 15000);
 
   // Crédits
   if (rand() < 0.15) profile.emploiDomicile = randInt(500, 14000);

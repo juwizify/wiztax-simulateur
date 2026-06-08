@@ -215,6 +215,32 @@
             <input type="number" id="bncReel2" value="0" min="0">
           </div>
 
+          <div class="form-subsection"><h3>Bénéfices industriels et commerciaux (BIC)</h3></div>
+
+          <div class="form-row">
+            <label for="bicVentes1">
+              BIC micro — ventes / hébergement (CA brut)
+              <i class="tip" data-tip="Commerçants (vente de biens), hôtellerie, restauration, meublés tourisme classés.&#10;&#10;Saisir le CA brut (pas le bénéfice).&#10;Abattement forfaitaire {{abat.bicVentes.taux|pct}} automatique :&#10;· minimum {{abat.bicVentes.min|eur}}&#10;· plafond CA : {{abat.bicVentes.plafond|eur}}/an&#10;&#10;Au-delà du plafond, basculer en BIC réel.">i</i>
+            </label>
+            <input type="number" id="bicVentes1" value="0" min="0">
+            <input type="number" id="bicVentes2" value="0" min="0">
+          </div>
+
+          <div class="form-row">
+            <label for="bicServices1">
+              BIC micro — services / prestations (CA brut)
+              <i class="tip" data-tip="Artisans, prestations de services commerciales (hors professions libérales = BNC).&#10;&#10;Saisir le CA brut (pas le bénéfice).&#10;Abattement forfaitaire {{abat.bicServices.taux|pct}} automatique :&#10;· minimum {{abat.bicServices.min|eur}}&#10;· plafond CA : {{abat.bicServices.plafond|eur}}/an&#10;&#10;Au-delà du plafond, basculer en BIC réel.">i</i>
+            </label>
+            <input type="number" id="bicServices1" value="0" min="0">
+            <input type="number" id="bicServices2" value="0" min="0">
+          </div>
+
+          <div class="form-row advanced">
+            <label for="bicReel1">BIC réel (bénéfice net)</label>
+            <input type="number" id="bicReel1" value="0" min="0">
+            <input type="number" id="bicReel2" value="0" min="0">
+          </div>
+
           <!-- PR-V : sous-section visible aussi en mode simple, mais seul le
                champ « Foncier réel / déficit » est en simple (cas courant pour
                la saisie d'un déficit foncier). Les autres régimes (micro-foncier,
@@ -229,12 +255,12 @@
             <input type="number" id="microFoncier" value="0" min="0">
           </div>
 
-          <div class="form-row">
+          <div class="form-row advanced">
             <label for="foncierReel">
-              Revenus fonciers nets (régime réel) — ou déficit
-              <i class="tip" data-tip="Cases 4BA (revenus) ou 4BC (déficit) de la déclaration.&#10;&#10;Bénéfice ou déficit foncier net après déduction des charges réelles (intérêts d'emprunt, travaux, charges de copropriété, taxe foncière, gestion…).&#10;&#10;Si NÉGATIF (déficit foncier) : imputation sur le revenu global plafonnée à {{plafonds.deficitFoncierMax|eur}}/an. Le surplus est reportable 10 ans (non simulé ici).&#10;&#10;Pas de prélèvements sociaux dus en cas de déficit (résultat foncier négatif).&#10;&#10;⚠ Seule la part hors intérêts d'emprunt s'impute sur le RG ; les intérêts ne s'imputent que sur les revenus fonciers futurs (simplification : on ne distingue pas).">i</i>
+              Revenus fonciers nets (régime réel)
+              <i class="tip" data-tip="Case 4BA de la déclaration.&#10;&#10;Bénéfice foncier net après déduction des charges réelles (intérêts d'emprunt, travaux, charges de copropriété, taxe foncière, gestion…).&#10;&#10;Pour un DÉFICIT foncier, utiliser le champ dédié dans la section Charges déductibles.">i</i>
             </label>
-            <input type="number" id="foncierReel" value="0">
+            <input type="number" id="foncierReel" value="0" min="0">
           </div>
 
           <div class="form-row advanced">
@@ -261,11 +287,9 @@
             <input type="number" id="autresMeubles" value="0" min="0">
           </div>
 
-          <!-- Jeanbrun (D3.11) — form-row générée depuis LEVIERS_CATALOGUE
-               (family:'jeanbrun'). Input déficit + select catégorie empilés
-               (pattern SOFICA / D3.2). Tooltip détaillé conservé dans le
-               catalogue (info + params[0].label). -->
-          <div id="simJeanbrun"></div>
+          <!-- Jeanbrun et déficit foncier ont été déplacés en section
+               Charges déductibles : ce sont des charges sur le revenu global,
+               pas des revenus à proprement parler. -->
 
           <!-- Warning cumul déficit foncier classique + Jeanbrun > {{plafonds.deficitFoncierMax|eur}}.
                Affiché dynamiquement par app.js (updateResults) quand
@@ -314,7 +338,9 @@
             <input type="number" id="avProduits128" value="0" min="0">
           </div>
 
-          <div class="form-row">
+          <!-- En mode simple : PFU forcé par défaut (pas de choix exposé au prospect).
+               Le sélecteur reste accessible en mode complet pour le CGP. -->
+          <div class="form-row advanced">
             <label for="optionPFU">
               Option imposition mobilier (case 2OP)
               <i class="tip" data-tip="Option GLOBALE qui s'applique à tous les revenus mobiliers du foyer : dividendes, intérêts (2TR) et plus-values.&#10;Cocher 2OP sur la déclaration officielle = choisir « Barème » ici.&#10;&#10;PFU (par défaut) : taux unique 31,4 % ({{ps.pfuIr|pct}} IR + {{ps.mobilier|pct}} PS, LFSS 2026 : CSG portée à 10,6 % via la Contribution Financière pour l'Autonomie). Simple, souvent avantageux à TMI ≥ 30 %.&#10;&#10;Barème progressif : dividendes (avec abattement 40 %), intérêts (sans abattement) et PV intégrés au revenu imposable + PS {{ps.mobilier|pct}} toujours dus. Peut être avantageux si TMI ≤ 11 % ou si vous avez beaucoup d'intérêts à faible montant.&#10;&#10;⚠ Le choix est global et irrévocable pour l'année.&#10;⚠ L'assurance-vie reste à {{ps.foncierNu|pct}} de PS (exclusion explicite LFSS 2026).">i</i>
@@ -355,6 +381,23 @@
                custom : `per-cap-live` mise à jour dynamiquement par app.js
                (set('per-cap-live', fmt(d.perCap))) à chaque recalcul. -->
           <div id="simPer"></div>
+
+          <!-- Déficit foncier : saisi en positif, traité comme charge déductible
+               du revenu global (cap 10 700 €/an, art. 156-I-3° CGI).
+               En mode simple, regroupe aussi l'amortissement Jeanbrun (cap commun) ;
+               en mode complet, Jeanbrun a son propre champ ci-dessous. -->
+          <div class="form-row">
+            <label for="deficitFoncier">
+              Déficit foncier (incl. Jeanbrun)
+              <i class="tip" data-tip="Saisir le montant POSITIF de la charge foncière de l'année (travaux supérieurs aux loyers nets, amortissement Jeanbrun, ou les deux combinés).&#10;&#10;Le déficit s'impute sur le revenu global, plafonné à {{plafonds.deficitFoncierMax|eur}}/an (art. 156-I-3° CGI). Plafond commun avec l'amortissement Jeanbrun.&#10;&#10;Le surplus est reportable 10 ans sur les revenus fonciers ultérieurs (non simulé ici).&#10;&#10;En mode complet, l'amortissement Jeanbrun a son propre champ avec catégorie de loyer et plafond catégoriel (intermédiaire / social / très social).">i</i>
+            </label>
+            <input type="number" id="deficitFoncier" value="0" min="0">
+          </div>
+
+          <!-- Jeanbrun (D3.11) — form-row générée depuis LEVIERS_CATALOGUE
+               (family:'jeanbrun'). Amortissement déductible (sémantique charge).
+               Conteneur déplacé ici en PR-J (sémantique cohérente). -->
+          <div id="simJeanbrun"></div>
 
           <div class="form-row">
             <label for="pensionsAlim">
@@ -507,8 +550,8 @@
                complète symétriquement la maille des crédits. -->
           <div class="form-row">
             <label for="autresReductions">
-              Autres réductions d'impôt
-              <i class="tip" data-tip="Catch-all pour FCPI JEI, FIP Corse/Outre-mer, Invest. PME (IR-PME variantes), et tout autre dispositif de réduction non listé individuellement. La saisie est directement la RI annuelle obtenue.">i</i>
+              Autres réductions d'impôt (mobilier)
+              <i class="tip" data-tip="Catch-all pour les réductions mobilières : SOFICA, Girardin (PD ou avec agrément), IR-PME (toutes variantes : ESUS, JEI, JEII, JEIR, MH), FCPI JEI, FIP Corse/Outre-mer, GFI forestier, et tout autre dispositif de réduction d'impôt non listé individuellement.&#10;&#10;Saisir directement le MONTANT DE LA RÉDUCTION d'impôt obtenue (pas le montant investi). Pour les dispositifs précis avec calcul automatique (taux × invest, plafonds), utiliser le mode complet.">i</i>
             </label>
             <input type="number" id="autresReductions" value="0" min="0">
             <div class="niche-cell">
@@ -517,7 +560,21 @@
           </div>
 
           <div class="form-row">
-            <label for="autresCredits">Autres crédits d'impôt</label>
+            <label for="autresReductionsImmo">
+              Réductions immobilières
+              <i class="tip" data-tip="Catch-all pour les réductions d'impôt liées à l'investissement immobilier : Pinel (millésimes ouverts), Denormandie, Scellier, Duflot, Censi-Bouvard, et tout autre dispositif immobilier non listé individuellement.&#10;&#10;Saisir directement le MONTANT DE LA RÉDUCTION d'impôt annuelle obtenue (pas le montant investi). Pour les dispositifs précis avec calcul automatique (étalement sur la durée, plafonds invest), utiliser le mode complet.">i</i>
+            </label>
+            <input type="number" id="autresReductionsImmo" value="0" min="0">
+            <div class="niche-cell">
+              <span class="niche-marker niche-10k">niche {{niches.plafond|eur}}</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="autresCredits">
+              Autres crédits d'impôt
+              <i class="tip" data-tip="Catch-all pour les crédits d'impôt non listés individuellement (transition énergétique CITE/MaPrimeRénov, services à domicile spécifiques, etc.).&#10;&#10;Saisir directement le MONTANT DU CRÉDIT d'impôt obtenu. Les crédits sont remboursables si supérieurs à l'impôt dû.">i</i>
+            </label>
             <input type="number" id="autresCredits" value="0" min="0">
             <div class="niche-cell">
               <span class="niche-marker niche-10k">niche {{niches.plafond|eur}}</span>

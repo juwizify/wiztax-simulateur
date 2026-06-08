@@ -122,6 +122,31 @@ function calculerIR(input) {
   // BNC réel
   det.bncReel = input.bncReel1 + input.bncReel2;
 
+  // BIC micro — ventes/hébergement classique (71 %, art. 50-0 CGI)
+  // Concerne commerçants (vente de biens), hôtels-restaurants. Symétrie BNC.
+  const abatBicV1 = (input.bicVentes1 || 0) > 0
+    ? Math.max(P.abat.bicVentes.min, input.bicVentes1 * P.abat.bicVentes.taux)
+    : 0;
+  const abatBicV2 = (input.bicVentes2 || 0) > 0
+    ? Math.max(P.abat.bicVentes.min, input.bicVentes2 * P.abat.bicVentes.taux)
+    : 0;
+  det.bicVentesNet = ((input.bicVentes1 || 0) - abatBicV1)
+                   + ((input.bicVentes2 || 0) - abatBicV2);
+
+  // BIC micro — services / prestations (50 %, art. 50-0 CGI)
+  // Concerne artisans, prestations de services commerciales (hors libéral = BNC).
+  const abatBicS1 = (input.bicServices1 || 0) > 0
+    ? Math.max(P.abat.bicServices.min, input.bicServices1 * P.abat.bicServices.taux)
+    : 0;
+  const abatBicS2 = (input.bicServices2 || 0) > 0
+    ? Math.max(P.abat.bicServices.min, input.bicServices2 * P.abat.bicServices.taux)
+    : 0;
+  det.bicServicesNet = ((input.bicServices1 || 0) - abatBicS1)
+                     + ((input.bicServices2 || 0) - abatBicS2);
+
+  // BIC réel — bénéfice net déjà déterminé hors moteur, ajouté tel quel.
+  det.bicReel = (input.bicReel1 || 0) + (input.bicReel2 || 0);
+
   // Foncier
   det.microFoncierNet = input.microFoncier * (1 - P.abat.microFoncier.taux);
 
@@ -134,33 +159,31 @@ function calculerIR(input) {
                      :                                  P.plafonds.jeanbrunPlafondInter;
   det.jeanbrunAmort = Math.min(input.jeanbrunAmort || 0, jeanbrunPlaf);
 
-  // Foncier réel après amortissement Jeanbrun. Deux branches sémantiques :
+  // Foncier — sémantique explicite : 2 inputs distincts ≥ 0.
   //
-  // 1. POSITIF → revenu foncier (bénéfice) : entre dans le revenu brut global
-  //    et dans l'assiette PS catégorie foncier nu (art. 14 CGI), 18,6 %.
+  // 1. `input.foncierReel` (≥ 0) — revenus fonciers nets du régime réel.
+  //    Entrent dans RBG + assiette PS catégorie foncier nu (art. 14 CGI).
+  //    Jeanbrun s'impute en priorité dessus.
   //
-  // 2. NÉGATIF → déficit foncier traité comme CHARGE PURE DÉDUCTIBLE :
-  //    capée à 10 700 €/an (art. 156-I-3° CGI), imputée sur le revenu global
-  //    comme charge (effet IR seulement, exactement comme le PER). Choix de
-  //    design « préconisation simple » : n'affecte ni l'assiette PS d'aucune
-  //    catégorie, ni les revenus fonciers positifs existants (qui conservent
-  //    leur PS propre). Justification : (a) micro et réel ne coexistent pas
-  //    sur la déclaration officielle, (b) en contexte préconisation, recommander
-  //    un déficit foncier ne doit pas mécaniquement écraser la stratégie
-  //    immobilière déjà en place du foyer. Plafond PARTAGÉ avec amortissement
-  //    Jeanbrun (lecture restrictive art. 156-I-3°, doctrine BOFiP en attente
-  //    pour le bailleur privé Jeanbrun, LF 2026 art. 47).
+  // 2. `input.deficitFoncier` (≥ 0) — déficit foncier saisi par l'utilisateur,
+  //    traité comme CHARGE DÉDUCTIBLE du revenu global (art. 156-I-3° CGI),
+  //    capée à 10 700 €/an. N'affecte aucune assiette PS. Effet IR seulement.
+  //    Choix de design « préconisation simple » : recommander un déficit foncier
+  //    ne doit pas mécaniquement écraser la stratégie immobilière déjà en place.
   //
-  // Surplus (excédent de saisie au-dessus de 10 700 €) exposé pour l'UI ; en
-  // pratique reportable 10 ans sur revenus fonciers futurs (non simulé V1).
-  const foncierApresJeanbrun = input.foncierReel - det.jeanbrunAmort;
+  // Articulation Jeanbrun + déficit :
+  //   - Jeanbrun s'impute d'abord sur foncierReel positif.
+  //   - L'excédent (jeanbrunAmort > foncierReel) rejoint le déficit foncier total.
+  //   - Cap commun 10 700 €/an avec le déficit saisi (art. 156-I-3°, doctrine
+  //     BOFiP en attente pour Jeanbrun LF 2026 art. 47).
+  //   - Surplus exposé pour l'UI ; en pratique reportable 10 ans sur revenus
+  //     fonciers futurs (non simulé V1).
+  const foncierApresJeanbrun = (input.foncierReel || 0) - det.jeanbrunAmort;
   det.foncierReel = Math.max(0, foncierApresJeanbrun);
-  det.deficitFoncierImputable = foncierApresJeanbrun < 0
-    ? Math.min(-foncierApresJeanbrun, P.plafonds.deficitFoncierMax)
-    : 0;
-  det.deficitFoncierSurplus = foncierApresJeanbrun < -P.plafonds.deficitFoncierMax
-    ? -foncierApresJeanbrun - P.plafonds.deficitFoncierMax
-    : 0;
+  const excedentJeanbrun = Math.max(0, -foncierApresJeanbrun);
+  const deficitTotal = (input.deficitFoncier || 0) + excedentJeanbrun;
+  det.deficitFoncierImputable = Math.min(deficitTotal, P.plafonds.deficitFoncierMax);
+  det.deficitFoncierSurplus = Math.max(0, deficitTotal - P.plafonds.deficitFoncierMax);
 
   // Meublé
   det.meubleClasseNet = input.meubleClasse * (1 - P.abat.meubleClasse.taux);
@@ -186,7 +209,9 @@ function calculerIR(input) {
   // Autres
   det.autresRevenus = input.autresRevenus;
 
-  det.revenuBrutGlobal = det.salaireNet + det.pensionNet + det.bncMicroNet + det.bncReel
+  det.revenuBrutGlobal = det.salaireNet + det.pensionNet
+    + det.bncMicroNet + det.bncReel
+    + det.bicVentesNet + det.bicServicesNet + det.bicReel
     + det.microFoncierNet + det.foncierReel
     + det.meubleClasseNet + det.meubleNonClasseNet + det.autresMeublesNet
     + det.dividendesBareme + det.interetsBareme + det.pvBareme
@@ -200,16 +225,18 @@ function calculerIR(input) {
   // individuel, max 37 680 €. Les plafonds individuels s'additionnent (mutualisation
   // conjugale considérée par défaut, comme la déclaration en ligne).
   // Art. 163 quatervicies CGI — assiette = revenus d'activité pro :
-  // salaires + chômage + heures sup exonérées + BNC micro + BNC réel.
+  // salaires + chômage + heures sup exonérées + BNC + BIC.
   // On utilise les revenus N comme proxy des revenus N-1 (approximation raisonnable).
   const revenuPro1 = input.sal1
     + (input.allocChomage1 || 0)
     + (input.heuresSupExo1 || 0)
-    + input.bncMicro1 + input.bncReel1;
+    + input.bncMicro1 + input.bncReel1
+    + (input.bicVentes1 || 0) + (input.bicServices1 || 0) + (input.bicReel1 || 0);
   const revenuPro2 = input.sal2
     + (input.allocChomage2 || 0)
     + (input.heuresSupExo2 || 0)
-    + input.bncMicro2 + input.bncReel2;
+    + input.bncMicro2 + input.bncReel2
+    + (input.bicVentes2 || 0) + (input.bicServices2 || 0) + (input.bicReel2 || 0);
   const capForRevenu = r => Math.max(
     P.plafonds.perPlancher,
     Math.min(r * P.plafonds.perTaux, P.plafonds.perMaxSalarie)
@@ -598,7 +625,13 @@ function calculerIR(input) {
   const _tauxSofica     = PD.sofica.taux[_tauxSoficaCle] || PD.sofica.taux[PD.sofica.tauxDefaut];
   const versSoficaRetenu = Math.min(input.sofica || 0, versSoficaEffectif);
   det.redSofica      = versSoficaRetenu * _tauxSofica;
-  det.redAutres      = input.autresReductions;  // catch-all, pas de cap
+  // catch-all : RI fourre-tout saisies en direct (lead-gen mode simple).
+  // `autresReductions` regroupe le mobilier (SOFICA, Girardin, IR-PME, FIP, GFI, …)
+  // et `autresReductionsImmo` regroupe l'immobilier (Pinel, Denormandie, Scellier, Duflot, …).
+  // Sommés dans `det.redAutres` pour le calcul ; conservés séparés pour traçabilité.
+  det.redAutresMobilier = input.autresReductions || 0;
+  det.redAutresImmo     = input.autresReductionsImmo || 0;
+  det.redAutres         = det.redAutresMobilier + det.redAutresImmo;  // catch-all, pas de cap
 
   // Surplus écrasés par les caps individuels (pour affichage UI).
   // Sémantique INVESTISSEMENT uniforme : surplus = montant saisi − ce qui a
@@ -800,6 +833,9 @@ function calculerIR(input) {
     + det.pensionNet
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1 + input.bncReel2
+    + (input.bicVentes1 || 0) + (input.bicVentes2 || 0)
+    + (input.bicServices1 || 0) + (input.bicServices2 || 0)
+    + (input.bicReel1 || 0) + (input.bicReel2 || 0)
     + det.microFoncierNet + det.foncierReel
     + input.meubleClasse + input.meubleNonClasse + (input.autresMeubles || 0)
     + input.dividendes + (input.interets || 0) + input.pv
