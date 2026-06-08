@@ -157,7 +157,7 @@ La démo expose **un seul questionnaire avec deux niveaux** (cf. README racine p
 |---|---|---|
 | **Situation** | `situation`, `nbEnfants`, `gardeAlternee`, `parentIsole` | Cas familiaux courants |
 | **Revenus** | `sal1`/`sal2`, `pen1`/`pen2`, `bncMicro1`/`bncMicro2`, `bicVentes1`/`bicServices1`, `dividendes` | Salaire, retraite, libéral, commerçant, artisan, dividendes (PFU forcé) |
-| **Charges** | `per`, `deficitFoncier`, `jeanbrunAmort`, `pensionsAlim`, `csgDeductible`, `autresCharges` | Épargne retraite, déficit foncier (incl. Jeanbrun), pensions alim |
+| **Charges** | `per`, `deficitFoncier`, `pensionsAlim`, `csgDeductible`, `autresCharges` | Épargne retraite, déficit foncier (un seul champ qui regroupe aussi l'amortissement Jeanbrun pour simplification lead-gen), pensions alim |
 | **RI / CI** | `dons` (7UF), `emploiDomicile`, `gardeEnfants`, `autresReductions`, `autresReductionsImmo`, `autresCredits` | Dons, emploi domicile, garde enfants, fourre-tout mobilier/immo |
 
 ### Champs accessibles uniquement en mode complet
@@ -167,7 +167,8 @@ La démo expose **un seul questionnaire avec deux niveaux** (cf. README racine p
 - `bncReel1`/`bncReel2`, `bicReel1`/`bicReel2`
 - `pensInvalidite`, `pensAlimRecue`, `allocChomage`, `heuresSupExo`, `fraisReels`
 - `interets`, `pv`, `avProduits75`, `avProduits128`, `pfnlVerse`
-- Tous les dispositifs précis : SOFICA, Pinel, Denormandie, IR-PME (toutes variantes), Malraux, Loc'Avantages, GFI, FIP Corse, Girardin, déficit foncier précis vs Jeanbrun précis, EHPAD, dons 7UD (Coluche 75 %), frais scolaires, cotisations syndicales
+- `jeanbrunAmort` + `jeanbrunCategorie` (sélecteur intermédiaire/social/très social) — en mode simple, l'amortissement Jeanbrun est saisi dans le même champ que le déficit foncier (cap commun 10 700 €/an)
+- Tous les dispositifs précis : SOFICA, Pinel, Denormandie, IR-PME (toutes variantes), Malraux, Loc'Avantages, GFI, FIP Corse, Girardin, EHPAD, dons 7UD (Coluche 75 %), frais scolaires, cotisations syndicales
 
 ### Fourre-tout mode simple — sémantique « RI directe »
 
