@@ -154,7 +154,12 @@ const LEVIERS_CATALOGUE = [
     id: 'jeanbrun', family: 'jeanbrun', label: 'Dispositif Jeanbrun (LF 2026)',
     levier: 1, cat: 'foncier', mode: 'jeanbrun', inputKey: 'jeanbrunAmort',
     paramKey: 'jeanbrunCategorie',
-    inSimpleMode: true,   // PR-V — dispositif locatif neuf phare LF 2026
+    // Jeanbrun caché en mode simple (PR-J) : le lead-gen utilise UN SEUL champ
+    // « Déficit foncier (incl. Jeanbrun) » qui regroupe les 2 sémantiquement.
+    // L'utilisateur saisit son montant total de charge foncière, le moteur le
+    // traite via input.deficitFoncier (cap commun 10 700 €/an, acceptable en
+    // simplification lead-gen). Jeanbrun reste accessible en mode complet pour
+    // une saisie précise avec catégorie de loyer et plafond catégoriel.
     showNicheCell: false,
     titleLong: 'Déficit Jeanbrun annuel — bailleur privé (LF 2026)',
     nature: 'amortissement-annuel', budget: 'exclu',

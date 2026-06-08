@@ -383,11 +383,13 @@
           <div id="simPer"></div>
 
           <!-- Déficit foncier : saisi en positif, traité comme charge déductible
-               du revenu global (cap 10 700 €/an, art. 156-I-3° CGI). -->
+               du revenu global (cap 10 700 €/an, art. 156-I-3° CGI).
+               En mode simple, regroupe aussi l'amortissement Jeanbrun (cap commun) ;
+               en mode complet, Jeanbrun a son propre champ ci-dessous. -->
           <div class="form-row">
             <label for="deficitFoncier">
-              Déficit foncier (travaux)
-              <i class="tip" data-tip="Saisir le montant POSITIF du déficit foncier de l'année (travaux > loyers nets, ou en l'absence de revenu foncier).&#10;&#10;Le déficit s'impute sur le revenu global, plafonné à {{plafonds.deficitFoncierMax|eur}}/an (art. 156-I-3° CGI).&#10;&#10;Plafond PARTAGÉ avec l'amortissement Jeanbrun.&#10;&#10;Le surplus est reportable 10 ans sur les revenus fonciers ultérieurs (non simulé ici).">i</i>
+              Déficit foncier (incl. Jeanbrun)
+              <i class="tip" data-tip="Saisir le montant POSITIF de la charge foncière de l'année (travaux supérieurs aux loyers nets, amortissement Jeanbrun, ou les deux combinés).&#10;&#10;Le déficit s'impute sur le revenu global, plafonné à {{plafonds.deficitFoncierMax|eur}}/an (art. 156-I-3° CGI). Plafond commun avec l'amortissement Jeanbrun.&#10;&#10;Le surplus est reportable 10 ans sur les revenus fonciers ultérieurs (non simulé ici).&#10;&#10;En mode complet, l'amortissement Jeanbrun a son propre champ avec catégorie de loyer et plafond catégoriel (intermédiaire / social / très social).">i</i>
             </label>
             <input type="number" id="deficitFoncier" value="0" min="0">
           </div>
