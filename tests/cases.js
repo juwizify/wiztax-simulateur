@@ -422,6 +422,25 @@ const CASES = [
     expected: { impotNet: 6094, revenuReference: 43300, tmi: 0.30 },
   },
   {
+    name: 'Combo Jeanbrun + déficit : Jeanbrun 10k > revenus 4k → excédent 6k rejoint déficit 5k saisi (cap 10 700)',
+    input: makeInput({
+      sal1: 60000,
+      foncierReel: 4000,                     // revenu foncier 4k
+      jeanbrunAmort: 10000,                  // amortissement 10k > revenus 4k
+      jeanbrunCategorie: 'social',           // plafond catégoriel 10k
+      deficitFoncier: 5000,                  // déficit foncier saisi explicite
+    }),
+    // foncierApresJeanbrun = 4 000 − 10 000 = −6 000
+    //   → foncierReel net = 0, excédent Jeanbrun = 6 000
+    // deficitTotal = 5 000 (saisi) + 6 000 (excédent JB) = 11 000 > cap 10 700
+    //   → deficitFoncierImputable = 10 700, surplus = 300 (exposé warning)
+    // sal net = 60 000 − 6 000 = 54 000 → RBG = 54 000 (foncier nul)
+    // RNI = 54 000 − 10 700 = 43 300
+    // QF=43 300 → 1 977,69 + (43 300 − 29 579) × 0,30 = 6 094
+    // RFR = sal net 54 000 + 0 (foncier) − déficit imputable 10 700 = 43 300
+    expected: { impotNet: 6094, revenuReference: 43300, tmi: 0.30 },
+  },
+  {
     name: '4BA non-régression : 40k sal + foncier réel +5 000 € (revenu)',
     input: makeInput({ sal1: 40000, foncierReel: 5000 }),
     // sal net 36 000 + foncier 5 000 → RBG 41 000

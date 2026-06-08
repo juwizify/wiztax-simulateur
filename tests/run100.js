@@ -651,6 +651,9 @@ function generateProfile(idx) {
   }
   if (rand() < 0.06) profile.fcpiJei = randInt(200, 2000);
   if (rand() < 0.05) profile.malrauxTravaux = randInt(5000, 25000);
+  // Déficit foncier saisi (sémantique investissement PR-J) : cap commun 10 700 €.
+  // Couvre la nouvelle articulation oracle/moteur (Jeanbrun excédent + déficit).
+  if (rand() < 0.08) profile.deficitFoncier = randInt(2000, 15000);
 
   // Crédits
   if (rand() < 0.15) profile.emploiDomicile = randInt(500, 14000);
