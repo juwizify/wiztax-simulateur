@@ -57,6 +57,7 @@ function makeInput(o = {}) {
     pen1: 0, pen2: 0, pensInvalidite1: 0, pensInvalidite2: 0,
     pensAlimRecue1: 0, pensAlimRecue2: 0,
     bncMicro1: 0, bncMicro2: 0, bncReel1: 0, bncReel2: 0,
+    bicVentes1: 0, bicVentes2: 0, bicServices1: 0, bicServices2: 0, bicReel1: 0, bicReel2: 0,
     microFoncier: 0, foncierReel: 0,
     meubleClasse: 0, meubleNonClasse: 0, autresMeubles: 0,
     jeanbrunAmort: 0, jeanbrunCategorie: 'intermediaire',
@@ -161,6 +162,14 @@ function oracleCalc(input) {
                     + (i.bncMicro2 - oracleAbatBNC(i.bncMicro2));
   const bncReelNet = i.bncReel1 + i.bncReel2;
 
+  // BIC — symétrie du BNC, 2 taux selon nature (art. 50-0 CGI)
+  const oracleAbatBic = (rev, taux) => rev > 0 ? Math.max(305, rev * taux) : 0;
+  const bicVentesNet = ((i.bicVentes1 || 0) - oracleAbatBic(i.bicVentes1 || 0, 0.71))
+                     + ((i.bicVentes2 || 0) - oracleAbatBic(i.bicVentes2 || 0, 0.71));
+  const bicServicesNet = ((i.bicServices1 || 0) - oracleAbatBic(i.bicServices1 || 0, 0.50))
+                       + ((i.bicServices2 || 0) - oracleAbatBic(i.bicServices2 || 0, 0.50));
+  const bicReelNet = (i.bicReel1 || 0) + (i.bicReel2 || 0);
+
   const microFoncierNet = i.microFoncier * 0.70;
 
   // Jeanbrun
@@ -188,6 +197,7 @@ function oracleCalc(input) {
   const pvNet  = isPFU ? 0 : i.pv;
 
   const rbg = salNet + penNet + bncMicroNet + bncReelNet
+            + bicVentesNet + bicServicesNet + bicReelNet
             + microFoncierNet + foncierReelNet
             + meuClNet + meuNcNet + autMeuNet
             + divNet + intNet + pvNet
@@ -198,9 +208,11 @@ function oracleCalc(input) {
   // plancher 4 710 € chacun, plafonds additionnés en mutualisation.
   const isCoupleForPER = i.situation === 'marie-pacse';
   const revPro1 = i.sal1 + (i.allocChomage1 || 0) + (i.heuresSupExo1 || 0)
-                + i.bncMicro1 + i.bncReel1;
+                + i.bncMicro1 + i.bncReel1
+                + (i.bicVentes1 || 0) + (i.bicServices1 || 0) + (i.bicReel1 || 0);
   const revPro2 = i.sal2 + (i.allocChomage2 || 0) + (i.heuresSupExo2 || 0)
-                + i.bncMicro2 + i.bncReel2;
+                + i.bncMicro2 + i.bncReel2
+                + (i.bicVentes2 || 0) + (i.bicServices2 || 0) + (i.bicReel2 || 0);
   const perCapOf = r => Math.max(4710, Math.min(r * 0.10, 37680));
   const perCapAuto = perCapOf(revPro1) + (isCoupleForPER ? perCapOf(revPro2) : 0);
   const perCap = (i.perPlafondManuel || 0) > 0 ? i.perPlafondManuel : perCapAuto;
@@ -495,6 +507,9 @@ function oracleCalc(input) {
     salNet + hsExoRFR1 + hsExoRFR2
     + penNet
     + i.bncMicro1 + i.bncMicro2 + i.bncReel1 + i.bncReel2
+    + (i.bicVentes1 || 0) + (i.bicVentes2 || 0)
+    + (i.bicServices1 || 0) + (i.bicServices2 || 0)
+    + (i.bicReel1 || 0) + (i.bicReel2 || 0)
     + microFoncierNet + foncierReelNet
     + i.meubleClasse + i.meubleNonClasse + (i.autresMeubles || 0)
     + i.dividendes + (i.interets || 0) + i.pv
@@ -573,6 +588,10 @@ function generateProfile(idx) {
       profile.sal1 = randInt(20000, 70000);
       profile.bncMicro1 = randInt(0, 20000);
       profile.microFoncier = randInt(0, 15000);
+      // BIC pro injecté avec faible probabilité (couvre commerçants/artisans)
+      if (rand() < 0.20) profile.bicVentes1 = randInt(5000, 40000);
+      else if (rand() < 0.20) profile.bicServices1 = randInt(5000, 25000);
+      else if (rand() < 0.10) profile.bicReel1 = randInt(10000, 50000);
       break;
     case 'foncier-heavy':
       profile.sal1 = randInt(30000, 80000);

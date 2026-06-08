@@ -28,6 +28,7 @@ function makeInput(o = {}) {
     pen1: 0, pen2: 0, pensInvalidite1: 0, pensInvalidite2: 0,
     pensAlimRecue1: 0, pensAlimRecue2: 0,
     bncMicro1: 0, bncMicro2: 0, bncReel1: 0, bncReel2: 0,
+    bicVentes1: 0, bicVentes2: 0, bicServices1: 0, bicServices2: 0, bicReel1: 0, bicReel2: 0,
     microFoncier: 0, foncierReel: 0,
     meubleClasse: 0, meubleNonClasse: 0,
     jeanbrunAmort: 0, jeanbrunCategorie: 'intermediaire',

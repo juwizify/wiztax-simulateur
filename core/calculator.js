@@ -122,6 +122,31 @@ function calculerIR(input) {
   // BNC réel
   det.bncReel = input.bncReel1 + input.bncReel2;
 
+  // BIC micro — ventes/hébergement classique (71 %, art. 50-0 CGI)
+  // Concerne commerçants (vente de biens), hôtels-restaurants. Symétrie BNC.
+  const abatBicV1 = (input.bicVentes1 || 0) > 0
+    ? Math.max(P.abat.bicVentes.min, input.bicVentes1 * P.abat.bicVentes.taux)
+    : 0;
+  const abatBicV2 = (input.bicVentes2 || 0) > 0
+    ? Math.max(P.abat.bicVentes.min, input.bicVentes2 * P.abat.bicVentes.taux)
+    : 0;
+  det.bicVentesNet = ((input.bicVentes1 || 0) - abatBicV1)
+                   + ((input.bicVentes2 || 0) - abatBicV2);
+
+  // BIC micro — services / prestations (50 %, art. 50-0 CGI)
+  // Concerne artisans, prestations de services commerciales (hors libéral = BNC).
+  const abatBicS1 = (input.bicServices1 || 0) > 0
+    ? Math.max(P.abat.bicServices.min, input.bicServices1 * P.abat.bicServices.taux)
+    : 0;
+  const abatBicS2 = (input.bicServices2 || 0) > 0
+    ? Math.max(P.abat.bicServices.min, input.bicServices2 * P.abat.bicServices.taux)
+    : 0;
+  det.bicServicesNet = ((input.bicServices1 || 0) - abatBicS1)
+                     + ((input.bicServices2 || 0) - abatBicS2);
+
+  // BIC réel — bénéfice net déjà déterminé hors moteur, ajouté tel quel.
+  det.bicReel = (input.bicReel1 || 0) + (input.bicReel2 || 0);
+
   // Foncier
   det.microFoncierNet = input.microFoncier * (1 - P.abat.microFoncier.taux);
 
@@ -186,7 +211,9 @@ function calculerIR(input) {
   // Autres
   det.autresRevenus = input.autresRevenus;
 
-  det.revenuBrutGlobal = det.salaireNet + det.pensionNet + det.bncMicroNet + det.bncReel
+  det.revenuBrutGlobal = det.salaireNet + det.pensionNet
+    + det.bncMicroNet + det.bncReel
+    + det.bicVentesNet + det.bicServicesNet + det.bicReel
     + det.microFoncierNet + det.foncierReel
     + det.meubleClasseNet + det.meubleNonClasseNet + det.autresMeublesNet
     + det.dividendesBareme + det.interetsBareme + det.pvBareme
@@ -200,16 +227,18 @@ function calculerIR(input) {
   // individuel, max 37 680 €. Les plafonds individuels s'additionnent (mutualisation
   // conjugale considérée par défaut, comme la déclaration en ligne).
   // Art. 163 quatervicies CGI — assiette = revenus d'activité pro :
-  // salaires + chômage + heures sup exonérées + BNC micro + BNC réel.
+  // salaires + chômage + heures sup exonérées + BNC + BIC.
   // On utilise les revenus N comme proxy des revenus N-1 (approximation raisonnable).
   const revenuPro1 = input.sal1
     + (input.allocChomage1 || 0)
     + (input.heuresSupExo1 || 0)
-    + input.bncMicro1 + input.bncReel1;
+    + input.bncMicro1 + input.bncReel1
+    + (input.bicVentes1 || 0) + (input.bicServices1 || 0) + (input.bicReel1 || 0);
   const revenuPro2 = input.sal2
     + (input.allocChomage2 || 0)
     + (input.heuresSupExo2 || 0)
-    + input.bncMicro2 + input.bncReel2;
+    + input.bncMicro2 + input.bncReel2
+    + (input.bicVentes2 || 0) + (input.bicServices2 || 0) + (input.bicReel2 || 0);
   const capForRevenu = r => Math.max(
     P.plafonds.perPlancher,
     Math.min(r * P.plafonds.perTaux, P.plafonds.perMaxSalarie)
@@ -800,6 +829,9 @@ function calculerIR(input) {
     + det.pensionNet
     + input.bncMicro1 + input.bncMicro2
     + input.bncReel1 + input.bncReel2
+    + (input.bicVentes1 || 0) + (input.bicVentes2 || 0)
+    + (input.bicServices1 || 0) + (input.bicServices2 || 0)
+    + (input.bicReel1 || 0) + (input.bicReel2 || 0)
     + det.microFoncierNet + det.foncierReel
     + input.meubleClasse + input.meubleNonClasse + (input.autresMeubles || 0)
     + input.dividendes + (input.interets || 0) + input.pv

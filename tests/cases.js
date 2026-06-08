@@ -31,6 +31,9 @@ function makeInput(overrides = {}) {
     // BNC
     bncMicro1: 0, bncMicro2: 0,
     bncReel1: 0,  bncReel2: 0,
+    bicVentes1: 0,   bicVentes2: 0,
+    bicServices1: 0, bicServices2: 0,
+    bicReel1: 0,     bicReel2: 0,
 
     // Foncier
     microFoncier: 0,
@@ -1134,6 +1137,37 @@ const CASES = [
     // RI 12 ans à 21 % total = 300 000 × 21 % / 12 = 5 250/an (dans panier niche10)
     // impotNet = 59 974 − 5 250 = 54 724
     expected: { impotNet: 54724, revenuReference: 185445, tmi: 0.45 },
+  },
+
+  // -------------------------------------------------------------------
+  // BIC — Bénéfices Industriels et Commerciaux (art. 50-0 CGI)
+  // 2 régimes micro (taux variable selon nature) + réel direct.
+  // RFR utilise le CA brut (avant abattement), comme pour le micro-BNC.
+  // -------------------------------------------------------------------
+  {
+    name: 'Micro-BIC ventes — célib 60k CA → abat 71 % → net 17 400 €',
+    input: makeInput({ sal1: 0, bicVentes1: 60000 }),
+    // abat = max(305, 60 000 × 71 %) = 42 600 → net = 17 400
+    // QF 17 400 (1 part) → barème 0 % jusqu'à 11 600 + 11 % × 5 800 = 638
+    // Décote (impôt < 1 982) = 897 − 638 × 45,25 % = 608,30 → impôt = 638 − 608,30 ≈ 30
+    // RFR = CA brut 60 000 (BNC/BIC entrent au brut dans le RFR, conforme avis officiel)
+    expected: { impotNet: 30, revenuReference: 60000, tmi: 0.11 },
+  },
+  {
+    name: 'Micro-BIC services — célib 30k CA → abat 50 % → net 15 000 €',
+    input: makeInput({ sal1: 0, bicServices1: 30000 }),
+    // abat = max(305, 30 000 × 50 %) = 15 000 → net = 15 000
+    // QF 15 000 → barème 0 % jusqu'à 11 600 + 11 % × 3 400 = 374
+    // Décote (impôt < 1 982) = 897 − 374 × 45,25 % ≈ 727 → impôt = 374 − 727 < 0 → 0
+    expected: { impotNet: 0, revenuReference: 30000, tmi: 0.11 },
+  },
+  {
+    name: 'BIC réel — célib 40k bénéfice net → ajouté tel quel au RBG',
+    input: makeInput({ sal1: 0, bicReel1: 40000 }),
+    // RBG = 40 000 (pas d'abattement, bénéfice déjà net), QF = 40 000 (1 part)
+    // Barème : 11 % × (29 579 − 11 600) + 30 % × (40 000 − 29 579)
+    //        = 1 977,69 + 3 126,30 = 5 103,99 → 5 104
+    expected: { impotNet: 5104, revenuReference: 40000, tmi: 0.30 },
   },
 ];
 

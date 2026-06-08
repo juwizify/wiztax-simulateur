@@ -215,6 +215,32 @@
             <input type="number" id="bncReel2" value="0" min="0">
           </div>
 
+          <div class="form-subsection"><h3>Bénéfices industriels et commerciaux (BIC)</h3></div>
+
+          <div class="form-row">
+            <label for="bicVentes1">
+              BIC micro — ventes / hébergement (CA brut)
+              <i class="tip" data-tip="Commerçants (vente de biens), hôtellerie, restauration, meublés tourisme classés.&#10;&#10;Saisir le CA brut (pas le bénéfice).&#10;Abattement forfaitaire {{abat.bicVentes.taux|pct}} automatique :&#10;· minimum {{abat.bicVentes.min|eur}}&#10;· plafond CA : {{abat.bicVentes.plafond|eur}}/an&#10;&#10;Au-delà du plafond, basculer en BIC réel.">i</i>
+            </label>
+            <input type="number" id="bicVentes1" value="0" min="0">
+            <input type="number" id="bicVentes2" value="0" min="0">
+          </div>
+
+          <div class="form-row">
+            <label for="bicServices1">
+              BIC micro — services / prestations (CA brut)
+              <i class="tip" data-tip="Artisans, prestations de services commerciales (hors professions libérales = BNC).&#10;&#10;Saisir le CA brut (pas le bénéfice).&#10;Abattement forfaitaire {{abat.bicServices.taux|pct}} automatique :&#10;· minimum {{abat.bicServices.min|eur}}&#10;· plafond CA : {{abat.bicServices.plafond|eur}}/an&#10;&#10;Au-delà du plafond, basculer en BIC réel.">i</i>
+            </label>
+            <input type="number" id="bicServices1" value="0" min="0">
+            <input type="number" id="bicServices2" value="0" min="0">
+          </div>
+
+          <div class="form-row advanced">
+            <label for="bicReel1">BIC réel (bénéfice net)</label>
+            <input type="number" id="bicReel1" value="0" min="0">
+            <input type="number" id="bicReel2" value="0" min="0">
+          </div>
+
           <!-- PR-V : sous-section visible aussi en mode simple, mais seul le
                champ « Foncier réel / déficit » est en simple (cas courant pour
                la saisie d'un déficit foncier). Les autres régimes (micro-foncier,
