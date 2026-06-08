@@ -61,6 +61,7 @@ function makeInput(o = {}) {
     microFoncier: 0, foncierReel: 0,
     meubleClasse: 0, meubleNonClasse: 0, autresMeubles: 0,
     jeanbrunAmort: 0, jeanbrunCategorie: 'intermediaire',
+    deficitFoncier: 0,
     dividendes: 0, interets: 0, pv: 0,
     avProduits75: 0, avProduits128: 0, pfnlVerse: 0,
     optionPFU: 'pfu', autresRevenus: 0,
@@ -178,14 +179,14 @@ function oracleCalc(input) {
                : jbCat === 'social'      ? 10000 : 8000;
   const jbAmort = Math.min(i.jeanbrunAmort || 0, jbPlaf);
 
-  const foncAvant = i.foncierReel - jbAmort;
-  // Foncier réel positif → revenu foncier (entre dans RBG + PS).
-  // Foncier réel négatif → déficit traité comme charge pure déductible (cap
-  // 10 700 €/an), pas d'effet PS. Cf. calculator.js étape 1 pour la doc.
-  const foncierReelNet      = Math.max(0, foncAvant);
-  const deficitFoncImputable = foncAvant < 0
-    ? Math.min(-foncAvant, 10700)
-    : 0;
+  // Sémantique explicite : foncierReel ≥ 0 (revenu) et deficitFoncier ≥ 0
+  // (déficit saisi). Jeanbrun s'impute d'abord sur foncierReel ; excédent
+  // rejoint le déficit total. Cap commun 10 700 €/an.
+  const foncAvant = (i.foncierReel || 0) - jbAmort;
+  const foncierReelNet = Math.max(0, foncAvant);
+  const excedJb = Math.max(0, -foncAvant);
+  const deficitTotal = (i.deficitFoncier || 0) + excedJb;
+  const deficitFoncImputable = Math.min(deficitTotal, 10700);
 
   const meuClNet = i.meubleClasse * 0.50;
   const meuNcNet = i.meubleNonClasse * 0.70;

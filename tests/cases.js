@@ -44,6 +44,7 @@ function makeInput(overrides = {}) {
     meubleNonClasse: 0,
     autresMeubles: 0,
     jeanbrunAmort: 0,
+    deficitFoncier: 0,
     jeanbrunCategorie: 'intermediaire',
 
     // Mobilier
@@ -402,24 +403,22 @@ const CASES = [
   // PS foncier dus uniquement sur résultat foncier net positif.
   // -------------------------------------------------------------------
   {
-    name: '4BC déficit modéré : 40k sal + foncier réel -5 000 €',
-    input: makeInput({ sal1: 40000, foncierReel: -5000 }),
-    // RBG = 36 000 - 5 000 = 31 000 (déficit sous plafond)
-    // QF=31 000 → tranche 2: 1 977.69 + tranche 3: (31 000-29 579)×0.30 = 426.30
-    // impôt = 2 403.99 → 2 404
-    // pas de PS (résultat foncier négatif)
-    // RFR = 40 000 + 0 + (-5 000) = 35 000
+    name: '4BC déficit modéré : 40k sal + déficit foncier 5 000 €',
+    input: makeInput({ sal1: 40000, deficitFoncier: 5000 }),
+    // RBG salaire = 36 000. Déficit foncier 5 000 < cap 10 700 → imputable intégralement.
+    // RNI = 36 000 - 5 000 = 31 000.
+    // QF=31 000 → 1 977.69 + (31 000-29 579)×0.30 = 426.30 → impôt 2 404
+    // Pas de PS sur le déficit (effet IR seulement).
+    // RFR = salNet 36 000 - déficit imputable 5 000 = 31 000
     expected: { impotNet: 2404, revenuReference: 31000, tmi: 0.30 },
   },
   {
-    name: '4BC déficit plafonné : 60k sal + foncier réel -15 000 € (plafond 10 700)',
-    input: makeInput({ sal1: 60000, foncierReel: -15000 }),
-    // sal net 60 000 - 6 000 = 54 000
-    // foncierReel plafonné à -10 700
-    // RBG = 54 000 - 10 700 = 43 300
-    // QF=43 300 → tranches: 1 977.69 + (43 300-29 579)×0.30 = 6 093.99 → 6 094
-    // pas de PS, pas de décote
-    // RFR = 60 000 + (-10 700) = 49 300 (et non 45 000 si non plafonné)
+    name: '4BC déficit plafonné : 60k sal + déficit foncier 15 000 € (cap 10 700)',
+    input: makeInput({ sal1: 60000, deficitFoncier: 15000 }),
+    // sal net 54 000. Déficit 15 000 > cap 10 700 → 4 300 € de surplus ignoré.
+    // RNI = 54 000 - 10 700 = 43 300.
+    // QF=43 300 → 1 977.69 + (43 300-29 579)×0.30 = 6 093.99 → 6 094
+    // RFR = 54 000 - 10 700 = 43 300
     expected: { impotNet: 6094, revenuReference: 43300, tmi: 0.30 },
   },
   {
@@ -831,8 +830,8 @@ const CASES = [
 
   // Profil 7 : Propriétaire en déficit foncier + EHPAD ascendant
   {
-    name: 'Profil 7 — 60k sal + foncier -8k + EHPAD 6k pour 1 ascendant',
-    input: makeInput({ sal1: 60000, foncierReel: -8000, ehpadFrais: 6000 }),
+    name: 'Profil 7 — 60k sal + déficit foncier 8k + EHPAD 6k pour 1 ascendant',
+    input: makeInput({ sal1: 60000, deficitFoncier: 8000, ehpadFrais: 6000 }),
     // sal net 54k - 8k déficit = RBG 46k (sous plafond -10700)
     // QF = 46k → 1977.69 + (46-29.579)×0.30 = 6903.99 → 6904
     // EHPAD : min(6000, 10000) × 25% = 1500

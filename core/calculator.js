@@ -159,33 +159,31 @@ function calculerIR(input) {
                      :                                  P.plafonds.jeanbrunPlafondInter;
   det.jeanbrunAmort = Math.min(input.jeanbrunAmort || 0, jeanbrunPlaf);
 
-  // Foncier réel après amortissement Jeanbrun. Deux branches sémantiques :
+  // Foncier — sémantique explicite : 2 inputs distincts ≥ 0.
   //
-  // 1. POSITIF → revenu foncier (bénéfice) : entre dans le revenu brut global
-  //    et dans l'assiette PS catégorie foncier nu (art. 14 CGI), 18,6 %.
+  // 1. `input.foncierReel` (≥ 0) — revenus fonciers nets du régime réel.
+  //    Entrent dans RBG + assiette PS catégorie foncier nu (art. 14 CGI).
+  //    Jeanbrun s'impute en priorité dessus.
   //
-  // 2. NÉGATIF → déficit foncier traité comme CHARGE PURE DÉDUCTIBLE :
-  //    capée à 10 700 €/an (art. 156-I-3° CGI), imputée sur le revenu global
-  //    comme charge (effet IR seulement, exactement comme le PER). Choix de
-  //    design « préconisation simple » : n'affecte ni l'assiette PS d'aucune
-  //    catégorie, ni les revenus fonciers positifs existants (qui conservent
-  //    leur PS propre). Justification : (a) micro et réel ne coexistent pas
-  //    sur la déclaration officielle, (b) en contexte préconisation, recommander
-  //    un déficit foncier ne doit pas mécaniquement écraser la stratégie
-  //    immobilière déjà en place du foyer. Plafond PARTAGÉ avec amortissement
-  //    Jeanbrun (lecture restrictive art. 156-I-3°, doctrine BOFiP en attente
-  //    pour le bailleur privé Jeanbrun, LF 2026 art. 47).
+  // 2. `input.deficitFoncier` (≥ 0) — déficit foncier saisi par l'utilisateur,
+  //    traité comme CHARGE DÉDUCTIBLE du revenu global (art. 156-I-3° CGI),
+  //    capée à 10 700 €/an. N'affecte aucune assiette PS. Effet IR seulement.
+  //    Choix de design « préconisation simple » : recommander un déficit foncier
+  //    ne doit pas mécaniquement écraser la stratégie immobilière déjà en place.
   //
-  // Surplus (excédent de saisie au-dessus de 10 700 €) exposé pour l'UI ; en
-  // pratique reportable 10 ans sur revenus fonciers futurs (non simulé V1).
-  const foncierApresJeanbrun = input.foncierReel - det.jeanbrunAmort;
+  // Articulation Jeanbrun + déficit :
+  //   - Jeanbrun s'impute d'abord sur foncierReel positif.
+  //   - L'excédent (jeanbrunAmort > foncierReel) rejoint le déficit foncier total.
+  //   - Cap commun 10 700 €/an avec le déficit saisi (art. 156-I-3°, doctrine
+  //     BOFiP en attente pour Jeanbrun LF 2026 art. 47).
+  //   - Surplus exposé pour l'UI ; en pratique reportable 10 ans sur revenus
+  //     fonciers futurs (non simulé V1).
+  const foncierApresJeanbrun = (input.foncierReel || 0) - det.jeanbrunAmort;
   det.foncierReel = Math.max(0, foncierApresJeanbrun);
-  det.deficitFoncierImputable = foncierApresJeanbrun < 0
-    ? Math.min(-foncierApresJeanbrun, P.plafonds.deficitFoncierMax)
-    : 0;
-  det.deficitFoncierSurplus = foncierApresJeanbrun < -P.plafonds.deficitFoncierMax
-    ? -foncierApresJeanbrun - P.plafonds.deficitFoncierMax
-    : 0;
+  const excedentJeanbrun = Math.max(0, -foncierApresJeanbrun);
+  const deficitTotal = (input.deficitFoncier || 0) + excedentJeanbrun;
+  det.deficitFoncierImputable = Math.min(deficitTotal, P.plafonds.deficitFoncierMax);
+  det.deficitFoncierSurplus = Math.max(0, deficitTotal - P.plafonds.deficitFoncierMax);
 
   // Meublé
   det.meubleClasseNet = input.meubleClasse * (1 - P.abat.meubleClasse.taux);

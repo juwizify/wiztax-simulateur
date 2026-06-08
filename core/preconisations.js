@@ -57,8 +57,8 @@ const eur = (n) => n.toLocaleString('fr-FR') + ' €';
 //   - 'taux-variable' : taux dépend d'un paramètre additionnel listé dans
 //     `params[0].options[].taux` (Loc'Avantages palier, Malraux zone).
 //   - 'taux-libre' : rendement saisi par l'utilisateur (Girardin PD/AG).
-//   - 'deficit-foncier' : les travaux saisis viennent en déficit foncier
-//     (input.foncierReel négatif), pas en RI.
+//   - Le déficit foncier utilise 'versement-direct' avec inputKey 'deficitFoncier'
+//     (sémantique positif, traité comme charge déductible cap 10 700 €/an).
 //   - 'jeanbrun' : amortissement spécifique foncier (pas un avantage IR direct).
 // Mode 'taux' retiré en D3.5 (plus aucun usager après migration FIP/GFI).
 
@@ -120,7 +120,7 @@ const LEVIERS_CATALOGUE = [
   },
   {
     id: 'deficitFoncier', label: 'Déficit foncier (travaux)',
-    levier: 1, cat: 'foncier', mode: 'deficit-foncier', inputKey: 'foncierReel',
+    levier: 1, cat: 'foncier', mode: 'versement-direct', inputKey: 'deficitFoncier',
     nature: 'depenses-annuelles', budget: 'cash',
     inSimpleMode: true,   // PR-V — cas courant dans la liste « Type de charge »
     info: `Saisir le montant du déficit foncier. Vient diminuer le revenu global, plafonné à ${eur(P.plafonds.deficitFoncierMax)}/an. Économie = montant retenu × TMI.`,
@@ -1037,11 +1037,6 @@ function appliquerPreconisations(input, precos) {
       // p.paramValue est un nombre décimal (1.10 = 110 %).
       const rendement = parseFloat(p.paramValue) || lev.rendementDefaut;
       out[lev.inputKey] = (out[lev.inputKey] || 0) + p.montant * rendement;
-    }
-    else if (lev.mode === 'deficit-foncier') {
-      // Les travaux saisis VIENNENT EN DÉFICIT (= foncier négatif). Le
-      // moteur cap déjà l'imputation sur le revenu global à -10 700 €/an.
-      out.foncierReel = (out.foncierReel || 0) - p.montant;
     }
     else if (lev.mode === 'jeanbrun') {
       // Mode legacy spécifique — sera unifié vers versement-direct + paramKey

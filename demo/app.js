@@ -45,7 +45,7 @@ function defaultInputs() {
     bicVentes1: 0, bicVentes2: 0,
     bicServices1: 0, bicServices2: 0,
     bicReel1: 0, bicReel2: 0,
-    microFoncier: 0, foncierReel: 0,
+    microFoncier: 0, foncierReel: 0, deficitFoncier: 0,
     meubleClasse: 0, meubleNonClasse: 0, autresMeubles: 0,
     jeanbrunAmort: 0, jeanbrunCategorie: 'intermediaire',
     // Mobilier
@@ -109,6 +109,7 @@ function getInputs() {
     bicServices1: v('bicServices1'), bicServices2: v('bicServices2'),
     bicReel1:     v('bicReel1'),     bicReel2:     v('bicReel2'),
     microFoncier: v('microFoncier'), foncierReel: v('foncierReel'),
+    deficitFoncier: v('deficitFoncier'),
     meubleClasse: v('meubleClasse'), meubleNonClasse: v('meubleNonClasse'),
     autresMeubles: v('autresMeubles'),
     jeanbrunAmort: v('jeanbrunAmort'),
