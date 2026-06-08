@@ -245,7 +245,10 @@
                champ « Foncier réel / déficit » est en simple (cas courant pour
                la saisie d'un déficit foncier). Les autres régimes (micro-foncier,
                LMNP, meublé tourisme) restent en .advanced pour le mode complet. -->
-          <div class="form-subsection"><h3>Revenus fonciers et locatifs</h3></div>
+          <!-- En mode simple, aucun input de cette sous-section n'est exposé
+               (foncierReel et meublés sont tous .advanced ; le déficit foncier
+               est en section Charges). Le titre est donc masqué en simple. -->
+          <div class="form-subsection advanced"><h3>Revenus fonciers et locatifs</h3></div>
 
           <div class="form-row advanced">
             <label for="microFoncier">
@@ -550,7 +553,7 @@
                complète symétriquement la maille des crédits. -->
           <div class="form-row">
             <label for="autresReductions">
-              Autres réductions d'impôt (mobilier)
+              Autres réductions d'impôt (SOFICA, Girardin, IR-PME, FCPI, FIP, GFI…)
               <i class="tip" data-tip="Catch-all pour les réductions mobilières : SOFICA, Girardin (PD ou avec agrément), IR-PME (toutes variantes : ESUS, JEI, JEII, JEIR, MH), FCPI JEI, FIP Corse/Outre-mer, GFI forestier, et tout autre dispositif de réduction d'impôt non listé individuellement.&#10;&#10;Saisir directement le MONTANT DE LA RÉDUCTION d'impôt obtenue (pas le montant investi). Pour les dispositifs précis avec calcul automatique (taux × invest, plafonds), utiliser le mode complet.">i</i>
             </label>
             <input type="number" id="autresReductions" value="0" min="0">
@@ -561,7 +564,7 @@
 
           <div class="form-row">
             <label for="autresReductionsImmo">
-              Réductions immobilières
+              Réductions immobilières (Pinel, Denormandie, Scellier, Duflot, Censi-Bouvard…)
               <i class="tip" data-tip="Catch-all pour les réductions d'impôt liées à l'investissement immobilier : Pinel (millésimes ouverts), Denormandie, Scellier, Duflot, Censi-Bouvard, et tout autre dispositif immobilier non listé individuellement.&#10;&#10;Saisir directement le MONTANT DE LA RÉDUCTION d'impôt annuelle obtenue (pas le montant investi). Pour les dispositifs précis avec calcul automatique (étalement sur la durée, plafonds invest), utiliser le mode complet.">i</i>
             </label>
             <input type="number" id="autresReductionsImmo" value="0" min="0">
@@ -572,7 +575,7 @@
 
           <div class="form-row">
             <label for="autresCredits">
-              Autres crédits d'impôt
+              Autres crédits d'impôt (transition énergétique, services à domicile spécifiques…)
               <i class="tip" data-tip="Catch-all pour les crédits d'impôt non listés individuellement (transition énergétique CITE/MaPrimeRénov, services à domicile spécifiques, etc.).&#10;&#10;Saisir directement le MONTANT DU CRÉDIT d'impôt obtenu. Les crédits sont remboursables si supérieurs à l'impôt dû.">i</i>
             </label>
             <input type="number" id="autresCredits" value="0" min="0">
