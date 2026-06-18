@@ -758,6 +758,22 @@ const DEMO_CASE = {
   microFoncier: 3000,
 };
 
+// Scénario de stress-test en cours de validation 3-sources
+// (impots.gouv.fr vs notre simulateur vs simulateur du dev intégrateur).
+// Les scénarios sont construits un par un en conversation.
+const TEST_SCENARIO = {
+  // ---- Scénario #1 — Cadre célibataire 0 enfant, sal 50k, dons 7UF 500 € ----
+  // Attendu (moteur wiztax) : impôt net 6 274 € · TMI 30 % · RFR 45 000 €
+  // Détail : sal net 45 000 (abat 10 %) → impôt brut barème 6 604 €
+  //          − dons 500 × 66 % = 330 € → impôt net 6 274 €.
+  // Pas de décote (impôt > seuil 1 982 €), pas de plafonnement QF (1 part).
+  // Cases impots.gouv : 1AJ=50000 · 7UF=500.
+  situation: 'celibataire',
+  nbEnfants: 0,
+  sal1: 50000,
+  dons: 500,
+};
+
 function initDevToolbar() {
   const toolbar = document.querySelector('.dev-toolbar');
   if (!isDevMode()) {
@@ -766,6 +782,26 @@ function initDevToolbar() {
   }
   const btnLoad = document.getElementById('btnLoadDemo');
   const btnReset = document.getElementById('btnResetInputs');
+  // Bouton « Scénario test » — reset + injection du TEST_SCENARIO courant.
+  const btnTest = document.getElementById('btnTestScenario');
+  if (btnTest) {
+    btnTest.addEventListener('click', () => {
+      document.querySelectorAll('#simulateur input[type="number"]').forEach(el => {
+        el.value = el.defaultValue || 0;
+      });
+      document.querySelectorAll('#simulateur select').forEach(el => {
+        if (el.options.length) el.selectedIndex = 0;
+      });
+      document.querySelectorAll('#simulateur input[type="checkbox"]').forEach(el => {
+        el.checked = false;
+      });
+      Object.entries(TEST_SCENARIO).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      });
+      recalculer();
+    });
+  }
   if (btnLoad) {
     btnLoad.addEventListener('click', () => {
       Object.entries(DEMO_CASE).forEach(([id, val]) => {
