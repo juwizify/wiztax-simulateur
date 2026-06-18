@@ -762,16 +762,29 @@ const DEMO_CASE = {
 // (impots.gouv.fr vs notre simulateur vs simulateur du dev intégrateur).
 // Les scénarios sont construits un par un en conversation.
 const TEST_SCENARIO = {
-  // ---- Scénario #1 — Cadre célibataire 0 enfant, sal 50k, dons 7UF 500 € ----
-  // Attendu (moteur wiztax) : impôt net 6 274 € · TMI 30 % · RFR 45 000 €
-  // Détail : sal net 45 000 (abat 10 %) → impôt brut barème 6 604 €
-  //          − dons 500 × 66 % = 330 € → impôt net 6 274 €.
-  // Pas de décote (impôt > seuil 1 982 €), pas de plafonnement QF (1 part).
-  // Cases impots.gouv : 1AJ=50000 · 7UF=500.
-  situation: 'celibataire',
-  nbEnfants: 0,
-  sal1: 50000,
-  dons: 500,
+  // ---- Scénario #2 — Couple cadre+prof, 2 enfants, immo + optim fiscale ----
+  // Exerce : abat sal cap 14555, plafonnement QF, PER, foncier mixte
+  // (revenu + déficit), dividendes PFU + PS, dons 2 paliers (7UD + 7UF),
+  // emploi domicile + majoration enfants, SOFICA (niche 18k), IR-PME (niche 10k),
+  // Denormandie étalée, frais scolarité hors niches.
+  situation: 'marie-pacse',
+  nbEnfants: 2,
+  sal1: 95000,                      // cadre
+  sal2: 42000,                      // prof
+  foncierReel: 5000,                // revenus locatifs nets
+  deficitFoncier: 7000,             // travaux générant un déficit
+  dividendes: 3000,                 // brut, PFU par défaut
+  per: 8000,                        // versement PER déductible
+  dons7UD: 200,                     // Coluche (75 % jusqu'à 2 000 €)
+  dons: 600,                        // 7UF (intérêt général 66 %)
+  emploiDomicile: 4500,             // salaire net + charges
+  sofica: 5000,
+  soficaTaux: '30',                 // SOFICA standard 30 %
+  irPme: 4000,                      // souscription IR-PME standard 18 %
+  denormandie: 200000,              // invest Denormandie
+  denormandieDuree: '9',            // étalement 9 ans (18 % total → 2 %/an)
+  fraisScolCollege: 1,              // 1 enfant collège
+  fraisScolLycee: 1,                // 1 enfant lycée
 };
 
 function initDevToolbar() {
