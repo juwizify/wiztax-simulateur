@@ -771,8 +771,7 @@ const TEST_SCENARIO = {
   nbEnfants: 2,
   sal1: 95000,                      // cadre
   sal2: 42000,                      // prof
-  foncierReel: 5000,                // revenus locatifs nets
-  deficitFoncier: 7000,             // travaux générant un déficit
+  foncierReel: 5000,                // revenus locatifs nets (régime réel, case 4BA)
   dividendes: 3000,                 // brut, PFU par défaut
   per: 8000,                        // versement PER déductible
   dons7UD: 200,                     // Coluche (75 % jusqu'à 2 000 €)
