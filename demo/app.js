@@ -758,6 +758,34 @@ const DEMO_CASE = {
   microFoncier: 3000,
 };
 
+// Scénario de stress-test en cours de validation 3-sources
+// (impots.gouv.fr vs notre simulateur vs simulateur du dev intégrateur).
+// Les scénarios sont construits un par un en conversation.
+const TEST_SCENARIO = {
+  // ---- Scénario #2 — Couple cadre+prof, 2 enfants, immo + optim fiscale ----
+  // Exerce : abat sal cap 14555, plafonnement QF, PER, foncier mixte
+  // (revenu + déficit), dividendes PFU + PS, dons 2 paliers (7UD + 7UF),
+  // emploi domicile + majoration enfants, SOFICA (niche 18k), IR-PME (niche 10k),
+  // Denormandie étalée, frais scolarité hors niches.
+  situation: 'marie-pacse',
+  nbEnfants: 2,
+  sal1: 95000,                      // cadre
+  sal2: 42000,                      // prof
+  foncierReel: 5000,                // revenus locatifs nets (régime réel, case 4BA)
+  dividendes: 3000,                 // brut, PFU par défaut
+  per: 8000,                        // versement PER déductible
+  dons7UD: 200,                     // Coluche (75 % jusqu'à 2 000 €)
+  dons: 600,                        // 7UF (intérêt général 66 %)
+  emploiDomicile: 4500,             // salaire net + charges
+  sofica: 5000,
+  soficaTaux: '30',                 // SOFICA standard 30 %
+  irPme: 4000,                      // souscription IR-PME standard 18 %
+  denormandie: 200000,              // invest Denormandie
+  denormandieDuree: '9',            // étalement 9 ans (18 % total → 2 %/an)
+  fraisScolCollege: 1,              // 1 enfant collège
+  fraisScolLycee: 1,                // 1 enfant lycée
+};
+
 function initDevToolbar() {
   const toolbar = document.querySelector('.dev-toolbar');
   if (!isDevMode()) {
@@ -766,6 +794,26 @@ function initDevToolbar() {
   }
   const btnLoad = document.getElementById('btnLoadDemo');
   const btnReset = document.getElementById('btnResetInputs');
+  // Bouton « Scénario test » — reset + injection du TEST_SCENARIO courant.
+  const btnTest = document.getElementById('btnTestScenario');
+  if (btnTest) {
+    btnTest.addEventListener('click', () => {
+      document.querySelectorAll('#simulateur input[type="number"]').forEach(el => {
+        el.value = el.defaultValue || 0;
+      });
+      document.querySelectorAll('#simulateur select').forEach(el => {
+        if (el.options.length) el.selectedIndex = 0;
+      });
+      document.querySelectorAll('#simulateur input[type="checkbox"]').forEach(el => {
+        el.checked = false;
+      });
+      Object.entries(TEST_SCENARIO).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      });
+      recalculer();
+    });
+  }
   if (btnLoad) {
     btnLoad.addEventListener('click', () => {
       Object.entries(DEMO_CASE).forEach(([id, val]) => {
